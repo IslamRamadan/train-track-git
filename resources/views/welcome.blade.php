@@ -97,15 +97,7 @@
     <div class="row">
         <div class="col-md-12 mb-3 mt-3 text-center">
             <!-- Your logo goes here -->
-            <img src="{{url('images/logo.svg')}}" alt="App Logo" style="max-width: 100%;">
-        </div>
-        <div class="col-md-12">
-            <p>Hey <strong>asd</strong>,</p>
-            <p>
-                <strong>asd</strong> invited you to join train track application
-                please download the application from Google play or App store and register with email:
-                <strong>dfdfg</strong> to join us
-            </p>
+            <img src="https://i.ibb.co/54TTf0J/logo.png" alt="App Logo" style="max-width: 100%;">
         </div>
         <div class="col-md-12">
             <!-- Download buttons -->
