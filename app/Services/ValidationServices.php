@@ -225,7 +225,7 @@ class ValidationServices
         $request->validate([
             'client_program_id' => 'required|exists:one_to_one_programs,id',
             'name' => 'required',
-            'date' => 'required|after:yesterday',
+            'date' => 'required',
             'description' => 'required',
             'extra_description' => 'nullable',
         ]);
