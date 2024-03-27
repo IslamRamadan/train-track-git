@@ -18,8 +18,8 @@ class AuthServices
                                 protected ValidationServices $validationServices,
                                 protected DB_Clients         $DB_Clients,
                                 protected DB_PendingClients  $DB_PendingClients,
-                                protected DB_Coaches       $DB_Coaches,
-                                protected DB_Notifications $DB_Notifications,
+                                protected DB_Coaches         $DB_Coaches,
+                                protected DB_Notifications   $DB_Notifications,
     )
     {
     }

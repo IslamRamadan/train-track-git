@@ -19,6 +19,7 @@ class OneToOneProgramController extends Controller
     {
         return $this->oneProgramServices->index($request);
     }
+
     public function destroy(Request $request)
     {
         return $this->oneProgramServices->destroy($request);

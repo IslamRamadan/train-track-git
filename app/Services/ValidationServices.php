@@ -398,5 +398,13 @@ class ValidationServices
         ]);
     }
 
+    public function add_comment($request)
+    {
+        $request->validate([
+            'date' => 'required',
+            'client_exercise_id' => 'required|exists:one_to_one_program_exercises,id',
+        ]);
+    }
+
 
 }

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class ProgramExerciseVideo extends Model
 {
     use HasFactory;
+
     protected $fillable = ['title', 'link', 'program_exercise_id'];
 
 }

@@ -16,6 +16,7 @@ class LogController extends Controller
     {
         return $this->logServices->client_logs_list($request);
     }
+
     public function client_programs_logs_list(Request $request)
     {
         return $this->logServices->client_programs_logs_list($request);

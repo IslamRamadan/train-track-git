@@ -21,6 +21,7 @@ class OneToOneProgram extends Model
     {
         return $this->hasMany(OneToOneProgramExercise::class, 'one_to_one_program_id');
     }
+
     public function client()
     {
         return $this->belongsTo(User::class, 'client_id');

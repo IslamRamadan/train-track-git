@@ -93,7 +93,8 @@
                 <span class="market-button-subtitle">Download on the</span>
                 <span class="market-button-title">Google Play</span>
             </a>
-            <a href="https://testflight.apple.com/join/3LpUm5JX" target="_blank" class="market-btn apple-btn" role="button">
+            <a href="https://testflight.apple.com/join/3LpUm5JX" target="_blank" class="market-btn apple-btn"
+               role="button">
                 <span class="market-button-subtitle">Download on the</span>
                 <span class="market-button-title">App Store</span>
             </a>

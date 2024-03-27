@@ -16,7 +16,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('coaches_id')->nullable();
             $table->foreign('client_id')->references('id')->on('users');
             $table->unsignedBigInteger('clients_id')->nullable();
-            $table->enum('status',["0","1","2"]);
+            $table->enum('status', ["0", "1", "2"]);
             $table->timestamps();
         });
     }

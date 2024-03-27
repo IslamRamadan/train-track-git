@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\CoachController;
+use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\ExerciseController;
 use App\Http\Controllers\Api\LogController;
 use App\Http\Controllers\Api\NotificationController;
@@ -63,6 +64,8 @@ Route::middleware('auth:api')->group(function () {
     Route::post('coach/update/profile', [CoachController::class, 'update_info']);
     Route::post('coach/client/logs', [CoachController::class, 'list_client_logs']);
     // Coach apis end
+
+    // Client apis start
     Route::post('client/date/exercises/list', [OneToOneExerciseController::class, 'list_client_exercises_in_date']);
     Route::post('client/exercise/log', [OneToOneExerciseController::class, 'log_client_exercise']);
     Route::post('client/exercise/log/update', [OneToOneExerciseController::class, 'log_client_exercise_update']);
@@ -74,8 +77,13 @@ Route::middleware('auth:api')->group(function () {
     Route::post('client/dashboard', [ClientController::class, 'client_dashboard']);
     Route::post('client/archive/account', [ClientController::class, 'archive_account']);
     Route::post('change/password', [AuthController::class, 'change_password']);
-    // Client apis start
+    // Client apis end
+
+    // Mutual apis start
     Route::post('notification/list', [NotificationController::class, 'list_notifications']);
+    Route::post('comment/add', [CommentController::class, 'add']);
+    Route::post('comment/delete', [CommentController::class, 'delete']);
+    // Mutual apis end
 
 
 });
