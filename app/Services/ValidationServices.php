@@ -402,7 +402,15 @@ class ValidationServices
     {
         $request->validate([
             'date' => 'required',
-            'client_exercise_id' => 'required|exists:one_to_one_program_exercises,id',
+            'comment' => 'required',
+            'client_program_id' => 'required|exists:one_to_one_programs,id',
+        ]);
+    }
+
+    public function delete_comment($request)
+    {
+        $request->validate([
+            'comment_id' => 'required|exists:oto_exercise_comments,id',
         ]);
     }
 

@@ -9,11 +9,11 @@ class OtoExerciseComment extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['date', 'comment', 'sender', 'oto_exercise_id'];
+    protected $fillable = ['date', 'comment', 'sender', 'oto_program_id'];
 
-    public function exercise()
+    public function program()
     {
-        return $this->belongsTo(User::class, 'oto_exercise_id');
+        return $this->belongsTo(User::class, 'oto_program_id');
     }
 //
 //    public function coach()

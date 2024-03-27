@@ -12,6 +12,11 @@ return new class extends Migration {
     {
         Schema::create('oto_exercise_comments', function (Blueprint $table) {
             $table->id();
+            $table->text('comment');
+            $table->date('date');
+            $table->enum('sender', ['0', '1']);
+            $table->unsignedBigInteger('oto_program_id');
+            $table->foreign('oto_program_id')->references('id')->on('one_to_one_programs');
             $table->timestamps();
         });
     }

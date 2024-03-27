@@ -16,4 +16,9 @@ class CommentController extends Controller
     {
         return $this->commentServices->add($request);
     }
+
+    public function delete(Request $request)
+    {
+        return $this->commentServices->delete($request);
+    }
 }
