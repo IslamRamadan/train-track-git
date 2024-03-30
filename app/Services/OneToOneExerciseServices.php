@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Services\DatabaseServices\DB_ExerciseLog;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_OneToOneProgramExerciseVideos;
+use App\Services\DatabaseServices\DB_OtoExerciseComments;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -13,8 +14,8 @@ class OneToOneExerciseServices
 {
     public function __construct(protected ValidationServices $validationServices
         , protected DB_OneToOneProgramExercises              $DB_OneToOneProgramExercises
-        , protected DB_OneToOneProgramExerciseVideos         $DB_OneToOneProgramExerciseVideos,
-                                protected DB_ExerciseLog     $DB_ExerciseLog
+        , protected DB_OneToOneProgramExerciseVideos         $DB_OneToOneProgramExerciseVideos
+        , protected DB_ExerciseLog                           $DB_ExerciseLog, protected DB_OtoExerciseComments $DB_OtoExerciseComments
     )
     {
     }
@@ -36,8 +37,7 @@ class OneToOneExerciseServices
         $this->validationServices->list_client_exercises($request);
         $program_id = $request['client_program_id'];
         $program_exercises = $this->DB_OneToOneProgramExercises->get_program_exercises($program_id);
-
-        $program_exercises_arr = $this->list_program_exercises_arr($program_exercises);
+        $program_exercises_arr = $this->list_program_exercises_arr($program_exercises, $program_id);
 
         return sendResponse($program_exercises_arr);
     }
@@ -80,7 +80,13 @@ class OneToOneExerciseServices
                 $program_exercises_arr[] = $single_program_exercises_arr;
             }
         }
-        return sendResponse($program_exercises_arr);
+        $exercises_arr['exercises'] = $program_exercises_arr;
+        $comments_in_this_day = $this->DB_OtoExerciseComments->get_comments_in_date(date: $date, program_id: $program_id);
+        $program_comments_arr = $this->date_comments($comments_in_this_day);
+        $exercises_arr['comments'] = $program_comments_arr;
+
+        return sendResponse($exercises_arr);
+
     }
 
     public function list_client_exercises_in_date($request)
@@ -127,6 +133,10 @@ class OneToOneExerciseServices
             }
         }
         $exercises_arr['exercises'] = $program_exercises_arr;
+        $comments_in_this_day = $this->DB_OtoExerciseComments->get_comments_in_date(date: $date);
+        $program_comments_arr = $this->date_comments($comments_in_this_day);
+        $exercises_arr['comments'] = $program_comments_arr;
+
         return sendResponse($exercises_arr);
     }
 
@@ -279,15 +289,24 @@ class OneToOneExerciseServices
         }
     }
 
-    private function list_program_exercises_arr(Collection|array $program_exercises)
+    private function list_program_exercises_arr(Collection|array $program_exercises, $program_id)
     {
         $program_exercises_arr = [];
         if ($program_exercises) {
-            foreach ($program_exercises as $day => $day_exercises) {
+            $single_day = [];
+
+            foreach ($program_exercises as $date => $day_exercises) {
+                $single_day['date'] = $date;
+                $single_exercise = [];
                 foreach ($day_exercises as $exercise) {
                     $single_program_exercises_arr = $this->program_exercises_arr($exercise);
-                    $program_exercises_arr[] = $single_program_exercises_arr;
+                    $single_exercise[] = $single_program_exercises_arr;
                 }
+                $single_day['exercises'] = $single_exercise;
+                $comments_in_this_day = $this->DB_OtoExerciseComments->get_comments_in_date(date: $date, program_id: $program_id);
+                $program_comments_arr = $this->date_comments($comments_in_this_day);
+                $single_day['comments'] = $program_comments_arr;
+                $program_exercises_arr[] = $single_day;
             }
         }
         return $program_exercises_arr;
@@ -323,16 +342,41 @@ class OneToOneExerciseServices
         return $single_program_exercises_arr;
     }
 
-    private function list_program_exercises_by_day_arr(Collection|array $program_exercises)
+//    private function list_program_exercises_by_day_arr(Collection|array $program_exercises)
+//    {
+//        $program_exercises_arr = [];
+//        if ($program_exercises) {
+//            foreach ($program_exercises as $exercise) {
+//                $single_program_exercises_arr = $this->program_exercises_arr($exercise);
+//                $program_exercises_arr[] = $single_program_exercises_arr;
+//            }
+//        }
+//        return $program_exercises_arr;
+//    }
+
+    /**
+     * @param Collection|array $comments_in_this_day
+     * @param array $exercises_arr
+     * @return array
+     */
+    private function date_comments(Collection|array $comments_in_this_day): array
     {
-        $program_exercises_arr = [];
-        if ($program_exercises) {
-            foreach ($program_exercises as $exercise) {
-                $single_program_exercises_arr = $this->program_exercises_arr($exercise);
-                $program_exercises_arr[] = $single_program_exercises_arr;
+        $program_comments_arr = [];
+        if ($comments_in_this_day) {
+            foreach ($comments_in_this_day as $comment) {
+                $single_program_comments_arr = [];
+                $single_program_comments_arr['comment_id'] = $comment->id;
+                $single_program_comments_arr['comment_content'] = $comment->comment;
+                $single_program_comments_arr['sender'] = $comment->user_type;
+                $single_program_comments_arr['coach_id'] = $comment->program->coach_id;
+                $single_program_comments_arr['coach_name'] = $comment->program->coach->name;
+                $single_program_comments_arr['client_id'] = $comment->program->client_id;
+                $single_program_comments_arr['client_name'] = $comment->program->client->name;
+
+                $program_comments_arr[] = $single_program_comments_arr;
             }
         }
-        return $program_exercises_arr;
+        return $program_comments_arr;
     }
 
 }
