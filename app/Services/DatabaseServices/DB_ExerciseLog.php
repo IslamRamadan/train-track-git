@@ -60,4 +60,9 @@ class DB_ExerciseLog
             });
         })->orderBy('created_at', 'DESC')->with('exercise.one_to_one_program.client')->get();
     }
+
+    public function find_exercise_log($exercise_id)
+    {
+        return ExerciseLog::query()->where('oto_exercise_id', $exercise_id)->first();
+    }
 }
