@@ -240,7 +240,12 @@ class OneToOneExerciseServices
         $client_exercise_id = $request->client_exercise_id;
         $sets = $request->sets;
         $details = $request->details;
-        $this->DB_ExerciseLog->create_exercise_log($client_exercise_id, $sets, $details, $client_id);
+        $exercise_log = $this->DB_ExerciseLog->find_exercise_log(exercise_id: $client_exercise_id);
+        if ($exercise_log) {
+            $this->DB_ExerciseLog->update_exercise_log($exercise_log->id, $sets, $details);
+        } else {
+            $this->DB_ExerciseLog->create_exercise_log($client_exercise_id, $sets, $details, $client_id);
+        }
         $this->DB_OneToOneProgramExercises->update_exercise_status($client_exercise_id, "1");
         return sendResponse(['message' => "Log created successfully"]);
     }
