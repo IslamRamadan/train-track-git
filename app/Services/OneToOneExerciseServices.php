@@ -367,6 +367,7 @@ class OneToOneExerciseServices
                 $single_program_comments_arr = [];
                 $single_program_comments_arr['comment_id'] = $comment->id;
                 $single_program_comments_arr['comment_content'] = $comment->comment;
+                $single_program_comments_arr['comment_date'] = Carbon::parse($comment->created_at)->format('Y-m-d');
                 $single_program_comments_arr['sender'] = $comment->user_type;
                 $single_program_comments_arr['coach_id'] = $comment->program->coach_id;
                 $single_program_comments_arr['coach_name'] = $comment->program->coach->name;
