@@ -45,6 +45,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('program/exercise/add', [ExerciseController::class, 'create']);
     Route::post('program/exercise/copy', [ExerciseController::class, 'copy']);
     Route::post('program/exercise/days/copy', [ExerciseController::class, 'copy_days']);
+    Route::post('program/exercise/days/delete', [ExerciseController::class, 'delete_days']);
     Route::post('program/exercise/edit', [ExerciseController::class, 'update']);
     Route::post('program/exercise/delete', [ExerciseController::class, 'destroy']);
     Route::post('program/client/assign', [ClientController::class, 'assign_program_to_client']);
@@ -59,6 +60,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('client/program/exercise/add', [OneToOneExerciseController::class, 'add_client_exercise']);
     Route::post('client/program/exercise/copy', [OneToOneExerciseController::class, 'copy_client_exercise']);
     Route::post('client/program/exercise/days/copy', [OneToOneExerciseController::class, 'copy_client_exercise_days']);
+    Route::post('client/program/exercise/days/delete', [OneToOneExerciseController::class, 'delete_client_exercise_days']);
     Route::post('client/program/exercise/edit', [OneToOneExerciseController::class, 'update_client_exercise']);
     Route::post('client/program/exercise/delete', [OneToOneExerciseController::class, 'delete_client_exercise']);
     Route::post('coach/dashboard', [CoachController::class, 'coach_dashboard']);

@@ -10,7 +10,7 @@ class DB_OneToOneProgram
 
     public function find_oto_program(mixed $program_id)
     {
-        return OneToOneProgram::with('exercises.videos')->find($program_id);
+        return OneToOneProgram::with('exercises.videos', 'comments')->find($program_id);
     }
 
     public function create_one_to_program($parent_program, mixed $client_id, mixed $coach_id)
@@ -41,6 +41,17 @@ class DB_OneToOneProgram
     public function delete_program(mixed $program_id)
     {
         return OneToOneProgram::query()->where('id', $program_id)->delete();
+    }
+
+
+    public function verify_coach_id($coach_id, $client_program_id)
+    {
+        return OneToOneProgram::query()
+            ->where([
+                'id' => $client_program_id,
+                'coach_id' => $coach_id,
+            ])
+            ->exists();
     }
 
 }

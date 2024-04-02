@@ -204,6 +204,36 @@ class OneToOneExerciseServices
         return sendResponse(['message' => "Exercise days copied successfully"]);
     }
 
+    function delete_client_exercise_days($request)
+    {
+        $this->validationServices->delete_client_program_exercise_days($request);
+        $program_id = $request['client_program_id'];
+        $deleted_days = $request['deleted_dates'];
+        foreach ($deleted_days as $date) {
+            $program_exercises = $this->DB_OneToOneProgramExercises->get_program_exercises_by_date(program_id: $program_id, date: $date);
+
+            DB::beginTransaction();
+            if ($program_exercises) {
+                foreach ($program_exercises as $exercise) {
+                    if ($exercise->videos()->exists()) {
+                        //delete exercises videos
+                        $exercise->videos()->delete();
+                    }
+                    if ($exercise->log()->exists()) {
+                        //delete exercises videos
+                        $exercise->log->delete();
+                    }
+                    //delete exercises
+                    $exercise->delete();
+                }
+                $this->DB_OtoExerciseComments->delete_date_comments(date: $date, program_id: $program_id);
+            }
+            DB::commit();
+        }
+        return sendResponse(['message' => "Exercise days deleted successfully"]);
+
+    }
+
     public function update_client_exercise($request)
     {
         $this->validationServices->edit_client_program_exercise($request);
@@ -234,8 +264,12 @@ class OneToOneExerciseServices
 
         $exercise = $this->DB_OneToOneProgramExercises->find_exercise($exercise_id);
         $other_exercises = $this->DB_OneToOneProgramExercises->get_other_exercises($exercise->one_to_one_program_id, $exercise->date, $exercise_id);
-        $this->rearrange_program_exercises($other_exercises, "0");
 
+        $this->rearrange_program_exercises($other_exercises, "0");
+        if ($other_exercises->isEmpty()) {
+            //if there is no another exercises in the day so delete the comments of the day
+            $this->DB_OtoExerciseComments->delete_date_comments(date: $exercise->date, program_id: $exercise->one_to_one_program_id);
+        }
         $this->DB_OneToOneProgramExerciseVideos->delete_exercise_videos($exercise);
         $this->DB_ExerciseLog->delete_exercise_log($exercise);
         $this->DB_OneToOneProgramExercises->delete_single_exercises($exercise_id);

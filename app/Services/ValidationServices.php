@@ -4,12 +4,18 @@ namespace App\Services;
 
 use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_ExerciseLog;
+use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
+use App\Services\DatabaseServices\DB_Programs;
 
 class ValidationServices
 {
     public function __construct(protected DB_OneToOneProgramExercises $DB_OneToOneProgramExercises,
-                                protected DB_ExerciseLog              $DB_ExerciseLog, protected DB_Clients $DB_Clients)
+                                protected DB_ExerciseLog              $DB_ExerciseLog,
+                                protected DB_Clients                  $DB_Clients,
+                                protected DB_Programs                 $DB_Programs,
+                                protected DB_OneToOneProgram          $DB_OneToOneProgram,
+    )
     {
     }
 
@@ -50,7 +56,6 @@ class ValidationServices
     {
         $request->validate([
             'program_id' => 'required|exists:programs,id',
-            'week' => 'required',
         ]);
     }
 
@@ -90,6 +95,21 @@ class ValidationServices
             'to_program_id' => 'required|exists:programs,id',
             'copied_days' => 'required|array',
             'start_day' => 'required',
+        ]);
+    }
+
+    public function delete_program_exercise_days($request)
+    {
+        $request->validate([
+            'deleted_days' => 'required|array',
+            'program_id' => ['required',
+                'exists:programs,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    $verify_coach_id = $this->DB_Programs->verify_coach_id($request->user()->id, $value);
+                    if (!$verify_coach_id) {
+                        $fail('The program must be the coach program');
+                    }
+                },]
         ]);
     }
 
@@ -255,6 +275,22 @@ class ValidationServices
             'to_client_program_id' => 'required|exists:one_to_one_programs,id',
             'copied_dates' => 'required|array',
             'start_date' => 'required',
+        ]);
+    }
+
+    public function delete_client_program_exercise_days($request)
+    {
+        $request->validate([
+            'deleted_dates' => 'required|array',
+            'client_program_id' => [
+                'required',
+                'exists:one_to_one_programs,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    $verify_coach_id = $this->DB_OneToOneProgram->verify_coach_id($request->user()->id, $value);
+                    if (!$verify_coach_id) {
+                        $fail('The program must be the coach program');
+                    }
+                },]
         ]);
     }
 

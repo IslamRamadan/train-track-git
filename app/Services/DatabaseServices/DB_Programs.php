@@ -43,4 +43,15 @@ class DB_Programs
     {
         return Program::query()->where('id', $program_id)->delete();
     }
+
+    public function verify_coach_id($coach_id, $program_id)
+    {
+        return Program::query()
+            ->where([
+                'id' => $program_id,
+                'coach_id' => $coach_id,
+            ])
+            ->exists();
+    }
+
 }

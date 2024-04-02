@@ -109,6 +109,30 @@ class ExerciseServices
         return sendResponse(['message' => "Exercise days copied successfully"]);
     }
 
+    function delete_days($request)
+    {
+        $this->validationServices->delete_program_exercise_days($request);
+        $program_id = $request['program_id'];
+        $deleted_days = $request['deleted_days'];
+        foreach ($deleted_days as $day) {
+            $program_exercises = $this->DB_Exercises->get_program_exercises_by_day(program_id: $program_id, day: $day);
+
+            DB::beginTransaction();
+            if ($program_exercises) {
+                foreach ($program_exercises as $exercise) {
+                    if ($exercise->videos()->exists()) {
+                        //delete exercises videos
+                        $exercise->videos()->delete();
+                    }
+                    //delete exercises
+                    $exercise->delete();
+                }
+            }
+            DB::commit();
+        }
+        return sendResponse(['message' => "Exercise days deleted successfully"]);
+    }
+
     public function update($request)
     {
         $this->validationServices->edit_program_exercise($request);

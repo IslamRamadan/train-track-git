@@ -21,6 +21,11 @@ class DB_OtoExerciseComments
         OtoExerciseComment::query()->where('id', $comment_id)->delete();
     }
 
+    public function delete_date_comments($date, $program_id)
+    {
+        OtoExerciseComment::query()->where(['date' => $date, 'oto_program_id' => $program_id])->delete();
+    }
+
     public function get_comments_in_date(mixed $date, $program_id = null)
     {
         return OtoExerciseComment::query()

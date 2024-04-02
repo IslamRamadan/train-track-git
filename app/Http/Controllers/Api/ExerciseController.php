@@ -53,6 +53,14 @@ class ExerciseController extends Controller
     }
 
     /**
+     * delete days of exercises .
+     */
+    public function delete_days(Request $request)
+    {
+        return $this->exerciseServices->delete_days($request);
+    }
+
+    /**
      * Update the specified resource in storage.
      */
     public function update(Request $request)
