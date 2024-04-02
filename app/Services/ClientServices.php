@@ -14,6 +14,7 @@ use App\Services\DatabaseServices\DB_Programs;
 use App\Services\DatabaseServices\DB_Users;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 class ClientServices
@@ -194,6 +195,23 @@ class ClientServices
         return sendResponse(['message' => "Client Invited Successfully"]);
     }
 
+    /**
+     * Invite client to join coach family
+     * @param $request
+     * @return JsonResponse
+     */
+    public function remove_client_invitation($request): JsonResponse
+    {
+        $this->validationServices->remove_client_invitation($request);
+
+        $coach_id = $request->user()->id;
+        $email = $request['email'];
+
+        $this->DB_PendingClients->delete_pending_client(email: $email);
+
+        return sendResponse(['message' => "Client Invitation removed Successfully"]);
+    }
+
     public function profile_info($request)
     {
         $client_id = $request->user()->id;
@@ -260,6 +278,52 @@ class ClientServices
         $client_id = $request->user()->id;
         $this->DB_Clients->archive_client($client_id, "2");
         return sendResponse(['message' => "Account archived successfully"]);
+    }
+
+    public function delete_client($request)
+    {
+        $this->validationServices->delete_client($request);
+        $client_id = $request->client_id;
+        //delete comments
+        $client_info = $this->DB_Users->get_user_for_delete($client_id);
+
+        DB::beginTransaction();
+        if ($client_info->client_programs()->exists()) {
+            foreach ($client_info->client_programs as $program) {
+                if ($program->exercises()->exists()) {
+                    foreach ($program->exercises as $exercise) {
+                        if ($exercise->log()->exists()) {
+                            //delete exercises logs
+                            $exercise->log->delete();
+                        }
+                        if ($exercise->videos()->exists()) {
+                            //delete exercises videos
+                            $exercise->videos()->delete();
+                        }
+                        //delete exercises
+                        $exercise->delete();
+                    }
+                }
+                //delete comments
+                if ($program->comments()->exists()) {
+                    $program->comments()->delete();
+                }
+
+
+                //delete programs
+                $program->delete();
+            }
+        }
+        //delete comments
+        if ($client_info->program_clients()->exists()) {
+            $client_info->program_clients()->delete();
+        }
+        //delete coach client
+        $client_info->coach_client_client()->delete();
+        //delete user
+        $client_info->delete();
+        DB::commit();
+        return sendResponse(['message' => "Account deleted successfully"]);
     }
 
     private function add_exercises_videos($oto_exercise_id, $exercise)

@@ -50,6 +50,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('program/client/assign', [ClientController::class, 'assign_program_to_client']);
     Route::post('clients/list', [ClientController::class, 'index']);
     Route::post('coach/client/assign', [ClientController::class, 'assign_client_to_coach']);
+    Route::post('coach/client/invitation/delete', [ClientController::class, 'remove_client_invitation']);
     Route::post('coach/client/archive', [ClientController::class, 'coach_archive_client']);
     Route::post('client/programs/list', [OneToOneProgramController::class, 'index']);
     Route::post('client/programs/delete', [OneToOneProgramController::class, 'destroy']);
@@ -76,6 +77,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('client/program/logs/list', [LogController::class, 'client_programs_logs_list']);
     Route::post('client/dashboard', [ClientController::class, 'client_dashboard']);
     Route::post('client/archive/account', [ClientController::class, 'archive_account']);
+    Route::post('client/delete', [ClientController::class, 'delete_client']);
     Route::post('change/password', [AuthController::class, 'change_password']);
     // Client apis end
 

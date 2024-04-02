@@ -50,6 +50,7 @@ class ValidationServices
     {
         $request->validate([
             'program_id' => 'required|exists:programs,id',
+            'week' => 'required',
         ]);
     }
 
@@ -143,6 +144,13 @@ class ValidationServices
     {
         $request->validate([
             'email' => 'required|email|unique:users,email|unique:pending_clients,email',
+        ]);
+    }
+
+    public function remove_client_invitation($request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:pending_clients,email',
         ]);
     }
 
@@ -414,5 +422,15 @@ class ValidationServices
         ]);
     }
 
-
+    public function delete_client($request)
+    {
+        $request->validate([
+            'client_id' => ['required', 'exists:users,id', function ($attribute, $value, $fail) use ($request) {
+                $verify_client_id = $this->DB_Clients->verify_client_id(coach_id: $request->user()->id, client_id: $value);
+                if (!$verify_client_id) {
+                    $fail('The client must be assigned to this coach');
+                }
+            }],
+        ]);
+    }
 }

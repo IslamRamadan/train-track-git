@@ -57,6 +57,16 @@ class User extends Authenticatable
         return $this->hasOne(CoachClient::class, 'client_id');
     }
 
+    public function client_programs()
+    {
+        return $this->hasMany(OneToOneProgram::class, 'client_id');
+    }
+
+    public function program_clients()
+    {
+        return $this->hasMany(ProgramClient::class, 'client_id');
+    }
+
     protected function userTypeText(): Attribute
     {
         return Attribute::make(
