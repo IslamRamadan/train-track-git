@@ -133,7 +133,8 @@ class OneToOneExerciseServices
             }
         }
         $exercises_arr['exercises'] = $program_exercises_arr;
-        $comments_in_this_day = $this->DB_OtoExerciseComments->get_comments_in_date(date: $date);
+//        $comments_in_this_day = $this->DB_OtoExerciseComments->get_comments_in_date(date: $date);
+        $comments_in_this_day = $this->DB_OtoExerciseComments->get_client_comments_in_date(date: $date, client_id: $client_id);
         $program_comments_arr = $this->date_comments($comments_in_this_day);
         $exercises_arr['comments'] = $program_comments_arr;
 

@@ -36,4 +36,15 @@ class DB_OtoExerciseComments
             })
             ->get();
     }
+
+    public function get_client_comments_in_date(mixed $date, $client_id)
+    {
+        return OtoExerciseComment::query()
+            ->with(['program.coach', 'program.client'])
+            ->where('date', $date)
+            ->whereHas('program', function ($query) use ($client_id) {
+                $query->where('client_id', $client_id);
+            })
+            ->get();
+    }
 }
