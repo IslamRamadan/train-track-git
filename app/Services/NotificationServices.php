@@ -44,11 +44,7 @@ class NotificationServices
             $this->DB_Notifications->updateUserNotificationStateAsRead($userNotification);
             $notifications_list[] = $array;
         }
-        try {
-            $this->send_notification_to_user($user_id, "train track", "Hello notification");
-        } catch (\Exception $exception) {
-            dd($exception);
-        }
+
 //        foreach ($generalNotifications as $generalNotification) {
 //            $general = [
 //                "title" => $generalNotification['title'],

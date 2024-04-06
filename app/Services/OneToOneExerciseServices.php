@@ -189,20 +189,23 @@ class OneToOneExerciseServices
         $to_client_program_id = $request['to_client_program_id'];
         $copied_dates = $request['copied_dates'];
         $date = $request['start_date'];
-
-        foreach ($copied_dates as $copied_date) {
-            $day_exercises = $this->DB_OneToOneProgramExercises->get_program_exercises_by_date(program_id: $from_client_program_id, date: $copied_date);
-            if ($day_exercises) {
-                DB::beginTransaction();
-                foreach ($day_exercises as $exercise) {
-                    $exercise_arrangement = $this->DB_OneToOneProgramExercises->get_exercise_arrangement($to_client_program_id, $date);
-                    $copied_exercise = $this->DB_OneToOneProgramExercises->add_oto_exercise($exercise->name, $exercise->description, $exercise->extra_description, $date, $exercise_arrangement, $to_client_program_id);
-                    if ($exercise->videos()->exists()) {
-                        $this->add_exercises_videos($copied_exercise->id, $exercise->videos);
+        $copied_days_arr = $this->make_copied_days_arr($copied_dates);//define which day that will be copied and which day will not
+        foreach ($copied_days_arr as $copied_date) {
+            if ($copied_date['copy']) {
+                $day_exercises = $this->DB_OneToOneProgramExercises->get_program_exercises_by_date(program_id: $from_client_program_id, date: $copied_date['day']);
+                if ($day_exercises) {
+                    DB::beginTransaction();
+                    foreach ($day_exercises as $exercise) {
+                        $exercise_arrangement = $this->DB_OneToOneProgramExercises->get_exercise_arrangement($to_client_program_id, $date);
+                        $copied_exercise = $this->DB_OneToOneProgramExercises->add_oto_exercise($exercise->name, $exercise->description, $exercise->extra_description, $date, $exercise_arrangement, $to_client_program_id);
+                        if ($exercise->videos()->exists()) {
+                            $this->add_exercises_videos($copied_exercise->id, $exercise->videos);
+                        }
                     }
+                    DB::commit();
                 }
-                DB::commit();
             }
+
             $date = Carbon::parse($date)->addDay()->toDateString();
         }
         return sendResponse(['message' => "Exercise days copied successfully"]);
@@ -431,4 +434,24 @@ class OneToOneExerciseServices
         return $days_arr;
     }
 
+    private function make_copied_days_arr(mixed $copied_days)
+    {
+        $result = [];
+        // Get the first item using its index (0 for the first element)
+        $first_item = $copied_days[0];
+
+        // Get the last item using its index (array length - 1)
+        $last_item = $copied_days[count($copied_days) - 1];
+        for ($i = $first_item; $i <= $last_item;) {
+            $single_day['day'] = $i;
+            if (in_array($i, $copied_days)) {
+                $single_day['copy'] = true;
+            } else {
+                $single_day['copy'] = false;
+            }
+            $result[] = $single_day;
+            $i = Carbon::parse($i)->addDay()->toDateString();
+        }
+        return $result;
+    }
 }

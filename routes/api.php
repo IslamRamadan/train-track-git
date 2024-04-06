@@ -45,6 +45,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('program/exercise/add', [ExerciseController::class, 'create']);
     Route::post('program/exercise/copy', [ExerciseController::class, 'copy']);
     Route::post('program/exercise/days/copy', [ExerciseController::class, 'copy_days']);
+    Route::post('program/exercise/days/cut', [ExerciseController::class, 'cut_days']);
     Route::post('program/exercise/days/delete', [ExerciseController::class, 'delete_days']);
     Route::post('program/exercise/edit', [ExerciseController::class, 'update']);
     Route::post('program/exercise/delete', [ExerciseController::class, 'destroy']);

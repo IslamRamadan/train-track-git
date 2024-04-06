@@ -32,7 +32,8 @@ class CommentServices
             sender: $sender, oto_program_id: $oto_program_id);
 
         $this->notificationServices->send_notification_to_user(user_id: $user_id, title: "New comment",
-            message: $user_name . " Leaves a comment to you.");
+            message: $user_name . " added a new comment for you on " . $date . "!");
+
 
         return sendResponse(['comment_id' => $create_comment->id, 'message' => "Comment added successfully"]);
     }

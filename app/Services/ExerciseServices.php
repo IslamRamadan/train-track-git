@@ -91,23 +91,37 @@ class ExerciseServices
         $from_program_id = $request['from_program_id'];
         $to_program_id = $request['to_program_id'];
         $copied_days = $request['copied_days'];
+
+        $copied_days_arr = $this->make_copied_days_arr($copied_days);//define which day that will be copied and which day will not
+
         $day = $request['start_day'];
-        foreach ($copied_days as $copied_day) {
-            $day_exercises = $this->DB_Exercises->get_program_exercises_by_day(program_id: $from_program_id, day: $copied_day);
-            if ($day_exercises) {
-                DB::beginTransaction();
-                foreach ($day_exercises as $exercise) {
-                    $exercise_arrangement = $this->DB_Exercises->get_exercise_arrangement($to_program_id, $day);
-                    $copied_exercise = $this->DB_Exercises->add_exercise($exercise->name, $exercise->description, $exercise->extra_description, $day, $exercise_arrangement, $to_program_id);
-                    if ($exercise->videos()->exists()) {
-                        $this->add_exercises_videos($copied_exercise->id, $exercise->videos);
+        foreach ($copied_days_arr as $copied_day) {
+            if ($copied_day['copy']) {
+                $day_exercises = $this->DB_Exercises->get_program_exercises_by_day(program_id: $from_program_id,
+                    day: $copied_day['day']);
+                if ($day_exercises) {
+                    DB::beginTransaction();
+                    foreach ($day_exercises as $exercise) {
+                        $exercise_arrangement = $this->DB_Exercises->get_exercise_arrangement($to_program_id, $day);
+                        $copied_exercise = $this->DB_Exercises->add_exercise($exercise->name, $exercise->description,
+                            $exercise->extra_description, $day, $exercise_arrangement, $to_program_id);
+                        if ($exercise->videos()->exists()) {
+                            $this->add_exercises_videos($copied_exercise->id, $exercise->videos);
+                        }
                     }
+                    DB::commit();
                 }
-                DB::commit();
             }
             $day++;
         }
         return sendResponse(['message' => "Exercise days copied successfully"]);
+    }
+
+
+    function cut_days($request)
+    {
+        $this->validationServices->copy_program_exercise_days($request);
+
     }
 
     function delete_days($request)
@@ -238,5 +252,25 @@ class ExerciseServices
         }
         return $days_arr;
 
+    }
+
+    private function make_copied_days_arr(mixed $copied_days)
+    {
+        $result = [];
+        // Get the first item using its index (0 for the first element)
+        $first_item = intval($copied_days[0]);
+
+        // Get the last item using its index (array length - 1)
+        $last_item = $copied_days[count($copied_days) - 1];
+        for ($i = $first_item; $i <= $last_item; $i++) {
+            $single_day['day'] = $i;
+            if (in_array($i, $copied_days)) {
+                $single_day['copy'] = true;
+            } else {
+                $single_day['copy'] = false;
+            }
+            $result[] = $single_day;
+        }
+        return $result;
     }
 }

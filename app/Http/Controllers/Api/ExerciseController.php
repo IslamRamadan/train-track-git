@@ -53,6 +53,14 @@ class ExerciseController extends Controller
     }
 
     /**
+     * cut days of exercise .
+     */
+    public function cut_days(Request $request)
+    {
+        return $this->exerciseServices->cut_days($request);
+    }
+
+    /**
      * delete days of exercises .
      */
     public function delete_days(Request $request)

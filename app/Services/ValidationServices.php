@@ -99,6 +99,16 @@ class ValidationServices
         ]);
     }
 
+    public function cut_program_exercise_days($request)
+    {
+        $request->validate([
+            'from_program_id' => 'required|exists:programs,id',
+            'to_program_id' => 'required|exists:programs,id',
+            'cut_days' => 'required|array',
+            'start_day' => 'required',
+        ]);
+    }
+
     public function delete_program_exercise_days($request)
     {
         $request->validate([
