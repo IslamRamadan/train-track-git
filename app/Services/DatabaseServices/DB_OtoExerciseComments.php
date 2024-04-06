@@ -8,7 +8,7 @@ class DB_OtoExerciseComments
 {
     public function create_comment($date, $comment, $sender, $oto_program_id)
     {
-        OtoExerciseComment::query()->create([
+        return OtoExerciseComment::query()->create([
             'date' => $date,
             'comment' => $comment,
             'sender' => $sender,
