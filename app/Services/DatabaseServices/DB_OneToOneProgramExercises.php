@@ -29,9 +29,15 @@ class DB_OneToOneProgramExercises
         ]);
     }
 
-    public function get_program_exercises(mixed $program_id)
+    public function get_program_exercises(mixed $program_id, $dates)
     {
-        return OneToOneProgramExercise::where('one_to_one_program_id', $program_id)->orderBy('date')->get()->groupBy('date');
+        return OneToOneProgramExercise::query()
+            ->where('one_to_one_program_id', $program_id)
+            ->when(!empty($dates), function ($q) use ($dates) {
+                $q->whereIn('date', $dates);
+            })
+            ->orderBy('date')
+            ->get()->groupBy('date');
     }
 
     public function get_program_exercises_by_date(mixed $program_id, $date)

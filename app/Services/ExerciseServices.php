@@ -6,7 +6,6 @@ use App\Services\DatabaseServices\DB_Exercises;
 use App\Services\DatabaseServices\DB_ProgramExerciseVideos;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class ExerciseServices
 {
@@ -33,7 +32,9 @@ class ExerciseServices
     {
         $this->validationServices->list_program_exercises($request);
         $program_id = $request['program_id'];
-        $program_exercises = $this->DB_Exercises->get_program_exercises($program_id);
+        $week = $request['week'];
+        $days_arr = $this->get_week_arr($week);
+        $program_exercises = $this->DB_Exercises->get_program_exercises($program_id, $days_arr);
         $program_exercises_arr = $this->list_program_exercises_arr($program_exercises);
         return sendResponse($program_exercises_arr);
     }
@@ -223,5 +224,19 @@ class ExerciseServices
             }
         }
         return $program_exercises_arr;
+    }
+
+    private function get_week_arr(mixed $week)
+    {
+        $days_arr = [];
+        if ($week) {
+            $start_day = ($week * 7) - 6;
+            $end_day = $start_day + 7;
+            for ($i = $start_day; $i < $end_day; $i++) {
+                $days_arr[] = $i;
+            }
+        }
+        return $days_arr;
+
     }
 }

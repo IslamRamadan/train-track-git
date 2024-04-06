@@ -25,10 +25,13 @@ class DB_Exercises
         return $get_last_exercise_arrangement ? $get_last_exercise_arrangement->arrangement + 1 : 1;
     }
 
-    public function get_program_exercises(mixed $program_id)
+    public function get_program_exercises(mixed $program_id, $days)
     {
         return ProgramExercise::with('videos')
             ->where('program_id', $program_id)
+            ->when(!empty($days), function ($q) use ($days) {
+                $q->whereIn('day', $days);
+            })
             ->orderBy('day')
             ->get()->groupBy('day');
     }

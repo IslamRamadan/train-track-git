@@ -56,6 +56,7 @@ class ValidationServices
     {
         $request->validate([
             'program_id' => 'required|exists:programs,id',
+            'week' => 'nullable|numeric',
         ]);
     }
 
@@ -139,7 +140,7 @@ class ValidationServices
             'clients_id' => 'required|array',
             'clients_id.*' => 'exists:users,id',
             'program_id' => 'required|exists:programs,id',
-            'start_date' => 'required|date',
+            'start_date' => 'required|date|date_format:Y-m-d',
             'start_day' => 'required|numeric',
             'end_day' => 'nullable|after_or_equal:start_day',
             'notify_client' => 'required|in:0,1',
@@ -230,6 +231,7 @@ class ValidationServices
     {
         $request->validate([
             'client_program_id' => 'required|exists:one_to_one_programs,id',
+            'start_week_date' => 'nullable|date_format:Y-m-d'
         ]);
     }
 
@@ -237,14 +239,14 @@ class ValidationServices
     {
         $request->validate([
             'client_program_id' => 'required|exists:one_to_one_programs,id',
-            'date' => 'required',
+            'date' => 'required|date_format:Y-m-d',
         ]);
     }
 
     public function list_client_exercises_in_date($request)
     {
         $request->validate([
-            'date' => 'required',
+            'date' => 'required|date_format:Y-m-d',
         ]);
     }
 
@@ -253,7 +255,7 @@ class ValidationServices
         $request->validate([
             'client_program_id' => 'required|exists:one_to_one_programs,id',
             'name' => 'required',
-            'date' => 'required',
+            'date' => 'required|date_format:Y-m-d',
             'description' => 'required',
             'extra_description' => 'nullable',
         ]);
@@ -264,7 +266,7 @@ class ValidationServices
         $request->validate([
             'client_exercise_id' => 'required|exists:one_to_one_program_exercises,id',
             'to_client_program_id' => 'required|exists:one_to_one_programs,id',
-            'date' => 'required',
+            'date' => 'required|date_format:Y-m-d',
         ]);
     }
 
@@ -274,7 +276,7 @@ class ValidationServices
             'from_client_program_id' => 'required|exists:one_to_one_programs,id',
             'to_client_program_id' => 'required|exists:one_to_one_programs,id',
             'copied_dates' => 'required|array',
-            'start_date' => 'required',
+            'start_date' => 'required|date_format:Y-m-d',
         ]);
     }
 
@@ -445,7 +447,7 @@ class ValidationServices
     public function add_comment($request)
     {
         $request->validate([
-            'date' => 'required',
+            'date' => 'required|date_format:Y-m-d',
             'comment' => 'required',
             'client_program_id' => 'required|exists:one_to_one_programs,id',
         ]);

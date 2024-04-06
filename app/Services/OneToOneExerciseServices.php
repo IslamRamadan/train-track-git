@@ -36,7 +36,10 @@ class OneToOneExerciseServices
     {
         $this->validationServices->list_client_exercises($request);
         $program_id = $request['client_program_id'];
-        $program_exercises = $this->DB_OneToOneProgramExercises->get_program_exercises($program_id);
+        $start_week_date = $request['start_week_date'];
+        $dates_arr = $this->get_week_arr($start_week_date);
+
+        $program_exercises = $this->DB_OneToOneProgramExercises->get_program_exercises($program_id, $dates_arr);
         $program_exercises_arr = $this->list_program_exercises_arr($program_exercises, $program_id);
 
         return sendResponse($program_exercises_arr);
@@ -413,6 +416,19 @@ class OneToOneExerciseServices
             }
         }
         return $program_comments_arr;
+    }
+
+    private function get_week_arr($start_week_date)
+    {
+        $days_arr = [];
+        if ($start_week_date) {
+
+            for ($i = 0; $i < 7; $i++) {
+                $days_arr[] = $start_week_date;
+                $start_week_date = Carbon::parse($start_week_date)->addDay()->toDateString();
+            }
+        }
+        return $days_arr;
     }
 
 }
