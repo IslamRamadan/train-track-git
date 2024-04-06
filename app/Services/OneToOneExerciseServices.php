@@ -188,27 +188,22 @@ class OneToOneExerciseServices
         $from_client_program_id = $request['from_client_program_id'];
         $to_client_program_id = $request['to_client_program_id'];
         $copied_dates = $request['copied_dates'];
-        $date = $request['start_date'];
-        $copied_days_arr = $this->make_copied_days_arr($copied_dates);//define which day that will be copied and which day will not
-        foreach ($copied_days_arr as $copied_date) {
-            if ($copied_date['copy']) {
-                $day_exercises = $this->DB_OneToOneProgramExercises->get_program_exercises_by_date(program_id: $from_client_program_id, date: $copied_date['day']);
-                if ($day_exercises) {
-                    DB::beginTransaction();
-                    foreach ($day_exercises as $exercise) {
-                        $exercise_arrangement = $this->DB_OneToOneProgramExercises->get_exercise_arrangement($to_client_program_id, $date);
-                        $copied_exercise = $this->DB_OneToOneProgramExercises->add_oto_exercise($exercise->name, $exercise->description, $exercise->extra_description, $date, $exercise_arrangement, $to_client_program_id);
-                        if ($exercise->videos()->exists()) {
-                            $this->add_exercises_videos($copied_exercise->id, $exercise->videos);
-                        }
-                    }
-                    DB::commit();
-                }
-            }
-
-            $date = Carbon::parse($date)->addDay()->toDateString();
-        }
+        $start_date = $request['start_date'];
+        $this->copy_dates_logic($start_date, $copied_dates, $from_client_program_id, $to_client_program_id);
         return sendResponse(['message' => "Exercise days copied successfully"]);
+    }
+
+    function cut_client_exercise_days($request)
+    {
+        $this->validationServices->cut_client_program_exercise_days($request);
+        $from_client_program_id = $request['from_client_program_id'];
+        $to_client_program_id = $request['to_client_program_id'];
+        $cut_dates = $request['cut_dates'];
+        $start_date = $request['start_date'];
+        $this->copy_dates_logic($start_date, $cut_dates, $from_client_program_id, $to_client_program_id, "cut");
+
+        return sendResponse(['message' => "Exercise dates cut successfully"]);
+
     }
 
     function delete_client_exercise_days($request)
@@ -453,5 +448,44 @@ class OneToOneExerciseServices
             $i = Carbon::parse($i)->addDay()->toDateString();
         }
         return $result;
+    }
+
+    /**
+     * @param $start_date
+     * @param mixed $copied_dates
+     * @param mixed $from_client_program_id
+     * @param mixed $to_client_program_id
+     * @return void
+     */
+    private function copy_dates_logic($start_date, mixed $copied_dates, mixed $from_client_program_id
+        , mixed                       $to_client_program_id, string $operation_type = "copy"): void
+    {
+        $date = $start_date;
+        $copied_days_arr = $this->make_copied_days_arr($copied_dates);//define which day that will be copied and which day will not
+        foreach ($copied_days_arr as $copied_date) {
+            if ($copied_date['copy']) {
+                $day_exercises = $this->DB_OneToOneProgramExercises->get_program_exercises_by_date(program_id: $from_client_program_id, date: $copied_date['day']);
+                if ($day_exercises) {
+                    foreach ($day_exercises as $exercise) {
+                        $exercise_arrangement = $this->DB_OneToOneProgramExercises->get_exercise_arrangement($to_client_program_id, $date);
+                        $copied_exercise = $this->DB_OneToOneProgramExercises->add_oto_exercise($exercise->name,
+                            $exercise->description, $exercise->extra_description, $date, $exercise_arrangement, $to_client_program_id);
+                        if ($exercise->videos()->exists()) {
+                            $this->add_exercises_videos($copied_exercise->id, $exercise->videos);
+                        }
+                        if ($operation_type == "cut") {
+                            $this->DB_OneToOneProgramExerciseVideos->delete_exercise_videos($exercise);
+                            $this->DB_ExerciseLog->delete_exercise_log($exercise);
+                            $this->DB_OneToOneProgramExercises->delete_single_exercises($exercise->id);
+                        }
+                    }
+                }
+                if ($operation_type == "cut") {
+                    $this->DB_OtoExerciseComments->delete_date_comments(date: $copied_date, program_id: $from_client_program_id);
+                }
+            }
+
+            $date = Carbon::parse($date)->addDay()->toDateString();
+        }
     }
 }

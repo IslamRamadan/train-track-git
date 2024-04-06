@@ -43,6 +43,11 @@ class OneToOneExerciseController extends Controller
         return $this->oneToOneExerciseServices->copy_client_exercise_days($request);
     }
 
+    public function cut_client_exercise_days(Request $request)
+    {
+        return $this->oneToOneExerciseServices->cut_client_exercise_days($request);
+    }
+
     public function delete_client_exercise_days(Request $request)
     {
         return $this->oneToOneExerciseServices->delete_client_exercise_days($request);

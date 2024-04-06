@@ -61,6 +61,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('client/program/exercise/add', [OneToOneExerciseController::class, 'add_client_exercise']);
     Route::post('client/program/exercise/copy', [OneToOneExerciseController::class, 'copy_client_exercise']);
     Route::post('client/program/exercise/days/copy', [OneToOneExerciseController::class, 'copy_client_exercise_days']);
+    Route::post('client/program/exercise/days/cut', [OneToOneExerciseController::class, 'cut_client_exercise_days']);
     Route::post('client/program/exercise/days/delete', [OneToOneExerciseController::class, 'delete_client_exercise_days']);
     Route::post('client/program/exercise/edit', [OneToOneExerciseController::class, 'update_client_exercise']);
     Route::post('client/program/exercise/delete', [OneToOneExerciseController::class, 'delete_client_exercise']);

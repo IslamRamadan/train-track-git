@@ -6,6 +6,7 @@ use App\Services\DatabaseServices\DB_Exercises;
 use App\Services\DatabaseServices\DB_ProgramExerciseVideos;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ExerciseServices
 {
@@ -95,33 +96,25 @@ class ExerciseServices
         $copied_days_arr = $this->make_copied_days_arr($copied_days);//define which day that will be copied and which day will not
 
         $day = $request['start_day'];
-        foreach ($copied_days_arr as $copied_day) {
-            if ($copied_day['copy']) {
-                $day_exercises = $this->DB_Exercises->get_program_exercises_by_day(program_id: $from_program_id,
-                    day: $copied_day['day']);
-                if ($day_exercises) {
-                    DB::beginTransaction();
-                    foreach ($day_exercises as $exercise) {
-                        $exercise_arrangement = $this->DB_Exercises->get_exercise_arrangement($to_program_id, $day);
-                        $copied_exercise = $this->DB_Exercises->add_exercise($exercise->name, $exercise->description,
-                            $exercise->extra_description, $day, $exercise_arrangement, $to_program_id);
-                        if ($exercise->videos()->exists()) {
-                            $this->add_exercises_videos($copied_exercise->id, $exercise->videos);
-                        }
-                    }
-                    DB::commit();
-                }
-            }
-            $day++;
-        }
+        $this->copy_days_logic(days_arr: $copied_days_arr, from_program_id: $from_program_id, to_program_id: $to_program_id, start_day: $day);
         return sendResponse(['message' => "Exercise days copied successfully"]);
     }
 
 
     function cut_days($request)
     {
-        $this->validationServices->copy_program_exercise_days($request);
+        $this->validationServices->cut_program_exercise_days($request);
+        $from_program_id = $request['from_program_id'];
+        $to_program_id = $request['to_program_id'];
+        $cut_days = $request['cut_days'];
+        $start_day = $request['start_day'];
 
+        $cut_days_arr = $this->make_copied_days_arr($cut_days);//define which day that will be cut and which day will not
+
+        $this->copy_days_logic(days_arr: $cut_days_arr, from_program_id: $from_program_id, to_program_id: $to_program_id,
+            start_day: $start_day, operation_type: "cut");
+
+        return sendResponse(['message' => "Exercise days cut successfully"]);
     }
 
     function delete_days($request)
@@ -272,5 +265,41 @@ class ExerciseServices
             $result[] = $single_day;
         }
         return $result;
+    }
+
+    /**
+     * @param $days_arr
+     * @param mixed $from_program_id
+     * @param mixed $to_program_id
+     * @param int $start_day
+     * @param string $operation_type
+     * @return void
+     */
+    private function copy_days_logic($days_arr, mixed $from_program_id, mixed $to_program_id, int $start_day, string $operation_type = "copy"): void
+    {
+        foreach ($days_arr as $single_day) {
+            if ($single_day['copy']) {
+                $day_exercises = $this->DB_Exercises->get_program_exercises_by_day(program_id: $from_program_id,
+                    day: $single_day['day']);
+                if ($day_exercises) {
+//                    DB::beginTransaction();
+                    foreach ($day_exercises as $exercise) {
+                        $exercise_arrangement = $this->DB_Exercises->get_exercise_arrangement($to_program_id, $start_day);
+                        Log::info($exercise_arrangement);
+                        $copied_exercise = $this->DB_Exercises->add_exercise($exercise->name, $exercise->description,
+                            $exercise->extra_description, $start_day, $exercise_arrangement, $to_program_id);
+                        if ($exercise->videos()->exists()) {
+                            $this->add_exercises_videos($copied_exercise->id, $exercise->videos);
+                        }
+                        if ($operation_type == "cut") {
+                            $this->DB_ProgramExerciseVideos->delete_exercise_videos($exercise);
+                            $this->DB_Exercises->delete_single_exercises($exercise->id);
+                        }
+                    }
+//                    DB::commit();
+                }
+            }
+            $start_day++;
+        }
     }
 }

@@ -21,7 +21,10 @@ class DB_Exercises
 
     public function get_exercise_arrangement(mixed $program_id, mixed $day)
     {
-        $get_last_exercise_arrangement = ProgramExercise::where(['program_id' => $program_id, 'day' => $day])->latest()->first();
+        $get_last_exercise_arrangement = ProgramExercise::query()
+            ->where(['program_id' => $program_id, 'day' => $day])
+            ->orderBy('arrangement','DESC')
+            ->first();
         return $get_last_exercise_arrangement ? $get_last_exercise_arrangement->arrangement + 1 : 1;
     }
 

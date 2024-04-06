@@ -290,6 +290,16 @@ class ValidationServices
         ]);
     }
 
+    public function cut_client_program_exercise_days($request)
+    {
+        $request->validate([
+            'from_client_program_id' => 'required|exists:one_to_one_programs,id',
+            'to_client_program_id' => 'required|exists:one_to_one_programs,id',
+            'cut_dates' => 'required|array',
+            'start_date' => 'required|date_format:Y-m-d',
+        ]);
+    }
+
     public function delete_client_program_exercise_days($request)
     {
         $request->validate([
