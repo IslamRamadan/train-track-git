@@ -102,6 +102,10 @@ class ClientController extends Controller
     {
         return $this->clientServices->delete_client($request);
     }
+    public function delete(): JsonResponse
+    {
+        return $this->clientServices->delete();
+    }
 
     /**
      *  coach archive client

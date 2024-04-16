@@ -82,6 +82,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('client/dashboard', [ClientController::class, 'client_dashboard']);
     Route::post('client/archive/account', [ClientController::class, 'archive_account']);
     Route::post('client/delete', [ClientController::class, 'delete_client']);
+    Route::post('client/delete/account', [ClientController::class, 'delete']);
     Route::post('change/password', [AuthController::class, 'change_password']);
     // Client apis end
 

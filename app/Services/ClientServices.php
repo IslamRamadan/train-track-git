@@ -344,4 +344,10 @@ class ClientServices
         $type = $status == "2" ? "archived" : "unarchived";
         return sendResponse(['message' => "Client " . $type . " successfully"]);
     }
+
+    public function delete()
+    {
+        return sendResponse(['message' => "Client deleted successfully"]);
+    }
+
 }
