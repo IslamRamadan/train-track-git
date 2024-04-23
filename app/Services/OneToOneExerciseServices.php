@@ -36,10 +36,11 @@ class OneToOneExerciseServices
     {
         $this->validationServices->list_client_exercises($request);
         $program_id = $request['client_program_id'];
+        $client_id = $request['client_id'];
         $start_week_date = $request['start_week_date'];
         $dates_arr = $this->get_week_arr($start_week_date);
 
-        $program_exercises = $this->DB_OneToOneProgramExercises->get_program_exercises($program_id, $dates_arr);
+        $program_exercises = $this->DB_OneToOneProgramExercises->get_program_exercises($program_id, $client_id, $dates_arr);
         $program_exercises_arr = $this->list_program_exercises_arr($program_exercises, $program_id);
 
         return sendResponse($program_exercises_arr);

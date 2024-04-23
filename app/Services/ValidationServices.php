@@ -22,7 +22,8 @@ class ValidationServices
     public function login($request)
     {
         $request->validate([
-            'phone' => 'required',
+            'phone' => 'required_without:email',
+            'email' => 'required_without:phone',
             'password' => 'required',
             'notification_token' => 'nullable',
         ]);
@@ -74,7 +75,7 @@ class ValidationServices
             'program_id' => 'required|exists:programs,id',
             'name' => 'required',
             'day' => 'required',
-            'description' => 'required',
+            'description' => 'nullable',
             'extra_description' => 'nullable',
             'videos' => 'nullable',
         ]);
@@ -129,7 +130,7 @@ class ValidationServices
         $request->validate([
             'exercise_id' => 'required|exists:program_exercises,id',
             'name' => 'required',
-            'description' => 'required',
+            'description' => 'nullable',
             'extra_description' => 'nullable',
             'order' => 'required',
             'videos' => 'nullable',
@@ -240,7 +241,13 @@ class ValidationServices
     public function list_client_exercises($request)
     {
         $request->validate([
-            'client_program_id' => 'required|exists:one_to_one_programs,id',
+            'client_program_id' => 'required_without:client_id|exists:one_to_one_programs,id',
+            'client_id' => ['required_without:client_program_id', 'exists:users,id', function ($attribute, $value, $fail) use ($request) {
+                $verify_client_id = $this->DB_Clients->verify_client_id(coach_id: $request->user()->id, client_id: $value);
+                if (!$verify_client_id) {
+                    $fail('The client must be assigned to this coach');
+                }
+            }],
             'start_week_date' => 'nullable|date_format:Y-m-d'
         ]);
     }
@@ -266,7 +273,7 @@ class ValidationServices
             'client_program_id' => 'required|exists:one_to_one_programs,id',
             'name' => 'required',
             'date' => 'required|date_format:Y-m-d',
-            'description' => 'required',
+            'description' => 'nullable',
             'extra_description' => 'nullable',
         ]);
     }
@@ -321,7 +328,7 @@ class ValidationServices
         $request->validate([
             'client_exercise_id' => 'required|exists:one_to_one_program_exercises,id',
             'name' => 'required',
-            'description' => 'required',
+            'description' => 'nullable',
             'extra_description' => 'nullable',
             'order' => 'required',
         ]);
@@ -366,7 +373,7 @@ class ValidationServices
                         $fail('The exercise must be the client exercise');
                     }
                 },],
-            'sets' => 'required|numeric',
+            'sets' => 'nullable|numeric',
             'details' => 'nullable'
 
         ]);
@@ -384,7 +391,7 @@ class ValidationServices
                         $fail('The exercise must be the client exercise');
                     }
                 },],
-            'sets' => 'required|numeric',
+            'sets' => 'nullable|numeric',
             'details' => 'nullable'
 
         ]);

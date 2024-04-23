@@ -29,10 +29,17 @@ class DB_OneToOneProgramExercises
         ]);
     }
 
-    public function get_program_exercises(mixed $program_id, $dates)
+    public function get_program_exercises(mixed $program_id, $client_id, $dates)
     {
         return OneToOneProgramExercise::query()
-            ->where('one_to_one_program_id', $program_id)
+            ->when($program_id != null, function ($q) use ($program_id) {
+                $q->where('one_to_one_program_id', $program_id);
+            })
+            ->when($client_id != null, function ($q) use ($client_id) {
+                $q->whereHas('one_to_one_program', function ($query) use ($client_id) {
+                    $query->where('client_id', $client_id);
+                });
+            })
             ->when(!empty($dates), function ($q) use ($dates) {
                 $q->whereIn('date', $dates);
             })

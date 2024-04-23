@@ -23,4 +23,11 @@ class ProgramExercise extends Model
             get: fn($value) => $value != null ? $value : "",
         );
     }
+
+    protected function description(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $value != null ? $value : "",
+        );
+    }
 }

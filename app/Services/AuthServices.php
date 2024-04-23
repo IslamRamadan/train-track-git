@@ -28,7 +28,12 @@ class AuthServices
     {
         $this->validationServices->login($request);
         $notification_token = $request['notification_token'];
-        if (Auth::attempt(['phone' => $request->phone, 'password' => $request->password])) {
+        if ($request->phone) {
+            $verify = Auth::attempt(['phone' => $request->phone, 'password' => $request->password]);
+        } else {
+            $verify = Auth::attempt(['email' => $request->email, 'password' => $request->password]);
+        }
+        if ($verify) {
             // successfully authenticated
             $user = $this->DB_Users->get_user_info(Auth::user()->id);
 
