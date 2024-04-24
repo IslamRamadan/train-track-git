@@ -404,13 +404,14 @@ class ValidationServices
         $request->validate([
             'client_exercise_id' => ['required',
                 'exists:one_to_one_program_exercises,id',
-                function ($attribute, $value, $fail) use ($request) {
-                    $verify_client_id = $this->DB_OneToOneProgramExercises->verify_client_id($request->user()->id, $request->client_exercise_id);
-                    if (!$verify_client_id) {
-                        $fail('The exercise must be the client exercise');
-                    }
-                },],
-            'status' => 'required|in:0,1',
+//                function ($attribute, $value, $fail) use ($request) {
+//                    $verify_client_id = $this->DB_OneToOneProgramExercises->verify_client_id($request->user()->id, $request->client_exercise_id);
+//                    if (!$verify_client_id) {
+//                        $fail('The exercise must be the client exercise');
+//                    }
+//                },
+                ],
+            'status' => 'required|in:0,1,2',
         ]);
     }
 
