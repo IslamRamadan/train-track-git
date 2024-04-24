@@ -78,6 +78,8 @@ class ValidationServices
             'description' => 'nullable',
             'extra_description' => 'nullable',
             'videos' => 'nullable',
+            'sync' => 'required|in:0,1',
+            'sync_date' => 'required_if:sync,1|date|date_format:Y-m-d'
         ]);
     }
 

@@ -9,5 +9,5 @@ class ProgramClient extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['program_id', 'client_id'];
+    protected $fillable = ['program_id', 'client_id', 'oto_program_id'];
 }
