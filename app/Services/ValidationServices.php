@@ -40,7 +40,9 @@ class ValidationServices
     {
         $request->validate([
             'name' => 'required',
-            'description' => 'required'
+            'description' => 'required',
+            'type' => 'required|in:0,1',
+            'starting_date' => 'required_if:type,1|date|date_format:Y-m-d'
         ]);
     }
 
@@ -49,7 +51,9 @@ class ValidationServices
         $request->validate([
             'program_id' => 'required|exists:programs,id',
             'name' => 'required',
-            'description' => 'required'
+            'description' => 'required',
+            'type' => 'required|in:0,1',
+            'starting_date' => 'required_if:type,1|date|date_format:Y-m-d'
         ]);
     }
 
@@ -78,8 +82,15 @@ class ValidationServices
             'description' => 'nullable',
             'extra_description' => 'nullable',
             'videos' => 'nullable',
-            'sync' => 'required|in:0,1',
-            'sync_date' => 'required_if:sync,1|date|date_format:Y-m-d'
+            'sync' => ['required', 'in:0,1',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($value == "1") {
+                        $program_type = $this->DB_Programs->find_program_type($request->program_id);
+                        if ($program_type->type == "0") {
+                            $fail('The sync is available for the ongoing programs only.');
+                        }
+                    }
+                },]
         ]);
     }
 
@@ -410,7 +421,7 @@ class ValidationServices
 //                        $fail('The exercise must be the client exercise');
 //                    }
 //                },
-                ],
+            ],
             'status' => 'required|in:0,1,2',
         ]);
     }

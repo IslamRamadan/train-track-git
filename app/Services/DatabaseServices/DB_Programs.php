@@ -16,12 +16,14 @@ class DB_Programs
             ->get();
     }
 
-    public function add_program($coach_id, mixed $name, mixed $description)
+    public function add_program($coach_id, mixed $name, mixed $description, $type, $starting_date)
     {
         return Program::create([
             'coach_id' => $coach_id,
             'name' => $name,
             'description' => $description,
+            'type' => $type,
+            'starting_date' => $starting_date,
             'program_type_id' => 1,
         ]);
     }
@@ -31,11 +33,13 @@ class DB_Programs
         return Program::with('exercises.videos')->find($program_id);
     }
 
-    public function update_program($program, mixed $name, mixed $description)
+    public function update_program($program, mixed $name, mixed $description, $type, $starting_date)
     {
         $program->update([
             'name' => $name,
             'description' => $description,
+            'type' => $type,
+            'starting_date' => $starting_date,
         ]);
     }
 
@@ -52,6 +56,11 @@ class DB_Programs
                 'coach_id' => $coach_id,
             ])
             ->exists();
+    }
+
+    public function find_program_type($program_id)
+    {
+        return Program::query()->select('id', 'type')->where('id', $program_id)->first();
     }
 
 }

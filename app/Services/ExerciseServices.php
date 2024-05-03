@@ -7,6 +7,8 @@ use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_OneToOneProgramExerciseVideos;
 use App\Services\DatabaseServices\DB_ProgramClients;
 use App\Services\DatabaseServices\DB_ProgramExerciseVideos;
+use App\Services\DatabaseServices\DB_Programs;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -14,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 class ExerciseServices
 {
     public function __construct(protected ValidationServices               $validationServices,
+                                protected DB_Programs                      $DB_Programs,
                                 protected DB_Exercises                     $DB_Exercises,
                                 protected DB_ProgramClients                $DB_ProgramClients,
                                 protected DB_OneToOneProgramExercises      $DB_OneToOneProgramExercises,
@@ -66,12 +69,13 @@ class ExerciseServices
         $extra_description = $request['extra_description'];
         $videos = $request['videos'];
         $sync = $request['sync'];
-        $sync_date = $request['sync_date'];
         $exercise_arrangement = $this->DB_Exercises->get_exercise_arrangement($program_id, $day);
         DB::beginTransaction();
         $exercise = $this->DB_Exercises->add_exercise($name, $description, $extra_description, $day, $exercise_arrangement, $program_id);
         $this->add_exercises_videos($exercise->id, $videos);
-        if ($sync == 1) {
+        if ($sync == "1") {
+            $program = $this->DB_Programs->find_program($program_id);
+            $sync_date = $this->get_date_after_n_days(starting_date: $program->starting_date, number_of_days_after_starting: $day - 1);
             // get the programs related to this template program
             $related_programs = $this->DB_ProgramClients->get_program_related_oto_programs($program_id);
 
@@ -332,5 +336,10 @@ class ExerciseServices
             }
             $start_day++;
         }
+    }
+
+    private function get_date_after_n_days($starting_date, $number_of_days_after_starting)
+    {
+        return Carbon::parse($starting_date)->addDays($number_of_days_after_starting)->toDateString();
     }
 }

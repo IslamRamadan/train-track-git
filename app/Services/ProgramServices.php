@@ -41,9 +41,12 @@ class ProgramServices
                 "id" => $program->id,
                 "name" => $program->name,
                 "description" => $program->description,
+                "type" => $program->type_text,
+                "starting_date" => $program->type == "1" ? $program->starting_date : "",
                 "exercise_days" => $program->exercise_days,
                 "clients_number" => $program->clients_number
             ];
+
             $programs_arr[] = $single_program;
         }
         return $programs_arr;
@@ -55,7 +58,9 @@ class ProgramServices
         $coach_id = $request->user()->id;
         $name = $request['name'];
         $description = $request['description'];
-        $this->DB_Programs->add_program($coach_id, $name, $description);
+        $type = $request['type'];
+        $starting_date = $request['starting_date'];
+        $this->DB_Programs->add_program($coach_id, $name, $description, $type, $starting_date);
         return sendResponse(['message' => "Program added successfully"]);
     }
 
@@ -65,8 +70,10 @@ class ProgramServices
         $name = $request['name'];
         $program_id = $request['program_id'];
         $description = $request['description'];
+        $type = $request['type'];
+        $starting_date = $request['starting_date'];
         $program = $this->DB_Programs->find_program($program_id);
-        $this->DB_Programs->update_program($program, $name, $description);
+        $this->DB_Programs->update_program($program, $name, $description, $type, $starting_date);
         return sendResponse(['message' => "Program updated successfully"]);
     }
 
