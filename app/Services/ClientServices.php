@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use function PHPUnit\Framework\isEmpty;
 
 class ClientServices
 {
@@ -91,10 +92,24 @@ class ClientServices
         $coach_id = $request->user()->id;
         $clients_id = $request['clients_id'];
         $program_id = $request['program_id'];
-        $start_date = $request['start_date'];
-        $start_day = $request['start_day'];
+        $start_date = $request['start_date'];//
+        $start_day = $request['start_day'];//
         $end_day = $request['end_day'];
         $notify_client = $request['notify_client'];
+
+        $find_program_type = $this->DB_Programs->find_program(program_id: $program_id);
+        if (($start_date == null || $start_day == null) && $find_program_type->type == "0") {
+            return sendError("Start date and Start day is required when program type is normal");
+        }
+
+        if ($find_program_type->type == "1") {
+            $start_date = $find_program_type->starting_date;//
+            if (count($this->DB_Exercises->get_program_exercises_days($program_id)) > 0) {
+                $start_day = $this->DB_Exercises->get_program_exercises_days($program_id)->first();
+            } else {
+                return sendError("the program must have at least one exercise", 401);
+            }
+        }
 
 //       1-get all program exercises days
         $program_exercises = $this->DB_Exercises->get_program_exercises_day_sorted($program_id, $start_day, $end_day);

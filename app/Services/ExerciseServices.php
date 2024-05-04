@@ -68,13 +68,12 @@ class ExerciseServices
         $description = $request['description'];
         $extra_description = $request['extra_description'];
         $videos = $request['videos'];
-        $sync = $request['sync'];
         $exercise_arrangement = $this->DB_Exercises->get_exercise_arrangement($program_id, $day);
         DB::beginTransaction();
         $exercise = $this->DB_Exercises->add_exercise($name, $description, $extra_description, $day, $exercise_arrangement, $program_id);
         $this->add_exercises_videos($exercise->id, $videos);
-        if ($sync == "1") {
-            $program = $this->DB_Programs->find_program($program_id);
+        $program = $this->DB_Programs->find_program($program_id);
+        if ($program->sync == "1") {
             $sync_date = $this->get_date_after_n_days(starting_date: $program->starting_date, number_of_days_after_starting: $day - 1);
             // get the programs related to this template program
             $related_programs = $this->DB_ProgramClients->get_program_related_oto_programs($program_id);

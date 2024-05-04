@@ -38,6 +38,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('programs/list', [ProgramController::class, 'index']);
     Route::post('program/add', [ProgramController::class, 'store']);
     Route::post('program/edit', [ProgramController::class, 'update']);
+    Route::post('program/update/sync', [ProgramController::class, 'update_sync']);
     Route::post('program/delete', [ProgramController::class, 'destroy']);
     Route::post('program/exercises/list', [ExerciseController::class, 'index']);
     Route::post('program/exercises/by/day/list', [ExerciseController::class, 'list_program_exercises_by_day']);

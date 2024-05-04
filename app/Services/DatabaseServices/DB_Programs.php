@@ -16,13 +16,14 @@ class DB_Programs
             ->get();
     }
 
-    public function add_program($coach_id, mixed $name, mixed $description, $type, $starting_date)
+    public function add_program($coach_id, mixed $name, mixed $description, $type, $starting_date, $sync)
     {
         return Program::create([
             'coach_id' => $coach_id,
             'name' => $name,
             'description' => $description,
             'type' => $type,
+            'sync' => $sync,
             'starting_date' => $starting_date,
             'program_type_id' => 1,
         ]);
@@ -40,6 +41,13 @@ class DB_Programs
             'description' => $description,
             'type' => $type,
             'starting_date' => $starting_date,
+        ]);
+    }
+
+    public function update_program_sync($program, $sync)
+    {
+        $program->update([
+            'sync' => $sync,
         ]);
     }
 

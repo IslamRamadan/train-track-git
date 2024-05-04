@@ -42,7 +42,8 @@ class ValidationServices
             'name' => 'required',
             'description' => 'required',
             'type' => 'required|in:0,1',
-            'starting_date' => 'required_if:type,1|date|date_format:Y-m-d'
+            'starting_date' => 'required_if:type,1|date|date_format:Y-m-d',
+            'sync' => 'required_if:type,1|in:0,1'
         ]);
     }
 
@@ -54,6 +55,14 @@ class ValidationServices
             'description' => 'required',
             'type' => 'required|in:0,1',
             'starting_date' => 'required_if:type,1|date|date_format:Y-m-d'
+        ]);
+    }
+
+    public function edit_program_sync($request)
+    {
+        $request->validate([
+            'program_id' => 'required|exists:programs,id',
+            'sync' => 'required|in:0,1'
         ]);
     }
 
@@ -81,16 +90,7 @@ class ValidationServices
             'day' => 'required',
             'description' => 'nullable',
             'extra_description' => 'nullable',
-            'videos' => 'nullable',
-            'sync' => ['required', 'in:0,1',
-                function ($attribute, $value, $fail) use ($request) {
-                    if ($value == "1") {
-                        $program_type = $this->DB_Programs->find_program_type($request->program_id);
-                        if ($program_type->type == "0") {
-                            $fail('The sync is available for the ongoing programs only.');
-                        }
-                    }
-                },]
+            'videos' => 'nullable'
         ]);
     }
 
@@ -164,8 +164,8 @@ class ValidationServices
             'clients_id' => 'required|array',
             'clients_id.*' => 'exists:users,id',
             'program_id' => 'required|exists:programs,id',
-            'start_date' => 'required|date|date_format:Y-m-d',
-            'start_day' => 'required|numeric',
+            'start_date' => 'nullable|date|date_format:Y-m-d',
+            'start_day' => 'nullable|numeric',
             'end_day' => 'nullable|after_or_equal:start_day',
             'notify_client' => 'required|in:0,1',
         ]);

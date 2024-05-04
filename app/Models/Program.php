@@ -10,7 +10,7 @@ class Program extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'description', 'coach_id', 'program_type_id', 'type', 'starting_date'];
+    protected $fillable = ['name', 'description', 'coach_id', 'program_type_id', 'type', 'starting_date','sync'];
     protected $appends = ['exercise_days', 'clients_number', 'type_text'];
 
     public function program_types()

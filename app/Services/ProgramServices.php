@@ -43,6 +43,7 @@ class ProgramServices
                 "description" => $program->description,
                 "type" => $program->type_text,
                 "starting_date" => $program->type == "1" ? $program->starting_date : "",
+                "sync" => $program->type == "1" ? $program->sync : "",
                 "exercise_days" => $program->exercise_days,
                 "clients_number" => $program->clients_number
             ];
@@ -59,8 +60,9 @@ class ProgramServices
         $name = $request['name'];
         $description = $request['description'];
         $type = $request['type'];
+        $sync = $request['sync'] ?? "0";
         $starting_date = $request['starting_date'];
-        $this->DB_Programs->add_program($coach_id, $name, $description, $type, $starting_date);
+        $this->DB_Programs->add_program($coach_id, $name, $description, $type, $starting_date, $sync);
         return sendResponse(['message' => "Program added successfully"]);
     }
 
@@ -75,6 +77,16 @@ class ProgramServices
         $program = $this->DB_Programs->find_program($program_id);
         $this->DB_Programs->update_program($program, $name, $description, $type, $starting_date);
         return sendResponse(['message' => "Program updated successfully"]);
+    }
+
+    public function update_sync($request)
+    {
+        $this->validationServices->edit_program_sync($request);
+        $sync = $request['sync'];
+        $program_id = $request['program_id'];
+        $program = $this->DB_Programs->find_program($program_id);
+        $this->DB_Programs->update_program_sync($program, $sync);
+        return sendResponse(['message' => "Program sync updated successfully"]);
     }
 
     /**
