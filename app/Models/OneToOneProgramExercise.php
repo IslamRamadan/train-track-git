@@ -10,7 +10,7 @@ class OneToOneProgramExercise extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'description', 'extra_description', 'one_to_one_program_id', 'arrangement', 'date', 'is_done'];
+    protected $fillable = ['name', 'description', 'extra_description', 'one_to_one_program_id', 'arrangement', 'date', 'is_done','exercise_id'];
 
     public function one_to_one_program()
     {

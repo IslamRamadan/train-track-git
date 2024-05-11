@@ -17,6 +17,11 @@ class ProgramExercise extends Model
         return $this->hasMany(ProgramExerciseVideo::class, 'program_exercise_id');
     }
 
+    public function program()
+    {
+        return $this->belongsTo(Program::class, 'program_id');
+    }
+
     protected function extraDescription(): Attribute
     {
         return Attribute::make(

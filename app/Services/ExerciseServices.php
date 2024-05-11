@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Services\DatabaseServices\DB_ExerciseLog;
 use App\Services\DatabaseServices\DB_Exercises;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_OneToOneProgramExerciseVideos;
+use App\Services\DatabaseServices\DB_OtoExerciseComments;
 use App\Services\DatabaseServices\DB_ProgramClients;
 use App\Services\DatabaseServices\DB_ProgramExerciseVideos;
 use App\Services\DatabaseServices\DB_Programs;
@@ -20,6 +22,8 @@ class ExerciseServices
                                 protected DB_Exercises                     $DB_Exercises,
                                 protected DB_ProgramClients                $DB_ProgramClients,
                                 protected DB_OneToOneProgramExercises      $DB_OneToOneProgramExercises,
+                                protected DB_OtoExerciseComments           $DB_OtoExerciseComments,
+                                protected DB_ExerciseLog                   $DB_ExerciseLog,
                                 protected DB_OneToOneProgramExerciseVideos $DB_OneToOneProgramExerciseVideos,
                                 protected DB_ProgramExerciseVideos         $DB_ProgramExerciseVideos
     )
@@ -34,6 +38,18 @@ class ExerciseServices
                 $current_order++;
             }
             $this->DB_Exercises->update_exercise($exercise, $exercise->name, $exercise->description, $exercise->extra_description, $current_order);
+            $current_order++;
+        }
+    }
+
+    private function rearrange_oto_program_exercises($exercises, $order): void
+    {
+        $current_order = 1;
+        foreach ($exercises as $exercise) {
+            if ($current_order == $order) {
+                $current_order++;
+            }
+            $this->DB_OneToOneProgramExercises->update_exercise($exercise, $exercise->name, $exercise->description, $exercise->extra_description, $current_order);
             $current_order++;
         }
     }
@@ -83,7 +99,7 @@ class ExerciseServices
                     $exercise_arrangement = $this->DB_OneToOneProgramExercises->get_exercise_arrangement($oto_program->oto_program_id,
                         $sync_date);
                     $oto_exercise = $this->DB_OneToOneProgramExercises->add_oto_exercise($name, $description, $extra_description,
-                        $sync_date, $exercise_arrangement, $oto_program->oto_program_id);
+                        $sync_date, $exercise_arrangement, $oto_program->oto_program_id, $exercise->id);
                     $this->add_oto_exercises_videos($oto_exercise->id, $videos);
                 }
             }
@@ -153,6 +169,14 @@ class ExerciseServices
             DB::beginTransaction();
             if ($program_exercises) {
                 foreach ($program_exercises as $exercise) {
+
+                    if ($exercise->program->sync == "1") {
+                        $this->sync_on_delete_exercise($exercise->id);
+                    } else {
+                        //remove the relation between the oto_exercise and template exercise
+                        $this->DB_OneToOneProgramExercises->remove_realation_btween_oto_and_template_exercise($exercise->id);
+                    }
+
                     if ($exercise->videos()->exists()) {
                         //delete exercises videos
                         $exercise->videos()->delete();
@@ -176,13 +200,15 @@ class ExerciseServices
         $order = $request['order'];
         $videos = $request['videos'];
         $exercise = $this->DB_Exercises->find_exercise($exercise_id);
-
         $this->DB_Exercises->update_exercise($exercise, $name, $description, $extra_description, $order);
         $this->DB_ProgramExerciseVideos->delete_exercise_videos($exercise);
         $this->add_exercises_videos($exercise_id, $videos);
 //        rearrange the exercises
         $other_exercises = $this->DB_Exercises->get_other_exercises($exercise->program_id, $exercise->day, $exercise_id);
         $this->rearrange_program_exercises($other_exercises, $order);
+        if ($exercise->program->sync == "1") {
+            $this->sync_on_edit_exercise($exercise_id, $name, $description, $extra_description, $order, $videos);
+        }
         return sendResponse(['message' => "Exercise updated successfully"]);
 
     }
@@ -194,6 +220,13 @@ class ExerciseServices
         $exercise_id = $request['exercise_id'];
 
         $exercise = $this->DB_Exercises->find_exercise($exercise_id);
+
+        if ($exercise->program->sync == "1") {
+            $this->sync_on_delete_exercise($exercise_id);
+        } else {
+            //remove the relation between the oto_exercise and template exercise
+            $this->DB_OneToOneProgramExercises->remove_realation_btween_oto_and_template_exercise($exercise_id);
+        }
         $other_exercises = $this->DB_Exercises->get_other_exercises($exercise->program_id, $exercise->day, $exercise_id);
         $this->rearrange_program_exercises($other_exercises, "0");
         $this->DB_ProgramExerciseVideos->delete_exercise_videos($exercise);
@@ -340,5 +373,51 @@ class ExerciseServices
     private function get_date_after_n_days($starting_date, $number_of_days_after_starting)
     {
         return Carbon::parse($starting_date)->addDays($number_of_days_after_starting)->toDateString();
+    }
+
+    /**
+     * @param mixed $exercise_id
+     * @param mixed $name
+     * @param mixed $description
+     * @param mixed $extra_description
+     * @param mixed $order
+     * @param mixed $videos
+     * @return void
+     */
+    private function sync_on_edit_exercise(mixed $exercise_id, mixed $name, mixed $description, mixed $extra_description, mixed $order, mixed $videos): void
+    {
+        $get_oto_exercises = $this->DB_OneToOneProgramExercises->get_oto_exercises_by_exercise_id($exercise_id);
+        if (count($get_oto_exercises) > 0) {
+            foreach ($get_oto_exercises as $oto_exercise) {
+                $this->DB_OneToOneProgramExercises->update_exercise($oto_exercise, $name, $description, $extra_description, $order);
+                $this->DB_OneToOneProgramExerciseVideos->delete_exercise_videos($oto_exercise);
+                $this->add_oto_exercises_videos($oto_exercise->id, $videos);
+                $other_exercises = $this->DB_OneToOneProgramExercises->get_other_exercises($oto_exercise->one_to_one_program_id, $oto_exercise->date, $oto_exercise->id);
+                $this->rearrange_oto_program_exercises($other_exercises, $order);
+            }
+        }
+    }
+
+    /**
+     * @param mixed $exercise_id
+     * @return int
+     */
+    private function sync_on_delete_exercise(mixed $exercise_id): int
+    {
+        $get_oto_exercises = $this->DB_OneToOneProgramExercises->get_oto_exercises_by_exercise_id($exercise_id);
+        if (count($get_oto_exercises) > 0) {
+            foreach ($get_oto_exercises as $oto_exercise) {
+                $other_exercises = $this->DB_OneToOneProgramExercises->get_other_exercises($oto_exercise->one_to_one_program_id, $oto_exercise->date, $oto_exercise->id);
+                $this->rearrange_oto_program_exercises($other_exercises, "0");
+                if ($other_exercises->isEmpty()) {
+                    //if there is no another exercises in the day so delete the comments of the day
+                    $this->DB_OtoExerciseComments->delete_date_comments(date: $oto_exercise->date, program_id: $oto_exercise->one_to_one_program_id);
+                }
+                $this->DB_OneToOneProgramExerciseVideos->delete_exercise_videos($oto_exercise);
+                $this->DB_ExerciseLog->delete_exercise_log($oto_exercise);
+                $this->DB_OneToOneProgramExercises->delete_program_exercises($oto_exercise);
+            }
+        }
+        return true;
     }
 }
