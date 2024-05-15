@@ -16,7 +16,6 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use function PHPUnit\Framework\isEmpty;
 
 class ClientServices
 {
@@ -148,7 +147,8 @@ class ClientServices
                 //11-create the custom program exercises assigned to custom program
                 foreach ($program_exercises as $exercise) {
                     $exercise_date = $this->get_date_after_n_days($start_date, $exercise->day - $start_day);//get the day after the current day
-                    $oto_exercise = $this->DB_OneToOneProgramExercises->create_one_to_one_program_exercises($exercise, $exercise_date, $one_to_program->id);
+                    $oto_exercise = $this->DB_OneToOneProgramExercises->create_one_to_one_program_exercises($exercise,
+                        $exercise_date, $one_to_program->id, $exercise->id);
                     //add exercises videos if exists
                     $this->add_exercises_videos($oto_exercise->id, $exercise);
                 }

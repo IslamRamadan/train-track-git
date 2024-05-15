@@ -112,7 +112,7 @@ class ExerciseServices
         }
         if ($exercise->program->sync == "1") {
             $this->sync_on_add_exercise($exercise->program->starting_date, $day, $to_program_id, $exercise->name,
-                $exercise->description, $exercise->extra_description, $exercise->id, $exercise->videos);
+                $exercise->description, $exercise->extra_description, $copied_exercise->id, $exercise->videos);
         }
         DB::commit();
 
@@ -127,7 +127,6 @@ class ExerciseServices
         $copied_days = $request['copied_days'];
 
         $copied_days_arr = $this->make_copied_days_arr($copied_days);//define which day that will be copied and which day will not
-
         $day = $request['start_day'];
         $this->copy_days_logic(days_arr: $copied_days_arr, from_program_id: $from_program_id, to_program_id: $to_program_id, start_day: $day);
         return sendResponse(['message' => "Exercise days copied successfully"]);
@@ -212,7 +211,6 @@ class ExerciseServices
         $exercise_id = $request['exercise_id'];
 
         $exercise = $this->DB_Exercises->find_exercise($exercise_id);
-
         if ($exercise->program->sync == "1") {
             $this->sync_on_delete_exercise($exercise_id);
         } else {
@@ -341,7 +339,7 @@ class ExerciseServices
                 $day_exercises = $this->DB_Exercises->get_program_exercises_by_day(program_id: $from_program_id,
                     day: $single_day['day']);
                 if ($day_exercises) {
-//                    DB::beginTransaction();
+                    DB::beginTransaction();
                     foreach ($day_exercises as $exercise) {
                         $exercise_arrangement = $this->DB_Exercises->get_exercise_arrangement($to_program_id, $start_day);
                         Log::info($exercise_arrangement);
@@ -350,12 +348,26 @@ class ExerciseServices
                         if ($exercise->videos()->exists()) {
                             $this->add_exercises_videos($copied_exercise->id, $exercise->videos);
                         }
+                        if ($exercise->program->sync == "1") {
+//                            TODO::We Stop here need to know why cannot copy
+                            Log::info("e1-" . $exercise->program->starting_date);
+                            Log::info("e2-" . $single_day['day']);
+                            Log::info("e3-" . $to_program_id);
+                            Log::info("e4-" . $exercise->name);
+                            Log::info("e5-" . $exercise->description);
+                            Log::info("e6-" . $exercise->extra_description);
+                            Log::info("e7-" . $exercise->id);
+                            Log::info("e8-" . $exercise->video);
+
+                            $this->sync_on_add_exercise($exercise->program->starting_date, $start_day, $to_program_id, $exercise->name,
+                                $exercise->description, $exercise->extra_description, $copied_exercise->id, $exercise->videos);
+                        }
                         if ($operation_type == "cut") {
                             $this->DB_ProgramExerciseVideos->delete_exercise_videos($exercise);
                             $this->DB_Exercises->delete_single_exercises($exercise->id);
                         }
                     }
-//                    DB::commit();
+                    DB::commit();
                 }
             }
             $start_day++;

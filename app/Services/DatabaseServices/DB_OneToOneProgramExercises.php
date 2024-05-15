@@ -17,7 +17,7 @@ class DB_OneToOneProgramExercises
             ->whereBetween('date', [$start_date, $end_date])->get();
     }
 
-    public function create_one_to_one_program_exercises(mixed $exercise, mixed $exercise_date, mixed $one_to_one_program_id)
+    public function create_one_to_one_program_exercises(mixed $exercise, mixed $exercise_date, mixed $one_to_one_program_id, $template_exercise_id = null)
     {
         return OneToOneProgramExercise::query()->create([
             'name' => $exercise->name,
@@ -26,6 +26,7 @@ class DB_OneToOneProgramExercises
             'arrangement' => $exercise->arrangement,
             'one_to_one_program_id' => $one_to_one_program_id,
             'date' => $exercise_date,
+            'exercise_id' => $template_exercise_id,
         ]);
     }
 
