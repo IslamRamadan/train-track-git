@@ -121,19 +121,11 @@ class ClientServices
 
 //       4-increase this difference to the start date to get the end date
             $end_date = $this->get_date_after_n_days($start_date, $start_and_difference);
-            $failed_clients = [];
             $success_clients = [];
             foreach ($clients_id as $client_id) {
                 $client_info = $this->DB_Users->get_user_info($client_id);
                 //5-check if the user has any conflict in client schedule (will check in one_to_one_program_exercises table with client_id
                 //and start_date and end_date)
-                $check_client_has_exercises_between_two_dates = $this->DB_OneToOneProgramExercises->
-                check_client_has_exercises_between_two_dates($client_id, $start_date, $end_date);
-                //6-if there is any conflict then fail
-                if (count($check_client_has_exercises_between_two_dates) > 0) {
-                    $failed_clients[] = $client_info->name;
-                    continue;
-                }
                 $success_clients[] = $client_info->name;
 
                 //if there is no conflict then create the program with exercises
@@ -158,18 +150,11 @@ class ClientServices
 //            return error the program must have at least one exercise
             return sendError("the program must have at least one exercise", 401);
         }
-        if (count($success_clients) > 0 && count($failed_clients) == 0) {
+        if (count($success_clients) > 0) {
             $success_clients_string = implode(",", $success_clients);
             return sendResponse(['message' => "Program assigned successfully to client(s) " . $success_clients_string]);
-        } elseif (count($failed_clients) > 0 && count($success_clients) == 0) {
-            $failed_clients_string = implode(",", $failed_clients);
-            return sendError("Failed to assign program to client(s) " . $failed_clients_string . " because they have exercises in this time");
         } else {
-            $success_clients_string = implode(",", $success_clients);
-            $failed_clients_string = implode(",", $failed_clients);
-
-            return sendResponse(['message' => "Program assigned successfully to client(s) " . $success_clients_string . " and failed to assign program to client(s) "
-                . $failed_clients_string . " because they have exercises in this time"]);
+            return sendError("Error,please try again.", 401);
         }
     }
 
