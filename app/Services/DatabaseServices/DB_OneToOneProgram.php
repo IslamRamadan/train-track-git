@@ -3,7 +3,6 @@
 namespace App\Services\DatabaseServices;
 
 use App\Models\OneToOneProgram;
-use App\Models\OneToOneProgramExercise;
 
 class DB_OneToOneProgram
 {
@@ -52,6 +51,14 @@ class DB_OneToOneProgram
                 'coach_id' => $coach_id,
             ])
             ->exists();
+    }
+
+    public function update_oto_program($program, mixed $name, mixed $description)
+    {
+        return $program->update([
+            'name' => $name,
+            'description' => $description
+        ]);
     }
 
 }

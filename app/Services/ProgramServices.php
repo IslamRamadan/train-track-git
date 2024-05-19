@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Services\DatabaseServices\DB_Exercises;
+use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_ProgramClients;
 use App\Services\DatabaseServices\DB_ProgramExerciseVideos;
 use App\Services\DatabaseServices\DB_Programs;
@@ -14,7 +15,8 @@ class ProgramServices
     public function __construct(protected ValidationServices       $validationServices
         , protected DB_Programs                                    $DB_Programs, protected DB_Exercises $DB_Exercises,
                                 protected DB_ProgramClients        $DB_ProgramClients,
-                                protected DB_ProgramExerciseVideos $DB_ProgramExerciseVideos
+                                protected DB_ProgramExerciseVideos $DB_ProgramExerciseVideos,
+                                protected DB_OneToOneProgram       $DB_OneToOneProgram
     )
     {
     }
@@ -75,7 +77,12 @@ class ProgramServices
         $type = $request['type'];
         $starting_date = $request['starting_date'];
         $program = $this->DB_Programs->find_program($program_id);
+        DB::beginTransaction();
+        if ($program->sync == "1") {
+            $this->sync_on_update_program($program_id, $name, $description);
+        }
         $this->DB_Programs->update_program($program, $name, $description, $type, $starting_date);
+        DB::commit();
         return sendResponse(['message' => "Program updated successfully"]);
     }
 
@@ -125,6 +132,22 @@ class ProgramServices
 
         return sendResponse(['message' => "Program deleted successfully"]);
 //
+    }
+
+    /**
+     * @param mixed $program_id
+     * @param mixed $name
+     * @param mixed $description
+     * @return void
+     */
+    public function sync_on_update_program(mixed $program_id, mixed $name, mixed $description): void
+    {
+        $related_oto_programs = $this->DB_ProgramClients->get_program_related_oto_programs($program_id);
+        if (count($related_oto_programs) > 0) {
+            foreach ($related_oto_programs as $related_program) {
+                $this->DB_OneToOneProgram->update_oto_program($related_program->oto_program, $name, $description);
+            }
+        }
     }
 
 }
