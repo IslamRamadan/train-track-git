@@ -288,6 +288,10 @@ class ClientServices
         $client_info = $this->DB_Users->get_user_for_delete($client_id);
 
         DB::beginTransaction();
+        //delete comments
+        if ($client_info->program_clients()->exists()) {
+            $client_info->program_clients()->delete();
+        }
         if ($client_info->client_programs()->exists()) {
             foreach ($client_info->client_programs as $program) {
                 if ($program->exercises()->exists()) {
@@ -314,9 +318,11 @@ class ClientServices
                 $program->delete();
             }
         }
-        //delete comments
-        if ($client_info->program_clients()->exists()) {
-            $client_info->program_clients()->delete();
+        if ($client_info->notifications()->exists()) {
+            $client_info->notifications()->delete();
+        }
+        if ($client_info->notification_token()->exists()) {
+            $client_info->notification_token()->delete();
         }
         //delete coach client
         $client_info->coach_client_client()->delete();
