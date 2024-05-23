@@ -31,7 +31,7 @@ class DB_Programs
 
     public function find_program(mixed $program_id)
     {
-        return Program::with('exercises.videos')->find($program_id);
+        return Program::with('one_to_one_program.oto_program','exercises.videos')->find($program_id);
     }
 
     public function update_program($program, mixed $name, mixed $description, $type, $starting_date)
