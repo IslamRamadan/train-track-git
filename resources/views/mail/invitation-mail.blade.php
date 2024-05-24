@@ -88,12 +88,11 @@
         <div class="col-md-12">
             <!-- Download buttons -->
             <p>Download Our App:</p>
-            <a href="#" target="_blank" class="market-btn google-btn" role="button">
+            <a href="https://play.google.com/store/apps/details?id=com.ar.train_track" target="_blank" class="market-btn google-btn" role="button">
                 <span class="market-button-subtitle">Download on the</span>
                 <span class="market-button-title">Google Play</span>
             </a>
-            <a href="https://testflight.apple.com/join/3LpUm5JX" target="_blank" class="market-btn apple-btn"
-               role="button">
+            <a href="https://apps.apple.com/eg/app/train-track-app/id6478457740" target="_blank" class="market-btn apple-btn" role="button">
                 <span class="market-button-subtitle">Download on the</span>
                 <span class="market-button-title">App Store</span>
             </a>
