@@ -12,8 +12,18 @@ class DB_Notifications
     {
         return UserNotification::query()
             ->where("user_id", $user_id)
-            ->orderBy('created_at',"DESC")
+            ->orderBy('created_at', "DESC")
             ->get();
+    }
+
+    public function user_has_unread_notifications($user_id)
+    {
+        return UserNotification::query()
+            ->where([
+                "user_id" => $user_id,
+                'state' => "0"
+            ])
+            ->exists();
     }
 
     public function get_num_of_user_unread_notifications($request)
