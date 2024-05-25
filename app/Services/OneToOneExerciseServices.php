@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_ExerciseLog;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_OneToOneProgramExerciseVideos;
@@ -16,6 +17,8 @@ class OneToOneExerciseServices
         , protected DB_OneToOneProgramExercises              $DB_OneToOneProgramExercises
         , protected DB_OneToOneProgramExerciseVideos         $DB_OneToOneProgramExerciseVideos
         , protected DB_ExerciseLog                           $DB_ExerciseLog, protected DB_OtoExerciseComments $DB_OtoExerciseComments
+        , protected NotificationServices                     $notificationServices
+        , protected DB_Clients                               $DB_Clients
     )
     {
     }
@@ -284,6 +287,8 @@ class OneToOneExerciseServices
     {
         $this->validationServices->log_client_exercise($request);
         $client_id = $request->user()->id;
+        $client_name = $request->user()->name;
+
         $client_exercise_id = $request->client_exercise_id;
         $sets = $request->sets;
         $details = $request->details;
@@ -294,6 +299,9 @@ class OneToOneExerciseServices
             $this->DB_ExerciseLog->create_exercise_log($client_exercise_id, $sets, $details, $client_id);
         }
         $this->DB_OneToOneProgramExercises->update_exercise_status($client_exercise_id, "1");
+
+        $this->send_notification_to_coach(user_id: $client_id, title: "New log", message: $client_name . " added a new log for exercise!");
+
         return sendResponse(['message' => "Log created successfully"]);
     }
 
@@ -311,9 +319,16 @@ class OneToOneExerciseServices
     {
         $this->validationServices->update_exercise_status($request);
         $client_exercise_id = $request->client_exercise_id;
+        $user_id = $request->user()->id;
+        $user_type = $request->user()->user_type;
+        $user_name = $request->user()->name;
         $status = $request->status;
 
         $this->DB_OneToOneProgramExercises->update_exercise_status($client_exercise_id, $status);
+
+        if ($user_type == "1" && $status == "2") {
+            $this->send_notification_to_coach(user_id: $user_id, title: "Missed exercise", message: $user_name . " Marked an exercise as missed!");
+        }
         return sendResponse(['message' => "exercise status successfully"]);
     }
 
@@ -456,6 +471,7 @@ class OneToOneExerciseServices
      * @param mixed $copied_dates
      * @param mixed $from_client_program_id
      * @param mixed $to_client_program_id
+     * @param string $operation_type
      * @return void
      */
     private function copy_dates_logic($start_date, mixed $copied_dates, mixed $from_client_program_id
@@ -488,5 +504,11 @@ class OneToOneExerciseServices
 
             $date = Carbon::parse($date)->addDay()->toDateString();
         }
+    }
+
+    private function send_notification_to_coach($user_id, $title, $message)
+    {
+        $coach_id = $this->DB_Clients->find_coach_id(client_id: $user_id)->coach_id;
+        $this->notificationServices->send_notification_to_user($coach_id, $title, $message);
     }
 }

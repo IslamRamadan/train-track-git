@@ -15,15 +15,16 @@ class NotificationServices
     public function send_notification_to_user($user_id, $title, $message)
     {
         // send notification to supplier to telling hin that thre exist user reserved appointment with him
+        $this->DB_Notifications->create_user_notification($user_id, $title, $message);
+
         $userNotificationToken = $this->DB_Notifications->find_user_notification_token($user_id);
         if ($userNotificationToken) {
             $body = $message;
 
             $sent = $this->send($userNotificationToken->token, $title, $body);
-            $res = json_decode($sent);
-            if ($res && $res->success) {
-                $this->DB_Notifications->create_user_notification($user_id, $title, $body);
-            }
+//            $res = json_decode($sent);
+//            if ($res && $res->success) {
+//            }
         }
     }
 
