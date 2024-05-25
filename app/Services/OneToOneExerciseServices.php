@@ -300,7 +300,13 @@ class OneToOneExerciseServices
         }
         $this->DB_OneToOneProgramExercises->update_exercise_status($client_exercise_id, "1");
 
-        $this->send_notification_to_coach(user_id: $client_id, title: "New log", message: $client_name . " added a new log for exercise!");
+        $find_exercise_details = $this->DB_OneToOneProgramExercises->find_exercise($client_exercise_id);
+        $exercise_name = $find_exercise_details->name;
+        $exercise_date = $find_exercise_details->date;
+        $this->send_notification_to_coach(
+            user_id: $client_id,
+            title: "New Log",
+            message: $client_name . ' added a new log for ' . $exercise_name . ' exercise on ' . $exercise_date . "!");
 
         return sendResponse(['message' => "Log created successfully"]);
     }
@@ -326,8 +332,15 @@ class OneToOneExerciseServices
 
         $this->DB_OneToOneProgramExercises->update_exercise_status($client_exercise_id, $status);
 
-        if ($user_type == "1" && $status == "2") {
-            $this->send_notification_to_coach(user_id: $user_id, title: "Missed exercise", message: $user_name . " Marked an exercise as missed!");
+        if ($user_type == "1" && ($status == "1" || $status == "2")) {
+            $status_name = $status == "1" ? "Done" : "Missed";
+            $find_exercise_details = $this->DB_OneToOneProgramExercises->find_exercise($client_exercise_id);
+            $exercise_name = $find_exercise_details->name;
+            $exercise_date = $find_exercise_details->date;
+            $this->send_notification_to_coach(
+                user_id: $user_id,
+                title: $status_name . " Exercise",
+                message: $user_name . " Marked " . $exercise_name . " exercise on " . $exercise_date . " as " . $status_name . "!");
         }
         return sendResponse(['message' => "exercise status successfully"]);
     }
