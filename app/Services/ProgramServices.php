@@ -15,10 +15,10 @@ use Illuminate\Support\Facades\DB;
 
 class ProgramServices
 {
-    public function __construct(protected ValidationServices       $validationServices
-        , protected DB_Programs                                    $DB_Programs, protected DB_Exercises $DB_Exercises,
-                                protected DB_ProgramClients        $DB_ProgramClients,
-                                protected DB_ProgramExerciseVideos $DB_ProgramExerciseVideos,
+    public function __construct(protected ValidationServices               $validationServices
+        , protected DB_Programs                                            $DB_Programs, protected DB_Exercises $DB_Exercises,
+                                protected DB_ProgramClients                $DB_ProgramClients,
+                                protected DB_ProgramExerciseVideos         $DB_ProgramExerciseVideos,
                                 protected DB_OneToOneProgram               $DB_OneToOneProgram,
                                 protected DB_OneToOneProgramExerciseVideos $DB_OneToOneProgramExerciseVideos,
                                 protected DB_ExerciseLog                   $DB_ExerciseLog,
@@ -123,15 +123,16 @@ class ProgramServices
         //        Delete from program_clients table
         DB::beginTransaction();
         $this->DB_ProgramClients->delete_program_clients($program_id);
-
         if ($program->one_to_one_program) {
             foreach ($program->one_to_one_program as $program_client) {
-                if ($program->sync == "0") {
-                    $this->delete_oto_programs($program_client->oto_program);
-                } else {
-                    if ($program->exercises()->exists()) {
-                        foreach ($program->exercises as $exercise) {
-                            $this->DB_OneToOneProgramExercises->remove_realation_btween_oto_and_template_exercise($exercise->id);
+                if ($program_client->oto_program_id) {
+                    if ($program->sync == "0") {
+                        $this->delete_oto_programs($program_client->oto_program);
+                    } else {
+                        if ($program->exercises()->exists()) {
+                            foreach ($program->exercises as $exercise) {
+                                $this->DB_OneToOneProgramExercises->remove_realation_btween_oto_and_template_exercise($exercise->id);
+                            }
                         }
                     }
                 }
