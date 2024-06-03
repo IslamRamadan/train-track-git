@@ -14,6 +14,7 @@ use App\Services\DatabaseServices\DB_Programs;
 use App\Services\DatabaseServices\DB_Users;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 class ClientServices
@@ -90,10 +91,24 @@ class ClientServices
         $coach_id = $request->user()->id;
         $clients_id = $request['clients_id'];
         $program_id = $request['program_id'];
-        $start_date = $request['start_date'];
-        $start_day = $request['start_day'];
+        $start_date = $request['start_date'];//
+        $start_day = $request['start_day'];//
         $end_day = $request['end_day'];
         $notify_client = $request['notify_client'];
+
+        $find_program_type = $this->DB_Programs->find_program(program_id: $program_id);
+        if (($start_date == null || $start_day == null) && $find_program_type->type == "0") {
+            return sendError("Start date and Start day is required when program type is normal");
+        }
+
+        if ($find_program_type->type == "1") {
+            $start_date = $find_program_type->starting_date;//
+            if (count($this->DB_Exercises->get_program_exercises_days($program_id)) > 0) {
+                $start_day = $this->DB_Exercises->get_program_exercises_days($program_id)->first();
+            } else {
+                return sendError("the program must have at least one exercise", 401);
+            }
+        }
 
 //       1-get all program exercises days
         $program_exercises = $this->DB_Exercises->get_program_exercises_day_sorted($program_id, $start_day, $end_day);
@@ -106,33 +121,26 @@ class ClientServices
 
 //       4-increase this difference to the start date to get the end date
             $end_date = $this->get_date_after_n_days($start_date, $start_and_difference);
-            $failed_clients = [];
             $success_clients = [];
             foreach ($clients_id as $client_id) {
                 $client_info = $this->DB_Users->get_user_info($client_id);
                 //5-check if the user has any conflict in client schedule (will check in one_to_one_program_exercises table with client_id
                 //and start_date and end_date)
-                $check_client_has_exercises_between_two_dates = $this->DB_OneToOneProgramExercises->
-                check_client_has_exercises_between_two_dates($client_id, $start_date, $end_date);
-                //6-if there is any conflict then fail
-                if (count($check_client_has_exercises_between_two_dates) > 0) {
-                    $failed_clients[] = $client_info->name;
-                    continue;
-                }
                 $success_clients[] = $client_info->name;
 
                 //if there is no conflict then create the program with exercises
                 //8-get the parent program
                 $parent_program = $this->DB_Programs->find_program($program_id);
 
-                //9-create row with client_id and program_id in program_clients table
-                $this->DB_ProgramClients->create_program_client($program_id, $client_id);
-                //10-create the custom program assigned to user
+                //9-create the custom program assigned to user
                 $one_to_program = $this->DB_OneToOneProgram->create_one_to_program($parent_program, $client_id, $coach_id);
+                //10-create row with client_id and program_id in program_clients table
+                $this->DB_ProgramClients->create_program_client($program_id, $client_id, $one_to_program->id);
                 //11-create the custom program exercises assigned to custom program
                 foreach ($program_exercises as $exercise) {
                     $exercise_date = $this->get_date_after_n_days($start_date, $exercise->day - $start_day);//get the day after the current day
-                    $oto_exercise = $this->DB_OneToOneProgramExercises->create_one_to_one_program_exercises($exercise, $exercise_date, $one_to_program->id);
+                    $oto_exercise = $this->DB_OneToOneProgramExercises->create_one_to_one_program_exercises($exercise,
+                        $exercise_date, $one_to_program->id, $exercise->id);
                     //add exercises videos if exists
                     $this->add_exercises_videos($oto_exercise->id, $exercise);
                 }
@@ -142,18 +150,11 @@ class ClientServices
 //            return error the program must have at least one exercise
             return sendError("the program must have at least one exercise", 401);
         }
-        if (count($success_clients) > 0 && count($failed_clients) == 0) {
+        if (count($success_clients) > 0) {
             $success_clients_string = implode(",", $success_clients);
             return sendResponse(['message' => "Program assigned successfully to client(s) " . $success_clients_string]);
-        } elseif (count($failed_clients) > 0 && count($success_clients) == 0) {
-            $failed_clients_string = implode(",", $failed_clients);
-            return sendError("Failed to assign program to client(s) " . $failed_clients_string . " because they have exercises in this time");
         } else {
-            $success_clients_string = implode(",", $success_clients);
-            $failed_clients_string = implode(",", $failed_clients);
-
-            return sendResponse(['message' => "Program assigned successfully to client(s) " . $success_clients_string . " and failed to assign program to client(s) "
-                . $failed_clients_string . " because they have exercises in this time"]);
+            return sendError("Error,please try again.", 401);
         }
     }
 
@@ -192,6 +193,23 @@ class ClientServices
         $this->DB_PendingClients->create_pending_client($coach_id, $email);
 
         return sendResponse(['message' => "Client Invited Successfully"]);
+    }
+
+    /**
+     * Invite client to join coach family
+     * @param $request
+     * @return JsonResponse
+     */
+    public function remove_client_invitation($request): JsonResponse
+    {
+        $this->validationServices->remove_client_invitation($request);
+
+        $coach_id = $request->user()->id;
+        $email = $request['email'];
+
+        $this->DB_PendingClients->delete_pending_client(email: $email);
+
+        return sendResponse(['message' => "Client Invitation removed Successfully"]);
     }
 
     public function profile_info($request)
@@ -262,6 +280,58 @@ class ClientServices
         return sendResponse(['message' => "Account archived successfully"]);
     }
 
+    public function delete_client($request)
+    {
+        $this->validationServices->delete_client($request);
+        $client_id = $request->client_id;
+        //delete comments
+        $client_info = $this->DB_Users->get_user_for_delete($client_id);
+
+        DB::beginTransaction();
+        //delete comments
+        if ($client_info->program_clients()->exists()) {
+            $client_info->program_clients()->delete();
+        }
+        if ($client_info->client_programs()->exists()) {
+            foreach ($client_info->client_programs as $program) {
+                if ($program->exercises()->exists()) {
+                    foreach ($program->exercises as $exercise) {
+                        if ($exercise->log()->exists()) {
+                            //delete exercises logs
+                            $exercise->log->delete();
+                        }
+                        if ($exercise->videos()->exists()) {
+                            //delete exercises videos
+                            $exercise->videos()->delete();
+                        }
+                        //delete exercises
+                        $exercise->delete();
+                    }
+                }
+                //delete comments
+                if ($program->comments()->exists()) {
+                    $program->comments()->delete();
+                }
+
+
+                //delete programs
+                $program->delete();
+            }
+        }
+        if ($client_info->notifications()->exists()) {
+            $client_info->notifications()->delete();
+        }
+        if ($client_info->notification_token()->exists()) {
+            $client_info->notification_token()->delete();
+        }
+        //delete coach client
+        $client_info->coach_client_client()->delete();
+        //delete user
+        $client_info->delete();
+        DB::commit();
+        return sendResponse(['message' => "Account deleted successfully"]);
+    }
+
     private function add_exercises_videos($oto_exercise_id, $exercise)
     {
         if ($exercise->videos()->exists()) {
@@ -280,4 +350,10 @@ class ClientServices
         $type = $status == "2" ? "archived" : "unarchived";
         return sendResponse(['message' => "Client " . $type . " successfully"]);
     }
+
+    public function delete()
+    {
+        return sendResponse(['message' => "Client deleted successfully"]);
+    }
+
 }

@@ -26,6 +26,7 @@ class User extends Authenticatable
         'phone',
         'user_type',
     ];
+    protected $appends = ['active_clients'];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -55,6 +56,37 @@ class User extends Authenticatable
     public function coach_client_client()
     {
         return $this->hasOne(CoachClient::class, 'client_id');
+    }
+
+    public function coach_client_coach()
+    {
+        return $this->hasMany(CoachClient::class, 'coach_id');
+    }
+
+    public function getActiveClientsAttribute()
+    {
+        return CoachClient::where(['coach_id' => $this->id, 'status' => "1"])->distinct('client_id')->count();
+    }
+
+
+    public function client_programs()
+    {
+        return $this->hasMany(OneToOneProgram::class, 'client_id');
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(UserNotification::class, 'user_id');
+    }
+
+    public function notification_token()
+    {
+        return $this->hasMany(UserNotificationToken::class, 'user_id');
+    }
+
+    public function program_clients()
+    {
+        return $this->hasMany(ProgramClient::class, 'client_id');
     }
 
     protected function userTypeText(): Attribute

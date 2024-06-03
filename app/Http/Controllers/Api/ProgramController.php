@@ -49,6 +49,14 @@ class ProgramController extends Controller
     }
 
     /**
+     * update ongoing program sync.
+     */
+    public function update_sync(Request $request)
+    {
+        return $this->programServices->update_sync($request);
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy(Request $request)

@@ -71,4 +71,9 @@ class DB_Clients
         return CoachClient::query()->where(['coach_id' => $coach_id, 'client_id' => $client_id])->exists();
     }
 
+    public function find_coach_id($client_id)
+    {
+        return CoachClient::query()->where(['client_id' => $client_id])->first();
+    }
+
 }

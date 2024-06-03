@@ -44,6 +44,16 @@ class ClientController extends Controller
     }
 
     /**
+     * Remove  client invitation
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function remove_client_invitation(Request $request): JsonResponse
+    {
+        return $this->clientServices->remove_client_invitation($request);
+    }
+
+    /**
      * get client profile info
      * @param Request $request
      * @return JsonResponse
@@ -81,6 +91,20 @@ class ClientController extends Controller
     public function archive_account(Request $request): JsonResponse
     {
         return $this->clientServices->archive_account($request);
+    }
+
+    /**
+     *  client delete account
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function delete_client(Request $request): JsonResponse
+    {
+        return $this->clientServices->delete_client($request);
+    }
+    public function delete(): JsonResponse
+    {
+        return $this->clientServices->delete();
     }
 
     /**

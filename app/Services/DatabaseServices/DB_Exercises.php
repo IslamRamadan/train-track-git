@@ -21,21 +21,27 @@ class DB_Exercises
 
     public function get_exercise_arrangement(mixed $program_id, mixed $day)
     {
-        $get_last_exercise_arrangement = ProgramExercise::where(['program_id' => $program_id, 'day' => $day])->latest()->first();
+        $get_last_exercise_arrangement = ProgramExercise::query()
+            ->where(['program_id' => $program_id, 'day' => $day])
+            ->orderBy('arrangement', 'DESC')
+            ->first();
         return $get_last_exercise_arrangement ? $get_last_exercise_arrangement->arrangement + 1 : 1;
     }
 
-    public function get_program_exercises(mixed $program_id)
+    public function get_program_exercises(mixed $program_id, $days)
     {
         return ProgramExercise::with('videos')
             ->where('program_id', $program_id)
+            ->when(!empty($days), function ($q) use ($days) {
+                $q->whereIn('day', $days);
+            })
             ->orderBy('day')
             ->get()->groupBy('day');
     }
 
     public function get_program_exercises_by_day(mixed $program_id, $day)
     {
-        return ProgramExercise::with('videos')
+        return ProgramExercise::with(['videos', 'program'])
             ->where(['program_id' => $program_id, 'day' => $day])
             ->orderBy('arrangement')
             ->get();
@@ -60,7 +66,7 @@ class DB_Exercises
 
     public function find_exercise($exercise_id)
     {
-        return ProgramExercise::query()->with('videos')->find($exercise_id);
+        return ProgramExercise::query()->with(['videos', 'program'])->find($exercise_id);
     }
 
     public function update_exercise($exercise, $name, $description, $extra_description, $order)
