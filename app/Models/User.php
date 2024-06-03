@@ -26,6 +26,7 @@ class User extends Authenticatable
         'phone',
         'user_type',
     ];
+    protected $appends = ['active_clients'];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -56,6 +57,17 @@ class User extends Authenticatable
     {
         return $this->hasOne(CoachClient::class, 'client_id');
     }
+
+    public function coach_client_coach()
+    {
+        return $this->hasMany(CoachClient::class, 'coach_id');
+    }
+
+    public function getActiveClientsAttribute()
+    {
+        return CoachClient::where(['coach_id' => $this->id, 'status' => "1"])->distinct('client_id')->count();
+    }
+
 
     public function client_programs()
     {
