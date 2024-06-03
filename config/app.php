@@ -83,8 +83,11 @@ return [
     |
     */
 
-    'locale' => 'en',
-
+    'locales' => ['en', 'ar'],
+    'available_locales' => [
+        'en' => 'English',
+        'ar' => 'Arabic',
+    ],
     /*
     |--------------------------------------------------------------------------
     | Application Fallback Locale
@@ -169,6 +172,7 @@ return [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+        Yajra\DataTables\DataTablesServiceProvider::class,
     ])->toArray(),
 
     /*

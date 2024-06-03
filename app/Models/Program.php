@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Attribute;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -10,8 +10,8 @@ class Program extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'description', 'coach_id', 'program_type_id'];
-    protected $appends = ['exercise_days', 'clients_number'];
+    protected $fillable = ['name', 'description', 'coach_id', 'program_type_id', 'type', 'starting_date','sync'];
+    protected $appends = ['exercise_days', 'clients_number', 'type_text'];
 
     public function program_types()
     {
@@ -36,6 +36,13 @@ class Program extends Model
     public function getClientsNumberAttribute()
     {
         return ProgramClient::where('program_id', $this->id)->distinct('client_id')->count();
+    }
+
+    protected function typeText(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $this->type == "0" ? "Normal" : "Ongoing",
+        );
     }
 
 }

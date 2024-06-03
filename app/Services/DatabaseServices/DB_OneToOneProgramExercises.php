@@ -17,7 +17,7 @@ class DB_OneToOneProgramExercises
             ->whereBetween('date', [$start_date, $end_date])->get();
     }
 
-    public function create_one_to_one_program_exercises(mixed $exercise, mixed $exercise_date, mixed $one_to_one_program_id)
+    public function create_one_to_one_program_exercises(mixed $exercise, mixed $exercise_date, mixed $one_to_one_program_id, $template_exercise_id = null)
     {
         return OneToOneProgramExercise::query()->create([
             'name' => $exercise->name,
@@ -26,12 +26,26 @@ class DB_OneToOneProgramExercises
             'arrangement' => $exercise->arrangement,
             'one_to_one_program_id' => $one_to_one_program_id,
             'date' => $exercise_date,
+            'exercise_id' => $template_exercise_id,
         ]);
     }
 
-    public function get_program_exercises(mixed $program_id)
+    public function get_program_exercises(mixed $program_id, $client_id, $dates)
     {
-        return OneToOneProgramExercise::where('one_to_one_program_id', $program_id)->orderBy('date')->get()->groupBy('date');
+        return OneToOneProgramExercise::query()
+            ->when($program_id != null, function ($q) use ($program_id) {
+                $q->where('one_to_one_program_id', $program_id);
+            })
+            ->when($client_id != null, function ($q) use ($client_id) {
+                $q->whereHas('one_to_one_program', function ($query) use ($client_id) {
+                    $query->where('client_id', $client_id);
+                });
+            })
+            ->when(!empty($dates), function ($q) use ($dates) {
+                $q->whereIn('date', $dates);
+            })
+            ->orderBy('date')
+            ->get()->groupBy('date');
     }
 
     public function get_program_exercises_by_date(mixed $program_id, $date)
@@ -65,7 +79,7 @@ class DB_OneToOneProgramExercises
         return $get_last_exercise_arrangement ? $get_last_exercise_arrangement->arrangement + 1 : 1;
     }
 
-    public function add_oto_exercise($name, $description, $extra_description, $date, $arrangement, $program_id)
+    public function add_oto_exercise($name, $description, $extra_description, $date, $arrangement, $program_id, $template_exercise_id = null)
     {
         return OneToOneProgramExercise::create([
             'name' => $name,
@@ -74,6 +88,7 @@ class DB_OneToOneProgramExercises
             'date' => $date,
             'arrangement' => $arrangement,
             'one_to_one_program_id' => $program_id,
+            'exercise_id' => $template_exercise_id,
         ]);
     }
 
@@ -161,6 +176,20 @@ class DB_OneToOneProgramExercises
     public function get_all_program_done_exercises_count(mixed $program_id)
     {
         return OneToOneProgramExercise::query()->where(['one_to_one_program_id' => $program_id, 'is_done' => "1"])->count();
+    }
+
+    public function get_oto_exercises_by_exercise_id(mixed $exercise_id)
+    {
+        return OneToOneProgramExercise::query()->where(['exercise_id' => $exercise_id])
+            ->get();
+    }
+
+    public function remove_realation_btween_oto_and_template_exercise(mixed $exercise_id)
+    {
+        OneToOneProgramExercise::where('exercise_id', $exercise_id)
+            ->update([
+                'exercise_id' => null,
+            ]);
     }
 
 }

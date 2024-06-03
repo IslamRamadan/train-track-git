@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_ExerciseLog;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_OneToOneProgramExerciseVideos;
+use App\Services\DatabaseServices\DB_OtoExerciseComments;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -13,8 +15,10 @@ class OneToOneExerciseServices
 {
     public function __construct(protected ValidationServices $validationServices
         , protected DB_OneToOneProgramExercises              $DB_OneToOneProgramExercises
-        , protected DB_OneToOneProgramExerciseVideos         $DB_OneToOneProgramExerciseVideos,
-                                protected DB_ExerciseLog     $DB_ExerciseLog
+        , protected DB_OneToOneProgramExerciseVideos         $DB_OneToOneProgramExerciseVideos
+        , protected DB_ExerciseLog                           $DB_ExerciseLog, protected DB_OtoExerciseComments $DB_OtoExerciseComments
+        , protected NotificationServices                     $notificationServices
+        , protected DB_Clients                               $DB_Clients
     )
     {
     }
@@ -35,9 +39,12 @@ class OneToOneExerciseServices
     {
         $this->validationServices->list_client_exercises($request);
         $program_id = $request['client_program_id'];
-        $program_exercises = $this->DB_OneToOneProgramExercises->get_program_exercises($program_id);
+        $client_id = $request['client_id'];
+        $start_week_date = $request['start_week_date'];
+        $dates_arr = $this->get_week_arr($start_week_date);
 
-        $program_exercises_arr = $this->list_program_exercises_arr($program_exercises);
+        $program_exercises = $this->DB_OneToOneProgramExercises->get_program_exercises($program_id, $client_id, $dates_arr);
+        $program_exercises_arr = $this->list_program_exercises_arr($program_exercises, $program_id);
 
         return sendResponse($program_exercises_arr);
     }
@@ -80,7 +87,13 @@ class OneToOneExerciseServices
                 $program_exercises_arr[] = $single_program_exercises_arr;
             }
         }
-        return sendResponse($program_exercises_arr);
+        $exercises_arr['exercises'] = $program_exercises_arr;
+        $comments_in_this_day = $this->DB_OtoExerciseComments->get_comments_in_date(date: $date, program_id: $program_id);
+        $program_comments_arr = $this->date_comments($comments_in_this_day);
+        $exercises_arr['comments'] = $program_comments_arr;
+
+        return sendResponse($exercises_arr);
+
     }
 
     public function list_client_exercises_in_date($request)
@@ -127,6 +140,11 @@ class OneToOneExerciseServices
             }
         }
         $exercises_arr['exercises'] = $program_exercises_arr;
+//        $comments_in_this_day = $this->DB_OtoExerciseComments->get_comments_in_date(date: $date);
+        $comments_in_this_day = $this->DB_OtoExerciseComments->get_client_comments_in_date(date: $date, client_id: $client_id);
+        $program_comments_arr = $this->date_comments($comments_in_this_day);
+        $exercises_arr['comments'] = $program_comments_arr;
+
         return sendResponse($exercises_arr);
     }
 
@@ -174,24 +192,52 @@ class OneToOneExerciseServices
         $from_client_program_id = $request['from_client_program_id'];
         $to_client_program_id = $request['to_client_program_id'];
         $copied_dates = $request['copied_dates'];
-        $date = $request['start_date'];
-
-        foreach ($copied_dates as $copied_date) {
-            $day_exercises = $this->DB_OneToOneProgramExercises->get_program_exercises_by_date(program_id: $from_client_program_id, date: $copied_date);
-            if ($day_exercises) {
-                DB::beginTransaction();
-                foreach ($day_exercises as $exercise) {
-                    $exercise_arrangement = $this->DB_OneToOneProgramExercises->get_exercise_arrangement($to_client_program_id, $date);
-                    $copied_exercise = $this->DB_OneToOneProgramExercises->add_oto_exercise($exercise->name, $exercise->description, $exercise->extra_description, $date, $exercise_arrangement, $to_client_program_id);
-                    if ($exercise->videos()->exists()) {
-                        $this->add_exercises_videos($copied_exercise->id, $exercise->videos);
-                    }
-                }
-                DB::commit();
-            }
-            $date = Carbon::parse($date)->addDay()->toDateString();
-        }
+        $start_date = $request['start_date'];
+        $this->copy_dates_logic($start_date, $copied_dates, $from_client_program_id, $to_client_program_id);
         return sendResponse(['message' => "Exercise days copied successfully"]);
+    }
+
+    function cut_client_exercise_days($request)
+    {
+        $this->validationServices->cut_client_program_exercise_days($request);
+        $from_client_program_id = $request['from_client_program_id'];
+        $to_client_program_id = $request['to_client_program_id'];
+        $cut_dates = $request['cut_dates'];
+        $start_date = $request['start_date'];
+        $this->copy_dates_logic($start_date, $cut_dates, $from_client_program_id, $to_client_program_id, "cut");
+
+        return sendResponse(['message' => "Exercise dates cut successfully"]);
+
+    }
+
+    function delete_client_exercise_days($request)
+    {
+        $this->validationServices->delete_client_program_exercise_days($request);
+        $program_id = $request['client_program_id'];
+        $deleted_days = $request['deleted_dates'];
+        foreach ($deleted_days as $date) {
+            $program_exercises = $this->DB_OneToOneProgramExercises->get_program_exercises_by_date(program_id: $program_id, date: $date);
+
+            DB::beginTransaction();
+            if ($program_exercises) {
+                foreach ($program_exercises as $exercise) {
+                    if ($exercise->videos()->exists()) {
+                        //delete exercises videos
+                        $exercise->videos()->delete();
+                    }
+                    if ($exercise->log()->exists()) {
+                        //delete exercises videos
+                        $exercise->log->delete();
+                    }
+                    //delete exercises
+                    $exercise->delete();
+                }
+                $this->DB_OtoExerciseComments->delete_date_comments(date: $date, program_id: $program_id);
+            }
+            DB::commit();
+        }
+        return sendResponse(['message' => "Exercise days deleted successfully"]);
+
     }
 
     public function update_client_exercise($request)
@@ -224,8 +270,12 @@ class OneToOneExerciseServices
 
         $exercise = $this->DB_OneToOneProgramExercises->find_exercise($exercise_id);
         $other_exercises = $this->DB_OneToOneProgramExercises->get_other_exercises($exercise->one_to_one_program_id, $exercise->date, $exercise_id);
-        $this->rearrange_program_exercises($other_exercises, "0");
 
+        $this->rearrange_program_exercises($other_exercises, "0");
+        if ($other_exercises->isEmpty()) {
+            //if there is no another exercises in the day so delete the comments of the day
+            $this->DB_OtoExerciseComments->delete_date_comments(date: $exercise->date, program_id: $exercise->one_to_one_program_id);
+        }
         $this->DB_OneToOneProgramExerciseVideos->delete_exercise_videos($exercise);
         $this->DB_ExerciseLog->delete_exercise_log($exercise);
         $this->DB_OneToOneProgramExercises->delete_single_exercises($exercise_id);
@@ -237,6 +287,8 @@ class OneToOneExerciseServices
     {
         $this->validationServices->log_client_exercise($request);
         $client_id = $request->user()->id;
+        $client_name = $request->user()->name;
+
         $client_exercise_id = $request->client_exercise_id;
         $sets = $request->sets;
         $details = $request->details;
@@ -247,6 +299,15 @@ class OneToOneExerciseServices
             $this->DB_ExerciseLog->create_exercise_log($client_exercise_id, $sets, $details, $client_id);
         }
         $this->DB_OneToOneProgramExercises->update_exercise_status($client_exercise_id, "1");
+
+        $find_exercise_details = $this->DB_OneToOneProgramExercises->find_exercise($client_exercise_id);
+        $exercise_name = $find_exercise_details->name;
+        $exercise_date = $find_exercise_details->date;
+        $this->send_notification_to_coach(
+            user_id: $client_id,
+            title: "New Log",
+            message: $client_name . ' added a new log for ' . $exercise_name . ' exercise on ' . $exercise_date . "!");
+
         return sendResponse(['message' => "Log created successfully"]);
     }
 
@@ -264,9 +325,23 @@ class OneToOneExerciseServices
     {
         $this->validationServices->update_exercise_status($request);
         $client_exercise_id = $request->client_exercise_id;
+        $user_id = $request->user()->id;
+        $user_type = $request->user()->user_type;
+        $user_name = $request->user()->name;
         $status = $request->status;
 
         $this->DB_OneToOneProgramExercises->update_exercise_status($client_exercise_id, $status);
+
+        if ($user_type == "1" && ($status == "1" || $status == "2")) {
+            $status_name = $status == "1" ? "Done" : "Missed";
+            $find_exercise_details = $this->DB_OneToOneProgramExercises->find_exercise($client_exercise_id);
+            $exercise_name = $find_exercise_details->name;
+            $exercise_date = $find_exercise_details->date;
+            $this->send_notification_to_coach(
+                user_id: $user_id,
+                title: $status_name . " Exercise",
+                message: $user_name . " Marked " . $exercise_name . " exercise on " . $exercise_date . " as " . $status_name . "!");
+        }
         return sendResponse(['message' => "exercise status successfully"]);
     }
 
@@ -279,15 +354,24 @@ class OneToOneExerciseServices
         }
     }
 
-    private function list_program_exercises_arr(Collection|array $program_exercises)
+    private function list_program_exercises_arr(Collection|array $program_exercises, $program_id)
     {
         $program_exercises_arr = [];
         if ($program_exercises) {
-            foreach ($program_exercises as $day => $day_exercises) {
+            $single_day = [];
+
+            foreach ($program_exercises as $date => $day_exercises) {
+                $single_day['date'] = $date;
+                $single_exercise = [];
                 foreach ($day_exercises as $exercise) {
                     $single_program_exercises_arr = $this->program_exercises_arr($exercise);
-                    $program_exercises_arr[] = $single_program_exercises_arr;
+                    $single_exercise[] = $single_program_exercises_arr;
                 }
+                $single_day['exercises'] = $single_exercise;
+                $comments_in_this_day = $this->DB_OtoExerciseComments->get_comments_in_date(date: $date, program_id: $program_id);
+                $program_comments_arr = $this->date_comments($comments_in_this_day);
+                $single_day['comments'] = $program_comments_arr;
+                $program_exercises_arr[] = $single_day;
             }
         }
         return $program_exercises_arr;
@@ -323,16 +407,121 @@ class OneToOneExerciseServices
         return $single_program_exercises_arr;
     }
 
-    private function list_program_exercises_by_day_arr(Collection|array $program_exercises)
+//    private function list_program_exercises_by_day_arr(Collection|array $program_exercises)
+//    {
+//        $program_exercises_arr = [];
+//        if ($program_exercises) {
+//            foreach ($program_exercises as $exercise) {
+//                $single_program_exercises_arr = $this->program_exercises_arr($exercise);
+//                $program_exercises_arr[] = $single_program_exercises_arr;
+//            }
+//        }
+//        return $program_exercises_arr;
+//    }
+
+    /**
+     * @param Collection|array $comments_in_this_day
+     * @param array $exercises_arr
+     * @return array
+     */
+    private function date_comments(Collection|array $comments_in_this_day): array
     {
-        $program_exercises_arr = [];
-        if ($program_exercises) {
-            foreach ($program_exercises as $exercise) {
-                $single_program_exercises_arr = $this->program_exercises_arr($exercise);
-                $program_exercises_arr[] = $single_program_exercises_arr;
+        $program_comments_arr = [];
+        if ($comments_in_this_day) {
+            foreach ($comments_in_this_day as $comment) {
+                $single_program_comments_arr = [];
+                $single_program_comments_arr['comment_id'] = $comment->id;
+                $single_program_comments_arr['comment_content'] = $comment->comment;
+                $single_program_comments_arr['comment_date'] = Carbon::parse($comment->created_at)->format('Y-m-d');
+                $single_program_comments_arr['sender'] = $comment->user_type;
+                $single_program_comments_arr['coach_id'] = $comment->program->coach_id;
+                $single_program_comments_arr['coach_name'] = $comment->program->coach->name;
+                $single_program_comments_arr['client_id'] = $comment->program->client_id;
+                $single_program_comments_arr['client_name'] = $comment->program->client->name;
+
+                $program_comments_arr[] = $single_program_comments_arr;
             }
         }
-        return $program_exercises_arr;
+        return $program_comments_arr;
     }
 
+    private function get_week_arr($start_week_date)
+    {
+        $days_arr = [];
+        if ($start_week_date) {
+
+            for ($i = 0; $i < 7; $i++) {
+                $days_arr[] = $start_week_date;
+                $start_week_date = Carbon::parse($start_week_date)->addDay()->toDateString();
+            }
+        }
+        return $days_arr;
+    }
+
+    private function make_copied_days_arr(mixed $copied_days)
+    {
+        $result = [];
+        // Get the first item using its index (0 for the first element)
+        $first_item = $copied_days[0];
+
+        // Get the last item using its index (array length - 1)
+        $last_item = $copied_days[count($copied_days) - 1];
+        for ($i = $first_item; $i <= $last_item;) {
+            $single_day['day'] = $i;
+            if (in_array($i, $copied_days)) {
+                $single_day['copy'] = true;
+            } else {
+                $single_day['copy'] = false;
+            }
+            $result[] = $single_day;
+            $i = Carbon::parse($i)->addDay()->toDateString();
+        }
+        return $result;
+    }
+
+    /**
+     * @param $start_date
+     * @param mixed $copied_dates
+     * @param mixed $from_client_program_id
+     * @param mixed $to_client_program_id
+     * @param string $operation_type
+     * @return void
+     */
+    private function copy_dates_logic($start_date, mixed $copied_dates, mixed $from_client_program_id
+        , mixed                       $to_client_program_id, string $operation_type = "copy"): void
+    {
+        $date = $start_date;
+        $copied_days_arr = $this->make_copied_days_arr($copied_dates);//define which day that will be copied and which day will not
+        foreach ($copied_days_arr as $copied_date) {
+            if ($copied_date['copy']) {
+                $day_exercises = $this->DB_OneToOneProgramExercises->get_program_exercises_by_date(program_id: $from_client_program_id, date: $copied_date['day']);
+                if ($day_exercises) {
+                    foreach ($day_exercises as $exercise) {
+                        $exercise_arrangement = $this->DB_OneToOneProgramExercises->get_exercise_arrangement($to_client_program_id, $date);
+                        $copied_exercise = $this->DB_OneToOneProgramExercises->add_oto_exercise($exercise->name,
+                            $exercise->description, $exercise->extra_description, $date, $exercise_arrangement, $to_client_program_id);
+                        if ($exercise->videos()->exists()) {
+                            $this->add_exercises_videos($copied_exercise->id, $exercise->videos);
+                        }
+                        if ($operation_type == "cut") {
+                            $this->DB_OneToOneProgramExerciseVideos->delete_exercise_videos($exercise);
+                            $this->DB_ExerciseLog->delete_exercise_log($exercise);
+                            $this->DB_OneToOneProgramExercises->delete_single_exercises($exercise->id);
+                        }
+                    }
+                }
+                if ($operation_type == "cut") {
+                    $this->DB_OtoExerciseComments->delete_date_comments(date: $copied_date, program_id: $from_client_program_id);
+                }
+            }
+
+            $date = Carbon::parse($date)->addDay()->toDateString();
+        }
+    }
+
+    private function send_notification_to_coach($user_id, $title, $message)
+    {
+        $coach_id = $this->DB_Clients->find_coach_id(client_id: $user_id)->coach_id;
+        $this->notificationServices->send_notification_to_user($coach_id, $title, $message);
+    }
 }

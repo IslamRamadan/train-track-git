@@ -6,6 +6,7 @@ use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_Coaches;
 use App\Services\DatabaseServices\DB_ExerciseLog;
 use App\Services\DatabaseServices\DB_Exercises;
+use App\Services\DatabaseServices\DB_Notifications;
 use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_PendingClients;
@@ -23,7 +24,8 @@ class CoachServices
                                 protected DB_Coaches                  $DB_Coaches,
                                 protected DB_Users                    $DB_Users,
                                 protected DB_ExerciseLog              $DB_ExerciseLog,
-                                protected DB_OneToOneProgramExercises $DB_OneToOneProgramExercises
+                                protected DB_OneToOneProgramExercises $DB_OneToOneProgramExercises,
+                                protected DB_Notifications            $DB_Notifications,
     )
     {
     }
@@ -76,6 +78,7 @@ class CoachServices
 //        get the today's logs of the coach clients
         $clients_logs_today = $this->DB_ExerciseLog->list_coach_clients_logs_today($coach_id, $today);
         $list_logs_arr = $this->list_logs_arr($clients_logs_today);
+        $unread_notifications = $this->DB_Notifications->user_has_unread_notifications($coach_id);
 //        Daily Activity done exercises/total workouts
         return sendResponse([
             'coach_id' => $coach_info->id,
@@ -89,7 +92,8 @@ class CoachServices
             'active_clients' => $number_of_active_clients,
             'done_workouts' => $done_workout,
             'clients_activity' => $clients_activity,
-            'today_logs' => $list_logs_arr
+            'today_logs' => $list_logs_arr,
+            'unread_notifications' => $unread_notifications ? "1" : "0"
         ]);
     }
 

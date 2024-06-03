@@ -94,6 +94,11 @@
 <body>
 
 <div class="container">
+    <nav>
+        @foreach(config('app.available_locales') as $locale => $language)
+            <a href="{{ route(Route::getCurrentRoute()->getName(), array_merge(Route::getCurrentRoute()->parameters, ['locale' => $locale])) }}">{{ $language }}</a>
+        @endforeach
+    </nav>
     <div class="row">
         <div class="col-md-12 mb-3 mt-3 text-center">
             <!-- Your logo goes here -->

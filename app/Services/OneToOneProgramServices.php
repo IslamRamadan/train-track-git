@@ -6,6 +6,8 @@ use App\Services\DatabaseServices\DB_ExerciseLog;
 use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_OneToOneProgramExerciseVideos;
+use App\Services\DatabaseServices\DB_OtoExerciseComments;
+use App\Services\DatabaseServices\DB_ProgramClients;
 use App\Services\DatabaseServices\DB_Users;
 use Illuminate\Support\Facades\DB;
 
@@ -16,6 +18,8 @@ class OneToOneProgramServices
                                 protected DB_OneToOneProgramExercises      $DB_OneToOneProgramExercises,
                                 protected DB_OneToOneProgramExerciseVideos $DB_OneToOneProgramExerciseVideos,
                                 protected DB_ExerciseLog                   $DB_ExerciseLog,
+                                protected DB_OtoExerciseComments           $DB_OtoExerciseComments,
+                                protected DB_ProgramClients           $DB_ProgramClients,
                                 protected DB_Users                         $DB_Users
     )
     {
@@ -66,7 +70,9 @@ class OneToOneProgramServices
         $program_id = $request['client_program_id'];
 
         $program = $this->DB_OneToOneProgram->find_oto_program($program_id);
+
         DB::beginTransaction();
+        $this->DB_ProgramClients->delete_program_clients_with_oto_id($program_id);
         if ($program->exercises()->exists()) {
             foreach ($program->exercises as $exercise) {
                 //Delete from program exercises videos table
@@ -76,6 +82,9 @@ class OneToOneProgramServices
                 //Delete from program exercises table
                 $this->DB_OneToOneProgramExercises->delete_program_exercises($exercise);
             }
+        }
+        if ($program->comments()->exists()) {
+            $program->comments()->delete();
         }
 //        Delete from programs table
         $this->DB_OneToOneProgram->delete_program($program_id);

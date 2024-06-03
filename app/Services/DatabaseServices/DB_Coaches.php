@@ -32,4 +32,9 @@ class DB_Coaches
             'certificates' => $certificates,
         ]);
     }
+
+    public function change_coach_status($id, mixed $status)
+    {
+        return Coach::query()->where('user_id', $id)->update(['status' => $status]);
+    }
 }

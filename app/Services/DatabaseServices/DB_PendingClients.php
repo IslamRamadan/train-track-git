@@ -3,7 +3,6 @@
 namespace App\Services\DatabaseServices;
 
 use App\Models\PendingClient;
-use App\Models\ProgramClient;
 
 class DB_PendingClients
 {

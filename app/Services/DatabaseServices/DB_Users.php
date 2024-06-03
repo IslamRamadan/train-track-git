@@ -12,6 +12,12 @@ class DB_Users
         return User::with('coach', 'coach_client_client')->find($id);
     }
 
+    public function get_user_for_delete($id)
+    {
+        return User::with('coach', 'coach_client_client', 'client_programs.exercises.log', 'program_clients', 'client_programs.comments',
+            'client_programs.exercises.videos')->find($id);
+    }
+
     public function create_user(mixed $name, mixed $email, mixed $phone, mixed $password, $user_type = "0")
     {
         return User::query()->create([

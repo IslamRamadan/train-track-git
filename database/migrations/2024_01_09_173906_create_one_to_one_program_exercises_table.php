@@ -18,7 +18,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('one_to_one_program_id');
             $table->foreign('one_to_one_program_id')->references('id')->on('one_to_one_programs');
             $table->date("date");
-            $table->enum('is_done', ["0", "1"])->default("0");
+            $table->enum('is_done', ["0", "1", "2"])->default("0");
             $table->timestamps();
         });
     }

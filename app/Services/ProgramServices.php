@@ -2,7 +2,11 @@
 
 namespace App\Services;
 
+use App\Services\DatabaseServices\DB_ExerciseLog;
 use App\Services\DatabaseServices\DB_Exercises;
+use App\Services\DatabaseServices\DB_OneToOneProgram;
+use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
+use App\Services\DatabaseServices\DB_OneToOneProgramExerciseVideos;
 use App\Services\DatabaseServices\DB_ProgramClients;
 use App\Services\DatabaseServices\DB_ProgramExerciseVideos;
 use App\Services\DatabaseServices\DB_Programs;
@@ -11,10 +15,14 @@ use Illuminate\Support\Facades\DB;
 
 class ProgramServices
 {
-    public function __construct(protected ValidationServices       $validationServices
-        , protected DB_Programs                                    $DB_Programs, protected DB_Exercises $DB_Exercises,
-                                protected DB_ProgramClients        $DB_ProgramClients,
-                                protected DB_ProgramExerciseVideos $DB_ProgramExerciseVideos
+    public function __construct(protected ValidationServices               $validationServices
+        , protected DB_Programs                                            $DB_Programs, protected DB_Exercises $DB_Exercises,
+                                protected DB_ProgramClients                $DB_ProgramClients,
+                                protected DB_ProgramExerciseVideos         $DB_ProgramExerciseVideos,
+                                protected DB_OneToOneProgram               $DB_OneToOneProgram,
+                                protected DB_OneToOneProgramExerciseVideos $DB_OneToOneProgramExerciseVideos,
+                                protected DB_ExerciseLog                   $DB_ExerciseLog,
+                                protected DB_OneToOneProgramExercises      $DB_OneToOneProgramExercises,
     )
     {
     }
@@ -41,9 +49,13 @@ class ProgramServices
                 "id" => $program->id,
                 "name" => $program->name,
                 "description" => $program->description,
+                "type" => $program->type_text,
+                "starting_date" => $program->type == "1" ? $program->starting_date : "",
+                "sync" => $program->type == "1" ? $program->sync : "",
                 "exercise_days" => $program->exercise_days,
                 "clients_number" => $program->clients_number
             ];
+
             $programs_arr[] = $single_program;
         }
         return $programs_arr;
@@ -55,7 +67,10 @@ class ProgramServices
         $coach_id = $request->user()->id;
         $name = $request['name'];
         $description = $request['description'];
-        $this->DB_Programs->add_program($coach_id, $name, $description);
+        $type = $request['type'];
+        $sync = $request['sync'] ?? "0";
+        $starting_date = $request['starting_date'];
+        $this->DB_Programs->add_program($coach_id, $name, $description, $type, $starting_date, $sync);
         return sendResponse(['message' => "Program added successfully"]);
     }
 
@@ -65,9 +80,26 @@ class ProgramServices
         $name = $request['name'];
         $program_id = $request['program_id'];
         $description = $request['description'];
+        $type = $request['type'];
+        $starting_date = $request['starting_date'];
         $program = $this->DB_Programs->find_program($program_id);
-        $this->DB_Programs->update_program($program, $name, $description);
+        DB::beginTransaction();
+        if ($program->sync == "1") {
+            $this->sync_on_update_program($program_id, $name, $description);
+        }
+        $this->DB_Programs->update_program($program, $name, $description, $type, $starting_date);
+        DB::commit();
         return sendResponse(['message' => "Program updated successfully"]);
+    }
+
+    public function update_sync($request)
+    {
+        $this->validationServices->edit_program_sync($request);
+        $sync = $request['sync'];
+        $program_id = $request['program_id'];
+        $program = $this->DB_Programs->find_program($program_id);
+        $this->DB_Programs->update_program_sync($program, $sync);
+        return sendResponse(['message' => "Program sync updated successfully"]);
     }
 
     /**
@@ -88,10 +120,26 @@ class ProgramServices
         $this->validationServices->delete_program($request);
         $program_id = $request['program_id'];
         $program = $this->DB_Programs->find_program($program_id);
-
-//        Delete from program_clients table
-        $this->DB_ProgramClients->delete_program_clients($program_id);
+        //        Delete from program_clients table
         DB::beginTransaction();
+        $this->DB_ProgramClients->delete_program_clients($program_id);
+        if ($program->one_to_one_program) {
+            foreach ($program->one_to_one_program as $program_client) {
+                if ($program_client->oto_program_id) {
+                    if ($program->sync == "0") {
+                        $this->delete_oto_programs($program_client->oto_program);
+                    } else {
+                        if ($program->exercises()->exists()) {
+                            foreach ($program->exercises as $exercise) {
+                                $this->DB_OneToOneProgramExercises->remove_realation_btween_oto_and_template_exercise($exercise->id);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
         if ($program->exercises()->exists()) {
             foreach ($program->exercises as $exercise) {
                 //Delete from program_exercises_videos table
@@ -106,6 +154,42 @@ class ProgramServices
 
         return sendResponse(['message' => "Program deleted successfully"]);
 //
+    }
+
+    /**
+     * @param mixed $program_id
+     * @param mixed $name
+     * @param mixed $description
+     * @return void
+     */
+    public function sync_on_update_program(mixed $program_id, mixed $name, mixed $description): void
+    {
+        $related_oto_programs = $this->DB_ProgramClients->get_program_related_oto_programs($program_id);
+        if (count($related_oto_programs) > 0) {
+            foreach ($related_oto_programs as $related_program) {
+                $this->DB_OneToOneProgram->update_oto_program($related_program->oto_program, $name, $description);
+            }
+        }
+    }
+
+    private function delete_oto_programs($program)
+    {
+        $this->DB_ProgramClients->delete_program_clients_with_oto_id($program->id);
+        if ($program->exercises()->exists()) {
+            foreach ($program->exercises as $exercise) {
+                //Delete from program exercises videos table
+                $this->DB_OneToOneProgramExerciseVideos->delete_exercise_videos($exercise);
+                //Delete from program exercises log table
+                $this->DB_ExerciseLog->delete_exercise_log($exercise);
+                //Delete from program exercises table
+                $this->DB_OneToOneProgramExercises->delete_program_exercises($exercise);
+            }
+        }
+        if ($program->comments()->exists()) {
+            $program->comments()->delete();
+        }
+//        Delete from programs table
+        $this->DB_OneToOneProgram->delete_program($program->id);
     }
 
 }

@@ -28,12 +28,20 @@ class AuthServices
     {
         $this->validationServices->login($request);
         $notification_token = $request['notification_token'];
-        if (Auth::attempt(['phone' => $request->phone, 'password' => $request->password])) {
+        if ($request->phone) {
+            $verify = Auth::attempt(['phone' => $request->phone, 'password' => $request->password]);
+        } else {
+            $verify = Auth::attempt(['email' => $request->email, 'password' => $request->password]);
+        }
+        if ($verify) {
             // successfully authenticated
             $user = $this->DB_Users->get_user_info(Auth::user()->id);
 
             if ($user->user_type == "1" && $user->coach_client_client->status == "2") {
                 return sendError("Archived client");
+            }
+            if ($user->user_type == "0" && $user->coach->status == "0") {
+                return sendError("Blocked Coach");
             }
             $this->check_user_notification_token(token: $notification_token, user_id: $user->id);
             return sendResponse($this->user_info_arr($user));

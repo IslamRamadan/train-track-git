@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Dashboard\AuthController;
+use App\Http\Controllers\Dashboard\CoachController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -13,6 +15,15 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
+
+Route::prefix('{locale?}')->middleware(['localized', 'AdminGuest'])->group(function () {
+    Route::get('/login', [AuthController::class, "login_form"])->name('login_view');
+    Route::post('/login', [AuthController::class, "login"])->name('login');
+    Route::get('/welcome', function () {
+        return view('welcome');
+    })->name("name");
+});
+Route::prefix('{locale?}')->middleware(['localized', 'AdminAuth'])->group(function () {
+    Route::get('/coaches', [CoachController::class, "index"])->name('coaches.index');
+    Route::post('/coaches/block/{id}', [CoachController::class, "block"])->name('coaches.block');
 });

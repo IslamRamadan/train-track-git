@@ -27,4 +27,15 @@ class OneToOneProgram extends Model
         return $this->belongsTo(User::class, 'client_id');
     }
 
+    public function coach()
+    {
+        return $this->belongsTo(User::class, 'coach_id');
+    }
+
+
+    public function comments()
+    {
+        return $this->hasMany(OtoExerciseComment::class, 'oto_program_id');
+    }
+
 }
