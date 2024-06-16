@@ -26,13 +26,18 @@ class DB_OtoExerciseComments
         OtoExerciseComment::query()->where(['date' => $date, 'oto_program_id' => $program_id])->delete();
     }
 
-    public function get_comments_in_date(mixed $date, $program_id = null)
+    public function get_comments_in_date(mixed $date, $program_id = null, $client_id = null)
     {
         return OtoExerciseComment::query()
             ->with(['program.coach', 'program.client'])
             ->where('date', $date)
             ->when($program_id != null, function ($q) use ($program_id) {
                 $q->where('oto_program_id', $program_id);
+            })
+            ->when($client_id != null, function ($q) use ($client_id) {
+                $q->whereHas('program', function ($query) use ($client_id) {
+                    $query->where('client_id', $client_id);
+                });
             })
             ->get();
     }

@@ -104,7 +104,9 @@ class ClientServices
         if ($find_program_type->type == "1") {
             $start_date = $find_program_type->starting_date;//
             if (count($this->DB_Exercises->get_program_exercises_days($program_id)) > 0) {
+                if ($start_day == null) {
                 $start_day = $this->DB_Exercises->get_program_exercises_days($program_id)->first();
+                }
             } else {
                 return sendError("the program must have at least one exercise", 401);
             }

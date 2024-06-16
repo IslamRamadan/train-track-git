@@ -44,7 +44,7 @@ class OneToOneExerciseServices
         $dates_arr = $this->get_week_arr($start_week_date);
 
         $program_exercises = $this->DB_OneToOneProgramExercises->get_program_exercises($program_id, $client_id, $dates_arr);
-        $program_exercises_arr = $this->list_program_exercises_arr($program_exercises, $program_id);
+        $program_exercises_arr = $this->list_program_exercises_arr($program_exercises, $program_id, $client_id);
 
         return sendResponse($program_exercises_arr);
     }
@@ -354,7 +354,7 @@ class OneToOneExerciseServices
         }
     }
 
-    private function list_program_exercises_arr(Collection|array $program_exercises, $program_id)
+    private function list_program_exercises_arr(Collection|array $program_exercises, $program_id, $client_id)
     {
         $program_exercises_arr = [];
         if ($program_exercises) {
@@ -368,7 +368,7 @@ class OneToOneExerciseServices
                     $single_exercise[] = $single_program_exercises_arr;
                 }
                 $single_day['exercises'] = $single_exercise;
-                $comments_in_this_day = $this->DB_OtoExerciseComments->get_comments_in_date(date: $date, program_id: $program_id);
+                $comments_in_this_day = $this->DB_OtoExerciseComments->get_comments_in_date(date: $date, program_id: $program_id, client_id: $client_id);
                 $program_comments_arr = $this->date_comments($comments_in_this_day);
                 $single_day['comments'] = $program_comments_arr;
                 $program_exercises_arr[] = $single_day;
@@ -381,6 +381,7 @@ class OneToOneExerciseServices
     {
         $single_program_exercises_arr = [];
         $single_program_exercises_arr['id'] = $exercise->id;
+        $single_program_exercises_arr['oto_program_id'] = $exercise->one_to_one_program_id;
         $single_program_exercises_arr['arrangement'] = $exercise->arrangement;
         $single_program_exercises_arr['name'] = $exercise->name;
         $single_program_exercises_arr['description'] = $exercise->description;
