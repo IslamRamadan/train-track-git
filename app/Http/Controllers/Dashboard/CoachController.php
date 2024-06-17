@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Services\Dashboard\CoachService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class CoachController extends Controller
 {
@@ -21,5 +20,15 @@ class CoachController extends Controller
     public function block($lang, $id, Request $request)
     {
         return $this->coachService->block($id, $request);
+    }
+
+    public function register_form($lang, $package)
+    {
+        return $this->coachService->register_form($package);
+    }
+
+    public function register($lang, Request $request)
+    {
+        return $this->coachService->register($request);
     }
 }

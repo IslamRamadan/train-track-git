@@ -4,8 +4,6 @@ namespace App\Services\Dashboard;
 
 use App\Models\User;
 use App\Services\DatabaseServices\DB_Coaches;
-use http\Env\Request;
-use Illuminate\Support\Facades\Route;
 use Yajra\DataTables\Facades\DataTables;
 
 class CoachService
@@ -111,5 +109,15 @@ class CoachService
         $status = $request->status;
         $this->DB_Coaches->change_coach_status($id, $status);
         return redirect()->back()->with(['msg' => "Done successfully"]);
+    }
+
+    public function register_form($package)
+    {
+        return view('users.register', compact('package'));
+    }
+
+    public function register($request)
+    {
+        dd($request->all());
     }
 }

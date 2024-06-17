@@ -27,3 +27,8 @@ Route::prefix('{locale?}')->middleware(['localized', 'AdminAuth'])->group(functi
     Route::get('/coaches', [CoachController::class, "index"])->name('coaches.index');
     Route::post('/coaches/block/{id}', [CoachController::class, "block"])->name('coaches.block');
 });
+
+Route::prefix('{locale?}')->middleware('localized')->group(function () {
+    Route::get('/register/{package}', [CoachController::class, "register_form"]);
+    Route::post('/register', [CoachController::class, "register"])->name('coach.register');
+});

@@ -21,4 +21,12 @@ return [
     'ar' => 'Arabic',
     'en' => 'English',
     'LogOut' => 'Sign Out',
+    'Register' => 'Register',
+    'SignUp' => 'Sign Up',
+    'Gym' => 'Gym',
+    'Speciality' => 'Speciality',
+    'Certificates' => 'Certificates',
+    'ConfirmPassword' => 'Confirm Password',
+    'PayNow' => 'Pay Now',
+    '30DaysFree' => '30 Days Free Trial',
 ];
