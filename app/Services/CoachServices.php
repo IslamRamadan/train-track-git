@@ -5,13 +5,8 @@ namespace App\Services;
 use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_Coaches;
 use App\Services\DatabaseServices\DB_ExerciseLog;
-use App\Services\DatabaseServices\DB_Exercises;
 use App\Services\DatabaseServices\DB_Notifications;
-use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
-use App\Services\DatabaseServices\DB_PendingClients;
-use App\Services\DatabaseServices\DB_ProgramClients;
-use App\Services\DatabaseServices\DB_Programs;
 use App\Services\DatabaseServices\DB_Users;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
@@ -51,29 +46,7 @@ class CoachServices
 
 //        Workouts done today
         $today = Carbon::now()->toDateString();
-        $get_workouts_done_today = $this->DB_OneToOneProgramExercises->get_workouts_done_today($today, $coach_id);
-        $clients_activity = [];
-        $done_workout = 0;
-        if (count($get_workouts_done_today) > 0) {
-            foreach ($get_workouts_done_today as $client_today_exercises) {
-                $client_info = $this->DB_Users->get_user_info($client_today_exercises[0]->one_to_one_program->client_id);
-                $done_exercises = 0;
-                foreach ($client_today_exercises as $exercise) {
-                    if ($exercise->is_done == "1") {
-                        $done_exercises++;
-                    }
-                }
-                if (count($client_today_exercises) == $done_exercises) {
-                    $done_workout++;
-                }
-                $clients_activity[] = [
-                    'client_id' => $client_info->id,
-                    'client_name' => $client_info->name,
-                    'today_exercises' => count($client_today_exercises),
-                    'done_exercises' => $done_exercises,
-                ];
-            }
-        }
+        list($clients_activity, $done_workout) = $this->clients_activities($today, $coach_id);
 
 //        get the today's logs of the coach clients
         $clients_logs_today = $this->DB_ExerciseLog->list_coach_clients_logs_today($coach_id, $today);
@@ -97,6 +70,15 @@ class CoachServices
         ]);
     }
 
+    public function get_clients_activities($request)
+    {
+        $this->validationServices->get_clients_activities($request);
+
+        $coach_id = $request->user()->id;
+        $date = $request->date;
+        list($clients_activity) = $this->clients_activities($date, $coach_id);
+        return sendResponse($clients_activity);
+    }
     public function update_info($request)
     {
         $this->validationServices->coach_update_info($request);
@@ -150,6 +132,39 @@ class CoachServices
             }
         }
         return $logs_arr;
+    }
+
+    /**
+     * @param string $today
+     * @param mixed $coach_id
+     * @return array
+     */
+    public function clients_activities(string $today, mixed $coach_id): array
+    {
+        $get_workouts_done_today = $this->DB_OneToOneProgramExercises->get_workouts_done_today($today, $coach_id);
+        $clients_activity = [];
+        $done_workout = 0;
+        if (count($get_workouts_done_today) > 0) {
+            foreach ($get_workouts_done_today as $client_today_exercises) {
+                $client_info = $this->DB_Users->get_user_info($client_today_exercises[0]->one_to_one_program->client_id);
+                $done_exercises = 0;
+                foreach ($client_today_exercises as $exercise) {
+                    if ($exercise->is_done == "1") {
+                        $done_exercises++;
+                    }
+                }
+                if (count($client_today_exercises) == $done_exercises) {
+                    $done_workout++;
+                }
+                $clients_activity[] = [
+                    'client_id' => $client_info->id,
+                    'client_name' => $client_info->name,
+                    'today_exercises' => count($client_today_exercises),
+                    'done_exercises' => $done_exercises,
+                ];
+            }
+        }
+        return array($clients_activity, $done_workout);
     }
 
 }

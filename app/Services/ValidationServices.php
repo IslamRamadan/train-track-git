@@ -512,4 +512,11 @@ class ValidationServices
             }],
         ]);
     }
+
+    public function get_clients_activities($request)
+    {
+        $request->validate([
+            'date' => 'required|date_format:Y-m-d',
+        ]);
+    }
 }

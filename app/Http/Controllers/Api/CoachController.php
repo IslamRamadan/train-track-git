@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\ClientServices;
 use App\Services\CoachServices;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,6 +18,11 @@ class CoachController extends Controller
     public function coach_dashboard(Request $request)
     {
         return $this->coachServices->coach_dashboard($request);
+    }
+
+    public function clients_activities(Request $request)
+    {
+        return $this->coachServices->get_clients_activities($request);
     }
 
     /**

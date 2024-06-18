@@ -32,8 +32,7 @@ Route::post('client/register', [AuthController::class, 'client_register']);
 Route::post('coach/register', [AuthController::class, 'coach_register']);
 Route::post('forget/password', [AuthController::class, 'forget_password']);
 
-
-Route::middleware('auth:api')->group(function () {
+Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     // Coach apis start
     Route::post('programs/list', [ProgramController::class, 'index']);
     Route::post('program/add', [ProgramController::class, 'store']);
@@ -67,6 +66,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('client/program/exercise/edit', [OneToOneExerciseController::class, 'update_client_exercise']);
     Route::post('client/program/exercise/delete', [OneToOneExerciseController::class, 'delete_client_exercise']);
     Route::post('coach/dashboard', [CoachController::class, 'coach_dashboard']);
+    Route::post('clients/activities', [CoachController::class, 'clients_activities']);
     Route::post('coach/update/profile', [CoachController::class, 'update_info']);
     Route::post('coach/client/logs', [CoachController::class, 'list_client_logs']);
     // Coach apis end
