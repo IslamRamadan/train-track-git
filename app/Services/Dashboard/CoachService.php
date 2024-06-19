@@ -4,12 +4,17 @@ namespace App\Services\Dashboard;
 
 use App\Models\User;
 use App\Services\DatabaseServices\DB_Coaches;
+use App\Services\DatabaseServices\DB_Programs;
+use App\Services\DatabaseServices\DB_Users;
+use App\Services\ValidationServices;
+use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
 
 class CoachService
 {
 
-    public function __construct(protected DB_Coaches $DB_Coaches)
+    public function __construct(protected ValidationServices $validationServices, protected DB_Coaches $DB_Coaches, protected DB_Programs $DB_Programs,
+                                protected DB_Users           $DB_Users)
     {
     }
 //
@@ -79,25 +84,56 @@ class CoachService
             $result = Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
+                    $btn = '
+                            <button type="button" class="btn btn-sm btn-success updateDueDate mb-2" data-id=' . $row->id . ' data-status="0" data-toggle="modal" data-target="#updateDueDate">
+                              ' . __('translate.UpdateDueDate') . '
+                            </button>
+';
                     if ($row->coach->status == "1") {
-                        $btn = '
-                            <button type="button" class="btn btn-sm btn-danger blockCoach" data-id=' . $row->id . ' data-status="0" data-toggle="modal" data-target="#blockCoach">
+                        $btn .= '
+                            <button type="button" class="btn btn-sm btn-danger blockCoach mb-2" data-id=' . $row->id . ' data-status="0" data-toggle="modal" data-target="#blockCoach">
                               ' . __('translate.Block') . '
                             </button>
 ';
                     } else {
-                        $btn = '
-                            <button type="button" class="btn btn-sm btn-primary blockCoach" data-id=' . $row->id . ' data-status="1" data-toggle="modal" data-target="#blockCoach">
+                        $btn .= '
+                            <button type="button" class="btn btn-sm btn-primary blockCoach mb-2" data-id=' . $row->id . ' data-status="1" data-toggle="modal" data-target="#blockCoach">
                               ' . __('translate.UnBlock') . '
                             </button>
 ';
                     }
                     return $btn;
                 })
+                ->addColumn('due_date_tab', function ($row) {
+                    $due_date = Carbon::parse($row->due_date);
+                    if ($due_date->lt(Carbon::today())) {
+                        $class = "danger";
+                    } elseif ($due_date->gt(Carbon::today()) && $due_date->lte(Carbon::today()->addWeek())) {
+                        $class = "warning";
+                    } else {
+                        $class = "primary";
+                    }
+                    $btn = '<div class="badge bg-' . $class . '" >
+                              ' . $row->due_date . '
+                            </div>';
+                    return $btn;
+                })
                 ->addColumn('active_clients', function ($row) {
                     return $row->active_clients;
                 })
-                ->rawColumns(['active_clients', 'action'])
+                ->addColumn('programs_number', function ($row) {
+                    return $this->DB_Programs->coach_programs_count($row->id);
+                })
+                ->addColumn('creation_date', function ($row) {
+                    return Carbon::parse($row->created_at)->toDateString();
+                })
+                ->filterColumn('creation_date', function ($query, $keyword) {
+                    $query->where('created_at', 'like', "%$keyword%");
+                })
+                ->filterColumn('due_date_tab', function ($query, $keyword) {
+                    $query->where('due_date', 'like', "%$keyword%");
+                })
+                ->rawColumns(['active_clients', 'action', 'due_date_tab', 'programs_number'])
                 ->make();
             return $result;
         }
@@ -119,5 +155,13 @@ class CoachService
     public function register($request)
     {
         dd($request->all());
+    }
+
+    public function update_coach_due_date($coach_id, $request)
+    {
+        $this->validationServices->update_coach_due_date($request);
+        $due_date = $request->due_date;
+        $this->DB_Users->update_user_due_date($coach_id, $due_date);
+        return redirect()->back()->with(['msg' => "Updated successfully"]);
     }
 }

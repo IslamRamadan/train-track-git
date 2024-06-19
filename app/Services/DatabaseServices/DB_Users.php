@@ -49,9 +49,9 @@ class DB_Users
         return User::query()->where('email', $email)->first();
     }
 
-    public function update_user_due_date(mixed $client_id, mixed $due_date)
+    public function update_user_due_date(mixed $user_id, mixed $due_date)
     {
-        return User::query()->where('id', $client_id)->update([
+        return User::query()->where('id', $user_id)->update([
             'due_date' => $due_date
         ]);
     }

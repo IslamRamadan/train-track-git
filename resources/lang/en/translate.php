@@ -29,4 +29,9 @@ return [
     'ConfirmPassword' => 'Confirm Password',
     'PayNow' => 'Pay Now',
     '30DaysFree' => '30 Days Free Trial',
+    'UpdateDueDate' => 'Update Due Date',
+    'DueDate' => 'Due Date',
+    'CreationDate' => 'Creation Date',
+    'ProgramsNumber' => 'Created Programs',
+    'Update' => 'Update',
 ];

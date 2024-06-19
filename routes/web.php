@@ -26,6 +26,7 @@ Route::prefix('{locale?}')->middleware(['localized', 'AdminGuest'])->group(funct
 Route::prefix('{locale?}')->middleware(['localized', 'AdminAuth'])->group(function () {
     Route::get('/coaches', [CoachController::class, "index"])->name('coaches.index');
     Route::post('/coaches/block/{id}', [CoachController::class, "block"])->name('coaches.block');
+    Route::post('/coaches/update/due/date/{id}', [CoachController::class, "update_due_date"])->name('coach.update.due.date');
 });
 
 Route::prefix('{locale?}')->middleware('localized')->group(function () {

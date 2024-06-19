@@ -29,4 +29,9 @@ return [
     'ConfirmPassword' => 'تأكيد كلمة السر',
     'PayNow' => 'ادفع الان',
     '30DaysFree' => '30 يوم تجربة مجانية',
+    'DueDate' => 'تاريخ الاستحقاق',
+    'UpdateDueDate' => 'تعديل تاريخ الاستحقاق',
+    'CreationDate' => 'تاريخ الانشاء',
+    'ProgramsNumber' => 'عدد البرامج المنشأه',
+    'Update' => 'تعديل',
 ];

@@ -31,4 +31,9 @@ class CoachController extends Controller
     {
         return $this->coachService->register($request);
     }
+
+    public function update_due_date($lang, $id, Request $request)
+    {
+        return $this->coachService->update_coach_due_date($id, $request);
+    }
 }

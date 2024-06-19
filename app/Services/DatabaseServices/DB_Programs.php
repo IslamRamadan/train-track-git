@@ -31,7 +31,7 @@ class DB_Programs
 
     public function find_program(mixed $program_id)
     {
-        return Program::with('one_to_one_program.oto_program','exercises.videos')->find($program_id);
+        return Program::with('one_to_one_program.oto_program', 'exercises.videos')->find($program_id);
     }
 
     public function update_program($program, mixed $name, mixed $description, $type, $starting_date)
@@ -71,4 +71,8 @@ class DB_Programs
         return Program::query()->select('id', 'type')->where('id', $program_id)->first();
     }
 
+    public function coach_programs_count($coach_id)
+    {
+        return Program::query()->where('coach_id', $coach_id)->count();
+    }
 }

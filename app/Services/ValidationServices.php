@@ -532,4 +532,12 @@ class ValidationServices
             'due_date' => 'required|date_format:Y-m-d|after_or_equal:tomorrow'
         ]);
     }
+
+    public function update_coach_due_date($request)
+    {
+        $request->validate([
+            'coach_id' => ['exists:users,id'],
+            'due_date' => 'required|date_format:Y-m-d|after_or_equal:tomorrow'
+        ]);
+    }
 }
