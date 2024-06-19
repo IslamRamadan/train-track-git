@@ -135,14 +135,15 @@ class ClientServices
                 $parent_program = $this->DB_Programs->find_program($program_id);
 
                 //9-create the custom program assigned to user
-                $one_to_program = $this->DB_OneToOneProgram->create_one_to_program($parent_program, $client_id, $coach_id);
+                $one_to_program = $this->DB_OneToOneProgram->create_one_to_program($parent_program->name, $parent_program->description, $client_id, $coach_id);
                 //10-create row with client_id and program_id in program_clients table
                 $this->DB_ProgramClients->create_program_client($program_id, $client_id, $one_to_program->id);
                 //11-create the custom program exercises assigned to custom program
                 foreach ($program_exercises as $exercise) {
                     $exercise_date = $this->get_date_after_n_days($start_date, $exercise->day - $start_day);//get the day after the current day
-                    $oto_exercise = $this->DB_OneToOneProgramExercises->create_one_to_one_program_exercises($exercise,
-                        $exercise_date, $one_to_program->id, $exercise->id);
+                    $oto_exercise = $this->DB_OneToOneProgramExercises->create_one_to_one_program_exercises($exercise->name,
+                        $exercise->description, $exercise->extra_description, $exercise->arrangement, $exercise_date,
+                        $one_to_program->id, $exercise->id);
                     //add exercises videos if exists
                     $this->add_exercises_videos($oto_exercise->id, $exercise);
                 }

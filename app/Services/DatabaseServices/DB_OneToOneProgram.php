@@ -12,11 +12,11 @@ class DB_OneToOneProgram
         return OneToOneProgram::with('exercises.videos', 'comments')->find($program_id);
     }
 
-    public function create_one_to_program($parent_program, mixed $client_id, mixed $coach_id)
+    public function create_one_to_program($program_name, $program_description, mixed $client_id, mixed $coach_id)
     {
         return OneToOneProgram::query()->create([
-            'name' => $parent_program->name,
-            'description' => $parent_program->description,
+            'name' => $program_name,
+            'description' => $program_description,
             'coach_id' => $coach_id,
             'client_id' => $client_id,
         ]);

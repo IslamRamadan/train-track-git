@@ -18,7 +18,7 @@ class DB_Users
             'client_programs.exercises.videos')->find($id);
     }
 
-    public function create_user(mixed $name, mixed $email, mixed $phone, mixed $password, $user_type = "0")
+    public function create_user(mixed $name, mixed $email, mixed $phone, mixed $password, $due_date, $user_type = "0")
     {
         return User::query()->create([
             'name' => $name,
@@ -26,6 +26,7 @@ class DB_Users
             'phone' => $phone,
             'password' => $password,
             'user_type' => $user_type,
+            'due_date' => $due_date,
         ]);
     }
 

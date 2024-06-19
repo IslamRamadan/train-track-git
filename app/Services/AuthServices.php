@@ -6,9 +6,13 @@ use App\Mail\ResetPasswordMail;
 use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_Coaches;
 use App\Services\DatabaseServices\DB_Notifications;
+use App\Services\DatabaseServices\DB_OneToOneProgram;
+use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_PendingClients;
 use App\Services\DatabaseServices\DB_Users;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 
@@ -20,6 +24,7 @@ class AuthServices
                                 protected DB_PendingClients  $DB_PendingClients,
                                 protected DB_Coaches         $DB_Coaches,
                                 protected DB_Notifications   $DB_Notifications,
+                                protected DB_OneToOneProgram $DB_OneToOneProgram, protected DB_OneToOneProgramExercises $DB_OneToOneProgramExercises
     )
     {
     }
@@ -61,11 +66,19 @@ class AuthServices
         $pending_client = $this->DB_PendingClients->get_pending_client_by_email($email);
         $coach_id = $pending_client->coach_id;
         $coach_info = $this->DB_Users->get_user_info($coach_id);
+        DB::beginTransaction();
         $client = $this->DB_Clients->create_client($name, $email, $phone, $password);
 //        delete email from pending clients
         $this->DB_PendingClients->delete_pending_client($email);
 //        create coach_clients record
         $this->DB_Clients->assign_client_to_coach($coach_id, $client->id);
+
+        $oto_program = $this->DB_OneToOneProgram->create_one_to_program("Welcome " . $name,
+            $name . " welcome program", $client->id, $coach_id);
+
+        $this->DB_OneToOneProgramExercises->create_one_to_one_program_exercises("Welcome " . $name,
+            "", "", 1, Carbon::today()->toDateString(), $oto_program->id);
+        DB::commit();
         return sendResponse(['message' => "Client Created Successfully and added to coach " . $coach_info->name]);
     }
 
@@ -79,7 +92,8 @@ class AuthServices
         $gym = $request['gym'];
         $speciality = $request['speciality'];
         $certificates = $request['certificates'];
-        $user = $this->DB_Users->create_user($name, $email, $phone, $password);
+        $due_date = Carbon::today()->addMonth()->toDateString();
+        $user = $this->DB_Users->create_user($name, $email, $phone, $password, $due_date);
         $this->DB_Coaches->create_coach($gym, $speciality, $certificates, $user->id);
         return sendResponse(['message' => "Coach Created Successfully"]);
     }
