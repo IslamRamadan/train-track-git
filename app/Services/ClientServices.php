@@ -58,6 +58,7 @@ class ClientServices
                 "name" => $client->client->name,
                 "email" => $client->client->email,
                 "phone" => $client->client->phone,
+                "due_date" => $client->client->due_date ?? "",
                 "status" => $client->status//0 for pending , 1 for active,2 for archived
             ];
             $clients_arr[] = $single_client;
@@ -70,6 +71,7 @@ class ClientServices
                         "name" => "",
                         "email" => $client->email,
                         "phone" => "",
+                        "due_date" => "",
                         "status" => "0"//0 for pending , 1 for active,2 for archived
                     ];
                     $clients_arr[] = $single_client;

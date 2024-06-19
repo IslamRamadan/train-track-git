@@ -67,6 +67,7 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     Route::post('client/program/exercise/delete', [OneToOneExerciseController::class, 'delete_client_exercise']);
     Route::post('coach/dashboard', [CoachController::class, 'coach_dashboard']);
     Route::post('clients/activities', [CoachController::class, 'clients_activities']);
+    Route::post('client/update/due/date', [CoachController::class, 'update_due_date']);
     Route::post('coach/update/profile', [CoachController::class, 'update_info']);
     Route::post('coach/client/logs', [CoachController::class, 'list_client_logs']);
     // Coach apis end

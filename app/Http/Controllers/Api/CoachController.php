@@ -45,5 +45,10 @@ class CoachController extends Controller
         return $this->coachServices->list_client_logs($request);
     }
 
+    public function update_due_date(Request $request): JsonResponse
+    {
+        return $this->coachServices->update_due_date($request);
+    }
+
 
 }

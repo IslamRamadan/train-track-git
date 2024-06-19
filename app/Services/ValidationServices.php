@@ -519,4 +519,17 @@ class ValidationServices
             'date' => 'required|date_format:Y-m-d',
         ]);
     }
+
+    public function update_due_date($request)
+    {
+        $request->validate([
+            'client_id' => ['exists:users,id', function ($attribute, $value, $fail) use ($request) {
+                $verify_client_id = $this->DB_Clients->verify_client_id(coach_id: $request->user()->id, client_id: $value);
+                if (!$verify_client_id) {
+                    $fail('The client must be assigned to this coach');
+                }
+            }],
+            'due_date' => 'required|date_format:Y-m-d|after_or_equal:tomorrow'
+        ]);
+    }
 }

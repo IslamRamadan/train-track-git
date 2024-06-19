@@ -110,6 +110,14 @@ class CoachServices
 
     }
 
+    public function update_due_date($request)
+    {
+        $this->validationServices->update_due_date($request);
+        $client_id = $request->client_id;
+        $due_date = $request->due_date;
+        $this->DB_Users->update_user_due_date($client_id, $due_date);
+        return sendResponse(['message' => "Client due date updated successfully"]);
+    }
     public function list_logs_arr(Collection|array $logs)
     {
         $logs_arr = [];

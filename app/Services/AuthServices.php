@@ -110,6 +110,7 @@ class AuthServices
             "name" => $user->name,
             "phone" => $user->phone,
             "user_type" => $user->user_type_text,//Coach or Athlete
+            "due_date" => $user->due_date??"",
             "token" => $user->createToken('appToken')->accessToken,
         ];
         return $success;
