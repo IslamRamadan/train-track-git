@@ -85,7 +85,7 @@ class CoachService
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
                     $btn = '
-                            <button type="button" class="btn btn-sm btn-success updateDueDate mb-2" data-id=' . $row->id . ' data-status="0" data-toggle="modal" data-target="#updateDueDate">
+                            <button type="button" class="btn btn-sm btn-primary updateDueDate mb-2" data-id=' . $row->id . ' data-status="0" data-toggle="modal" data-target="#updateDueDate">
                               ' . __('translate.UpdateDueDate') . '
                             </button>
 ';
@@ -97,7 +97,7 @@ class CoachService
 ';
                     } else {
                         $btn .= '
-                            <button type="button" class="btn btn-sm btn-primary blockCoach mb-2" data-id=' . $row->id . ' data-status="1" data-toggle="modal" data-target="#blockCoach">
+                            <button type="button" class="btn btn-sm btn-warning blockCoach mb-2" data-id=' . $row->id . ' data-status="1" data-toggle="modal" data-target="#blockCoach">
                               ' . __('translate.UnBlock') . '
                             </button>
 ';
@@ -111,7 +111,7 @@ class CoachService
                     } elseif ($due_date->gt(Carbon::today()) && $due_date->lte(Carbon::today()->addWeek())) {
                         $class = "warning";
                     } else {
-                        $class = "primary";
+                        $class = "success";
                     }
                     $btn = '<div class="badge bg-' . $class . '" >
                               ' . $row->due_date . '

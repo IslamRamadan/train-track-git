@@ -30,7 +30,7 @@ return [
     'PayNow' => 'Pay Now',
     '30DaysFree' => '30 Days Free Trial',
     'UpdateDueDate' => 'Update Due Date',
-    'DueDate' => 'Due Date',
+    'DueDate' => 'Payment Due Date',
     'CreationDate' => 'Creation Date',
     'ProgramsNumber' => 'Created Programs',
     'Update' => 'Update',
