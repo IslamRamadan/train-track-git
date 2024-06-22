@@ -44,7 +44,7 @@ class LogServices
                 $single_log_arr['exercise_name'] = $log->exercise->name;
                 $single_log_arr['exercise_description'] = $log->exercise->description;
                 $single_log_arr['log_id'] = $log->id;
-                $single_log_arr['log_sets'] = $log->sets;
+                $single_log_arr['log_sets'] = "0";
                 $single_log_arr['log_details'] = $log->details;
                 $single_log_arr['log_date'] = $log->created_at->format("Y-m-d");
                 $single_log_arr['log_time'] = $log->created_at->format("H:i:s");

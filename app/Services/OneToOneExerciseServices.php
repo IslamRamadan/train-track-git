@@ -61,7 +61,7 @@ class OneToOneExerciseServices
             foreach ($program_exercises as $exercise) {
                 $single_program_exercises_arr = [];
                 $single_program_exercises_arr['id'] = $exercise->id;
-                $single_program_exercises_arr['arrangement'] = $exercise->arrangement;
+                $single_program_exercises_arr['arrangement'] = strval($exercise->arrangement);
                 $single_program_exercises_arr['name'] = $exercise->name;
                 $single_program_exercises_arr['description'] = $exercise->description;
                 $single_program_exercises_arr['extra_description'] = $exercise->extra_description;
@@ -80,7 +80,7 @@ class OneToOneExerciseServices
                 if ($exercise->log()->exists()) {
                     $single_log_arr = [];
                     $single_log_arr['log_id'] = $exercise->log->id;
-                    $single_log_arr['sets'] = $exercise->log->sets;
+                    $single_log_arr['sets'] = "0";
                     $single_log_arr['details'] = $exercise->log->details;
                     $single_program_exercises_arr['logs'][] = $single_log_arr;
                 }
@@ -121,7 +121,7 @@ class OneToOneExerciseServices
                 $logs_arr = [];
                 if ($exercise->log) {
                     $logs_arr['id'] = $exercise->log->id;
-                    $logs_arr['sets'] = $exercise->log->sets;
+                    $logs_arr['sets'] = "0";
                     $logs_arr['details'] = $exercise->log->details;
                     $single_program_exercises_arr['log'] = [$logs_arr];
                 } else {
@@ -382,7 +382,7 @@ class OneToOneExerciseServices
         $single_program_exercises_arr = [];
         $single_program_exercises_arr['id'] = $exercise->id;
         $single_program_exercises_arr['oto_program_id'] = $exercise->one_to_one_program_id;
-        $single_program_exercises_arr['arrangement'] = $exercise->arrangement;
+        $single_program_exercises_arr['arrangement'] = strval($exercise->arrangement);
         $single_program_exercises_arr['name'] = $exercise->name;
         $single_program_exercises_arr['description'] = $exercise->description;
         $single_program_exercises_arr['extra_description'] = $exercise->extra_description;
@@ -401,7 +401,7 @@ class OneToOneExerciseServices
         if ($exercise->log()->exists()) {
             $single_log_arr = [];
             $single_log_arr['log_id'] = $exercise->log->id;
-            $single_log_arr['sets'] = $exercise->log->sets;
+            $single_log_arr['sets'] = "0";
             $single_log_arr['details'] = $exercise->log->details;
             $single_program_exercises_arr['logs'][] = $single_log_arr;
         }
@@ -435,7 +435,7 @@ class OneToOneExerciseServices
                 $single_program_comments_arr['comment_content'] = $comment->comment;
                 $single_program_comments_arr['comment_date'] = Carbon::parse($comment->created_at)->format('Y-m-d');
                 $single_program_comments_arr['sender'] = $comment->user_type;
-                $single_program_comments_arr['coach_id'] = $comment->program->coach_id;
+                $single_program_comments_arr['coach_id'] = strval($comment->program->coach_id);
                 $single_program_comments_arr['coach_name'] = $comment->program->coach->name;
                 $single_program_comments_arr['client_id'] = $comment->program->client_id;
                 $single_program_comments_arr['client_name'] = $comment->program->client->name;
