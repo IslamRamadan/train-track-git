@@ -155,6 +155,9 @@ class CoachService
 
     public function register($request)
     {
+        $this->validationServices->coach_register($request);
+        dd($request->all());
+
         $pay = new PaymentServices();
         $payment = $pay->pay(1, rand(1,123423423));
         return view('payment.paymob')->with('token', $payment);
