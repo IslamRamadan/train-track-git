@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\DatabaseServices\DB_Coaches;
 use App\Services\DatabaseServices\DB_Programs;
 use App\Services\DatabaseServices\DB_Users;
+use App\Services\PaymentServices;
 use App\Services\ValidationServices;
 use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
@@ -154,7 +155,9 @@ class CoachService
 
     public function register($request)
     {
-        dd($request->all());
+        $pay = new PaymentServices();
+        $payment = $pay->pay(1000, 292);
+        return view('payment.paymob')->with('token', $payment);
     }
 
     public function update_coach_due_date($coach_id, $request)

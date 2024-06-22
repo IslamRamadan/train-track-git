@@ -15,6 +15,7 @@
         "laravel/passport": "^11.8",
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
+        "samir-hussein/paymob": "*",
         "spatie/laravel-translatable": "^6.7",
         "yajra/laravel-datatables": "10.0"
     },

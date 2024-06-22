@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OneToOneExerciseController;
 use App\Http\Controllers\Api\OneToOneProgramController;
 use App\Http\Controllers\Api\ProgramController;
+use App\Http\Controllers\PaymentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +32,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('client/register', [AuthController::class, 'client_register']);
 Route::post('coach/register', [AuthController::class, 'coach_register']);
 Route::post('forget/password', [AuthController::class, 'forget_password']);
+Route::post('checkout/processed', [PaymentController::class, 'checkout_processed']);
 
 Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     // Coach apis start

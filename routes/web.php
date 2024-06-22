@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Dashboard\AuthController;
 use App\Http\Controllers\Dashboard\CoachController;
+use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -32,4 +33,5 @@ Route::prefix('{locale?}')->middleware(['localized', 'AdminAuth'])->group(functi
 Route::prefix('{locale?}')->middleware('localized')->group(function () {
     Route::get('/register/{package}', [CoachController::class, "register_form"]);
     Route::post('/register', [CoachController::class, "register"])->name('coach.register');
+    Route::get('/checkout/response', [PaymentController::class, "checkout_response"])->name('checkout.response');
 });
