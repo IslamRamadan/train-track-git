@@ -47,7 +47,7 @@ class PaymentServices
     {
         $request_hmac = $request->hmac;
         $calc_hmac = PayMob::calcHMAC($request);
-        dd($request->all());
+        dd($request->all(),$request_hmac == $calc_hmac);
         if ($request_hmac == $calc_hmac) {
             $order_id = $request->obj['order']['merchant_order_id'];
             $amount_cents = $request->obj['amount_cents'];
