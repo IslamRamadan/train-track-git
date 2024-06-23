@@ -229,6 +229,24 @@ class ValidationServices
         ]);
     }
 
+    public function coach_web_register($request)
+    {
+        $request->validate([
+            'name' => 'required',
+            'email' => 'required|email|unique:users,email',
+            'phone' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|unique:users,phone',
+            'password' => 'required|confirmed',
+            'gym' => 'required',
+            'speciality' => 'required',
+            'certificates' => 'required',
+            'pay_now' => 'required|in:0,1',
+            'package_id' => 'required|exists:packages,id',
+
+        ], [
+            'email.unique' => 'This email already exists in the system',
+        ]);
+    }
+
     public function coach_update_info($request)
     {
         $request->validate([
