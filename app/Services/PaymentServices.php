@@ -20,7 +20,7 @@ class PaymentServices
         ]);
         $PaymentKey = PayMob::PaymentKeyRequest([
             'auth_token' => $auth->token,
-                    'amount_cents' => 150 * 100, //put your price
+            'amount_cents' => $total_price * 100, //put your price
             'currency' => 'EGP',
             'order_id' => $order->id,
             "billing_data" => [ // put your client information
