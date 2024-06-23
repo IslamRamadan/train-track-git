@@ -4,18 +4,20 @@ namespace App\Services\Dashboard;
 
 use App\Models\User;
 use App\Services\DatabaseServices\DB_Coaches;
+use App\Services\DatabaseServices\DB_Packages;
 use App\Services\DatabaseServices\DB_Programs;
 use App\Services\DatabaseServices\DB_Users;
 use App\Services\PaymentServices;
 use App\Services\ValidationServices;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
 class CoachService
 {
 
     public function __construct(protected ValidationServices $validationServices, protected DB_Coaches $DB_Coaches, protected DB_Programs $DB_Programs,
-                                protected DB_Users           $DB_Users)
+                                protected DB_Users           $DB_Users, protected DB_Packages $DB_Packages)
     {
     }
 //
@@ -155,11 +157,29 @@ class CoachService
 
     public function register($request)
     {
-        $this->validationServices->coach_register($request);
-        dd($request->all());
+        $this->validationServices->coach_web_register($request);
+        $name = $request->name;
+        $email = $request->email;
+        $phone = $request->phone;
+        $password = $request->password;
+        $gym = $request->gym;
+        $speciality = $request->speciality;
+        $certificates = $request->certificates;
+        $pay_now = $request->pay_now;
+        $package_id = $request->package_id;
+        $due_date = Carbon::today()->addMonth()->toDateString();
+        DB::beginTransaction();
+        $user = $this->DB_Users->create_user($name, $email, $phone, $password, $due_date);
+        $this->DB_Coaches->create_coach($gym, $speciality, $certificates, $user->id);
+        DB::commit();
+
+        if ($pay_now == "0") {
+            return redirect()->back()->with("msg", "You registered successfully as a coach. Go to the coach app to login");
+        }
+        $package = $this->DB_Packages->find_package($package_id);
 
         $pay = new PaymentServices();
-        $payment = $pay->pay(1, rand(1,123423423));
+        $payment = $pay->pay($package->amount, rand(1, 123423423));
         return view('payment.paymob')->with('token', $payment);
     }
 
