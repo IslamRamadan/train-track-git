@@ -11,6 +11,7 @@ class PaymentServices
     public function pay($total_price, $order_id)
     {
         $auth = PayMob::AuthenticationRequest();
+        dd($auth);
         $payment_link_image = asset('images/logo.png');
         $amount_cents = "1350";
         $full_name = "Islam Ramadan";
