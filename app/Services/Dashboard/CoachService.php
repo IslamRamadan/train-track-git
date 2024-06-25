@@ -168,10 +168,10 @@ class CoachService
         $pay_now = $request->pay_now;
         $package_id = $request->package_id;
         $due_date = Carbon::today()->addMonth()->toDateString();
-        DB::beginTransaction();
-        $user = $this->DB_Users->create_user($name, $email, $phone, $password, $due_date);
-        $this->DB_Coaches->create_coach($gym, $speciality, $certificates, $user->id);
-        DB::commit();
+//        DB::beginTransaction();
+//        $user = $this->DB_Users->create_user($name, $email, $phone, $password, $due_date);
+//        $this->DB_Coaches->create_coach($gym, $speciality, $certificates, $user->id);
+//        DB::commit();
 
         if ($pay_now == "0") {
             return redirect()->back()->with("msg", "You registered successfully as a coach. Go to the coach app to login");
