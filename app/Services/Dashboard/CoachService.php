@@ -180,6 +180,7 @@ class CoachService
 
         $pay = new PaymentServices();
         $payment = $pay->pay($package->amount, rand(1, 123423423));
+        dd($payment);
         return view('payment.paymob')->with('token', $payment);
     }
 
