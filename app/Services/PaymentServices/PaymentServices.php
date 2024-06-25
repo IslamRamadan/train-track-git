@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\PaymentServices;
 
+use App\Services\Order;
 use PayMob\Facades\PayMob;
 
 class PaymentServices
@@ -18,36 +19,19 @@ class PaymentServices
             'merchant_order_id' => $order_id, //put order id from your database must be unique id
             'items' => [] // all items information or leave it empty
         ]);
-        $PaymentKey = PayMob::PaymentKeyRequest([
-            'auth_token' => $auth->token,
-            'amount_cents' => $total_price * 100, //put your price
-            'currency' => 'EGP',
-            'order_id' => $order->id,
-            "billing_data" => [ // put your client information
-                "apartment" => "803",
-                "email" => "claudette09@exa.com",
-                "floor" => "42",
-                "first_name" => "Clifford",
-                "street" => "Ethan Land",
-                "building" => "8028",
-                "phone_number" => "+86(8)9135210487",
-                "shipping_method" => "PKG",
-                "postal_code" => "01898",
-                "city" => "Jaskolskiburgh",
-                "country" => "CR",
-                "last_name" => "Nicolas",
-                "state" => "Utah"
-            ]
-        ]);
-
-        return $PaymentKey->token;
+        $payment_link_image = asset('images/logo.png');
+        $amount_cents = "1350";
+        $full_name = "Islam Ramadan";
+        $email = "eslam.iniesta@gmail.com";
+        $description = "Short Description";
+        return PayMob::createPaymentLink($auth->token, $payment_link_image, $amount_cents, $full_name, $email, $description);
     }
 
     public function checkout_processed($request)
     {
         $request_hmac = $request->hmac;
         $calc_hmac = PayMob::calcHMAC($request);
-        dd($request->all(),$request_hmac == $calc_hmac);
+        dd($request->all(), $request_hmac == $calc_hmac);
         if ($request_hmac == $calc_hmac) {
             $order_id = $request->obj['order']['merchant_order_id'];
             $amount_cents = $request->obj['amount_cents'];

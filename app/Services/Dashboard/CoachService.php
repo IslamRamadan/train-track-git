@@ -7,7 +7,7 @@ use App\Services\DatabaseServices\DB_Coaches;
 use App\Services\DatabaseServices\DB_Packages;
 use App\Services\DatabaseServices\DB_Programs;
 use App\Services\DatabaseServices\DB_Users;
-use App\Services\PaymentServices;
+use App\Services\PaymentServices\PaymentServices;
 use App\Services\ValidationServices;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
