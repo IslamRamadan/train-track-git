@@ -6,12 +6,12 @@ use App\Models\UsersPayment;
 
 class DB_UserPayment
 {
-    public function find_user_payment($coach_id, $order_id, $amount)
+    public function find_user_payment( $order_id, $amount,$status)
     {
-        UsersPayment::query()->where([
-            'coach_id' => $coach_id,
+        return UsersPayment::query()->where([
             'order_id' => $order_id,
             'amount' => $amount,
+            'status' => $status,
         ])->first();
     }
 

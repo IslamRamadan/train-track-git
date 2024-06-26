@@ -187,7 +187,6 @@ class CoachService
             $payment_amount = $payment->amount_cents / 100;
             $this->DB_UserPayment->create_user_payment(coach_id: $user->id, order_id: $order_id, amount: $payment_amount);
             return redirect($payment_url);
-
         } catch (\Exception $exception) {
             return redirect()->back()->with("msg", "Payment failed but you still have 30 days free trial. Go to the coach app to login");
         }
