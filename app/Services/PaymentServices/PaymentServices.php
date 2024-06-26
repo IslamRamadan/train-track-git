@@ -2,21 +2,16 @@
 
 namespace App\Services\PaymentServices;
 
-use App\Services\Order;
 use PayMob\Facades\PayMob;
 
 class PaymentServices
 {
 
-    public function pay($total_price, $order_id)
+    public function pay($amount, $full_name, $email, $description)
     {
         $auth = PayMob::AuthenticationRequest();
         $payment_link_image = asset('images/logo.png');
-        $amount_cents = "1350";
-        $full_name = "Islam Ramadan";
-        $email = "eslam.iniesta@gmail.com";
-        $description = "Short Description";
-        return PayMob::createPaymentLink($auth->token, $payment_link_image, $amount_cents, $full_name, $email, $description);
+        return PayMob::createPaymentLink($auth->token, $payment_link_image, $amount * 100, $full_name, $email, $description);
     }
 
     public function checkout_processed($request)

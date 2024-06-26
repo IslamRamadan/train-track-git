@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\DatabaseServices\DB_Coaches;
 use App\Services\DatabaseServices\DB_Packages;
 use App\Services\DatabaseServices\DB_Programs;
+use App\Services\DatabaseServices\DB_UserPayment;
 use App\Services\DatabaseServices\DB_Users;
 use App\Services\PaymentServices\PaymentServices;
 use App\Services\ValidationServices;
@@ -17,7 +18,7 @@ class CoachService
 {
 
     public function __construct(protected ValidationServices $validationServices, protected DB_Coaches $DB_Coaches, protected DB_Programs $DB_Programs,
-                                protected DB_Users           $DB_Users, protected DB_Packages $DB_Packages)
+                                protected DB_Users           $DB_Users, protected DB_Packages $DB_Packages, protected DB_UserPayment $DB_UserPayment)
     {
     }
 //
@@ -168,20 +169,28 @@ class CoachService
         $pay_now = $request->pay_now;
         $package_id = $request->package_id;
         $due_date = Carbon::today()->addMonth()->toDateString();
-//        DB::beginTransaction();
-//        $user = $this->DB_Users->create_user($name, $email, $phone, $password, $due_date);
-//        $this->DB_Coaches->create_coach($gym, $speciality, $certificates, $user->id);
-//        DB::commit();
+        DB::beginTransaction();
+        $user = $this->DB_Users->create_user($name, $email, $phone, $password, $due_date);
+        $this->DB_Coaches->create_coach($gym, $speciality, $certificates, $user->id);
+        DB::commit();
 
         if ($pay_now == "0") {
             return redirect()->back()->with("msg", "You registered successfully as a coach. Go to the coach app to login");
         }
         $package = $this->DB_Packages->find_package($package_id);
-
+        $payment_description = $package->name . " payment with " . $package->clients_limit . " clients limit.";
         $pay = new PaymentServices();
-        $payment = $pay->pay($package->amount, rand(1, 123423423));
-        dd($payment);
-        return view('payment.paymob')->with('token', $payment);
+        try {
+            $payment = $pay->pay(amount: $package->amount, full_name: $name, email: $email, description: $payment_description);
+            $payment_url = $payment->client_url;
+            $order_id = $payment->order;
+            $payment_amount = $payment->amount_cents / 100;
+            $this->DB_UserPayment->create_user_payment(coach_id: $user->id, order_id: $order_id, amount: $payment_amount);
+            return redirect($payment_url);
+
+        } catch (\Exception $exception) {
+            return redirect()->back()->with("msg", "Payment failed but you still have 30 days free trial. Go to the coach app to login");
+        }
     }
 
     public function update_coach_due_date($coach_id, $request)

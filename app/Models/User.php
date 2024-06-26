@@ -80,6 +80,11 @@ class User extends Authenticatable
         return $this->hasMany(UserNotification::class, 'user_id');
     }
 
+    public function payments()
+    {
+        return $this->hasMany(UsersPayment::class, 'coach_id');
+    }
+
     public function notification_token()
     {
         return $this->hasMany(UserNotificationToken::class, 'user_id');

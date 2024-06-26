@@ -326,6 +326,9 @@ class ClientServices
         if ($client_info->notifications()->exists()) {
             $client_info->notifications()->delete();
         }
+        if ($client_info->payments()->exists()) {
+            $client_info->payments()->delete();
+        }
         if ($client_info->notification_token()->exists()) {
             $client_info->notification_token()->delete();
         }
