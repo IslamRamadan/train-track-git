@@ -188,7 +188,7 @@ class CoachService
             $this->DB_UserPayment->create_user_payment(coach_id: $user->id, order_id: $order_id, amount: $payment_amount);
             return redirect($payment_url);
         } catch (\Exception $exception) {
-            return view('payment.payment_fail');
+            return view('payment.payment_failed');
         }
     }
 
