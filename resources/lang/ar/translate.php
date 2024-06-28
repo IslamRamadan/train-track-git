@@ -34,4 +34,15 @@ return [
     'CreationDate' => 'تاريخ الانشاء',
     'ProgramsNumber' => 'عدد البرامج المنشأه',
     'Update' => 'تعديل',
+    'PaymentSuccessMsg' => "تم الدفع بنجاح واشتراكك حتى ",
+    'Success' => 'نجح',
+    'Failed' => 'فشل',
+    'Order' => 'طلب',
+    'GoToLoginPage' => 'اذهب لصفحة تسجيل الدخول',
+    'PaymentSuccess' => 'نجح الدفع',
+    'Enjoy30DayFree' => 'استمتع بالتجربة المجانية لمدة 30 يومًا مع Train Track',
+    'RegisterSuccess' => 'تم التسجيل بنجاح',
+    "PaymentFailedBut30FreeTrial" => "فشل الدفع ولكن يمكنك الاستمتاع بالتجربة المجانية لمدة 30 يومًا مع Train Track.",
+    "PaymentFailed" => "فشل الدفع"
+
 ];

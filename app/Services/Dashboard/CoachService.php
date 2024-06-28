@@ -153,6 +153,7 @@ class CoachService
 
     public function register_form($package)
     {
+        return view('payment.payment_fail');
         return view('users.register', compact('package'));
     }
 
@@ -175,7 +176,7 @@ class CoachService
         DB::commit();
 
         if ($pay_now == "0") {
-            return redirect()->back()->with("msg", "You registered successfully as a coach. Go to the coach app to login");
+            return view('payment.free_trial');
         }
         $package = $this->DB_Packages->find_package($package_id);
         $payment_description = $package->name . " payment with " . $package->clients_limit . " clients limit.";
@@ -188,7 +189,7 @@ class CoachService
             $this->DB_UserPayment->create_user_payment(coach_id: $user->id, order_id: $order_id, amount: $payment_amount);
             return redirect($payment_url);
         } catch (\Exception $exception) {
-            return redirect()->back()->with("msg", "Payment failed but you still have 30 days free trial. Go to the coach app to login");
+            return view('payment.payment_failed');
         }
     }
 

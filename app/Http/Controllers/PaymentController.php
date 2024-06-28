@@ -27,7 +27,7 @@ class PaymentController extends Controller
         if ($request->success == "true") {
             $order_id = $request->order;
             $amount = $request->amount_cents / 100;
-            $get_the_order = $this->DB_UserPayment->find_user_payment($order_id, $amount, 1);
+            $get_the_order = $this->DB_UserPayment->find_user_payment($order_id, $amount, "1");
             if ($get_the_order) {
                 $get_the_coach = $this->DB_Users->get_user_info($get_the_order->coach_id);
                 $coach_due_date = Carbon::parse($get_the_coach->due_date);
@@ -36,15 +36,15 @@ class PaymentController extends Controller
                 } else {
                     $new_due_date = $coach_due_date->addMonth()->toDateString();
                 }
-                $this->DB_Users->update_user_due_date($get_the_coach, $new_due_date);
-                $this->DB_UserPayment->update_user_payment_status($get_the_order, 2);
-//                return redirect()->route()
-                return "payment successfully done and your subscription till" . $new_due_date;
+                $this->DB_Users->update_user_due_date($get_the_coach->id, $new_due_date);
+                $this->DB_UserPayment->update_user_payment_status($get_the_order, "2");
+                $success_msg = __('translate.PaymentSuccessMsg') . $new_due_date;
+                return view('payment.payment_done', compact('success_msg', 'order_id'));
             } else {
-                dd("un expected error");
+                return view('payment.payment_failed');
             }
         }
-//        dd($request->all(), $request_hmac, $calc_hmac);
+        return view('payment.payment_failed');
     }
 
 
