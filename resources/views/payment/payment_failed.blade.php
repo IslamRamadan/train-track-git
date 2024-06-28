@@ -50,8 +50,8 @@
             <div class="col-md-5">
                 <div class="message-box _success _failed">
                     <i class="fa fa-times-circle" aria-hidden="true"></i>
-                    <h2>{{__('translate.PaymentFailed')}}</h2>
-                    <p>{{__('translate.PaymentFailedBut30FreeTrial')}}</p>
+                    <h2>{{__('translate.Failed')}}</h2>
+                    <p>{{__('translate.FailedBut30FreeTrial')}}</p>
                     <br>
                     <a class="btn btn-dark text-light w-100"
                        href="http://app.traintrackcoach.com/">{{__('translate.GoToLoginPage')}}</a>

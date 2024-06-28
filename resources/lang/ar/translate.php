@@ -42,7 +42,7 @@ return [
     'PaymentSuccess' => 'نجح الدفع',
     'Enjoy30DayFree' => 'استمتع بالتجربة المجانية لمدة 30 يومًا مع Train Track',
     'RegisterSuccess' => 'تم التسجيل بنجاح',
-    "PaymentFailedBut30FreeTrial" => "فشل الدفع ولكن يمكنك الاستمتاع بالتجربة المجانية لمدة 30 يومًا مع Train Track.",
+    "FailedBut30FreeTrial" => "حدث خطأ ما ولكن يمكنك الاستمتاع بالتجربة المجانية لمدة 30 يومًا مع Train Track.",
     "PaymentFailed" => "فشل الدفع"
 
 ];
