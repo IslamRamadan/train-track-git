@@ -153,8 +153,7 @@ class CoachService
 
     public function register_form($package)
     {
-        return view('payment.payment_fail');
-        return view('users.register', compact('package'));
+            return view('users.register', compact('package'));
     }
 
     public function register($request)
