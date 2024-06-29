@@ -25,6 +25,7 @@ Route::prefix('{locale?}')->middleware(['localized', 'AdminGuest'])->group(funct
     })->name("name");
 });
 Route::prefix('{locale?}')->middleware(['localized', 'AdminAuth'])->group(function () {
+    Route::get('/logout', [AuthController::class, "logout"])->name('logout');
     Route::get('/coaches', [CoachController::class, "index"])->name('coaches.index');
     Route::get('/payments', [PaymentController::class, "index"])->name('payments.index');
     Route::post('/coaches/block/{id}', [CoachController::class, "block"])->name('coaches.block');

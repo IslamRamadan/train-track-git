@@ -31,7 +31,7 @@
                 <i class="fas fa-cog"></i>
             </a>
             <div class="dropdown-menu dropdown-menu-sm dropdown-menu-right">
-                <a href="#" class="dropdown-item">
+                <a href="{{route('logout',app()->getLocale())}}" class="dropdown-item">
                     <i class="fas fa-sign-out-alt"></i> {{__('translate.LogOut')}}
                 </a>
             </div>
