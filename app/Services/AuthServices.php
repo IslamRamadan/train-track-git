@@ -48,6 +48,16 @@ class AuthServices
             if ($user->user_type == "0" && $user->coach->status == "0") {
                 return sendError("Blocked Coach");
             }
+            if ($user->user_type == "0") {
+                $due_date = Carbon::parse($user->due_date);
+            } else {
+                $coach_id = $user->coach_client_client->coach_id;
+                $client_coach = $this->DB_Users->get_user_info($coach_id);
+                $due_date = Carbon::parse($client_coach->due_date);
+            }
+            if ($due_date->lt(Carbon::today())) {
+                return sendError("Coach subscription expired", 401);
+            }
             $this->check_user_notification_token(token: $notification_token, user_id: $user->id);
             return sendResponse($this->user_info_arr($user));
         } else {
