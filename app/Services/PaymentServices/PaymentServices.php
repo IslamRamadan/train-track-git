@@ -3,6 +3,9 @@
 namespace App\Services\PaymentServices;
 
 use App\Models\UsersPayment;
+use App\Services\DatabaseServices\DB_Clients;
+use App\Services\DatabaseServices\DB_Coaches;
+use App\Services\DatabaseServices\DB_Packages;
 use App\Services\DatabaseServices\DB_UserPayment;
 use App\Services\DatabaseServices\DB_Users;
 use Carbon\Carbon;
@@ -11,7 +14,12 @@ use Yajra\DataTables\Facades\DataTables;
 
 class PaymentServices
 {
-    public function __construct(protected DB_UserPayment $DB_UserPayment, protected DB_Users $DB_Users)
+    public function __construct(protected DB_UserPayment $DB_UserPayment,
+                                protected DB_Users       $DB_Users,
+                                protected DB_Clients     $DB_Clients,
+                                protected DB_Packages    $DB_Packages,
+                                protected DB_Coaches     $DB_Coaches,
+    )
     {
     }
 
@@ -81,15 +89,20 @@ class PaymentServices
             $amount = $request->amount_cents / 100;
             $get_the_order = $this->DB_UserPayment->find_user_payment($order_id, $amount, "1");
             if ($get_the_order) {
-                $get_the_coach = $this->DB_Users->get_user_info($get_the_order->coach_id);
+                $coach_id = $get_the_order->coach_id;
+                $get_the_coach = $this->DB_Users->get_user_info($coach_id);
                 $coach_due_date = Carbon::parse($get_the_coach->due_date);
                 if ($coach_due_date->lt(Carbon::today())) {
                     $new_due_date = Carbon::today()->addMonth()->toDateString();
                 } else {
                     $new_due_date = $coach_due_date->addMonth()->toDateString();
                 }
-                $this->DB_Users->update_user_due_date($get_the_coach->id, $new_due_date);
+                $this->DB_Users->update_user_due_date($coach_id, $new_due_date);
                 $this->DB_UserPayment->update_user_payment_status($get_the_order, "2");
+
+                //check if user need to downgrade the package
+                if ($get_the_order->first_pay == "0") $this->checkIfUserNeedToDowngradeThePackage($coach_id);
+
                 $success_msg = __('translate.PaymentSuccessMsg') . $new_due_date;
                 return view('payment.payment_done', compact('success_msg', 'order_id'));
             } else {
@@ -97,6 +110,18 @@ class PaymentServices
             }
         }
         return view('payment.payment_failed');
+    }
+
+    /**
+     * Check if user need to downgrade the package
+     * @param $coach_id
+     * @return void
+     */
+    public function checkIfUserNeedToDowngradeThePackage($coach_id): void
+    {
+        $coach_active_clients = $this->DB_Clients->get_active_clients($coach_id);
+        $appropriate_package = $this->DB_Packages->get_appropriate_package($coach_active_clients);
+        $this->DB_Coaches->update_coach_package($coach_id, $appropriate_package->id);
     }
 
 

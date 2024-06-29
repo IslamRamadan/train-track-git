@@ -3,7 +3,6 @@
 namespace App\Services\DatabaseServices;
 
 use App\Models\Package;
-use App\Models\User;
 
 class DB_Packages
 {
@@ -11,4 +10,10 @@ class DB_Packages
     {
         return Package::query()->find($package_id);
     }
+
+    public function get_appropriate_package($coach_active_clients)
+    {
+        return Package::query()->where('clients_limit', ">", $coach_active_clients)->orderBy('clients_limit')->first();
+    }
+
 }

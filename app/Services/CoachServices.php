@@ -155,6 +155,22 @@ class CoachServices
 
     }
 
+    public function check_package_limit($request)
+    {
+        $coach_id = $request->user()->id;
+
+        if ($request->user()->user_type != "0") {
+            return sendError("This user is not a coach");
+        }
+        list($coach_package, $upgrade) = $this->get_coach_package($coach_id);
+        return sendResponse([
+            "upgrade" => $upgrade,
+            "package_id" => $coach_package->id,
+            "package_name" => $coach_package->name,
+            "package_amount" => $coach_package->amount,
+            "package_clients_limit" => $coach_package->clients_limit,
+        ]);
+    }
     public function list_logs_arr(Collection|array $logs)
     {
         $logs_arr = [];
@@ -212,7 +228,23 @@ class CoachServices
         return array($clients_activity, $done_workout);
     }
 
+    /**
+     * @param mixed $coach_id
+     * @return array
+     */
+    public function get_coach_package(mixed $coach_id): array
+    {
+        $active_clients = $this->DB_Clients->get_active_clients($coach_id);
+        $get_coach_info = $this->DB_Coaches->get_coach_info($coach_id);
+        $coach_package = $get_coach_info->package;
+        $upgrade = false;
 
+        if ($active_clients + 1 > $coach_package->clients_limit) {
+//          the coach now will exceed the client limit
+            $upgrade = true;
+//          get the higher package
+            $coach_package = $this->DB_Packages->get_appropriate_package($active_clients);
+        }
+        return array($coach_package, $upgrade);
+    }
 }
-
-https://test.traintrackcoach.com/ar/checkout/response?id=195875503&pending=false&amount_cents=100&success=true&is_auth=false&is_capture=false&is_standalone_payment=true&is_voided=false&is_refunded=false&is_3d_secure=true&integration_id=4598040&profile_id=981700&has_parent_transaction=false&order=221683366&created_at=2024-06-29T05%3A38%3A01.132793&currency=EGP&merchant_commission=0&discount_details=%5B%5D&is_void=false&is_refund=false&error_occured=false&refunded_amount_cents=0&captured_amount=0&updated_at=2024-06-29T05%3A38%3A39.706984&is_settled=false&bill_balanced=false&is_bill=false&owner=1804864&data.message=Approved&source_data.type=card&source_data.pan=8769&source_data.sub_type=Visa&acq_response_code=00&txn_response_code=APPROVED&hmac=5219ae48722ac22131b5272a5fcd3e1a6ea1e9836e25b04aa7e61b0b0af1b4fec58dc5577f7c4359dcc9d123909f25c7abd7b06230bf024a178b0156738f7718

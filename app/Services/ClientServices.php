@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Mail\InvitationMail;
 use App\Services\DatabaseServices\DB_Clients;
+use App\Services\DatabaseServices\DB_Coaches;
 use App\Services\DatabaseServices\DB_Exercises;
 use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
@@ -20,7 +21,9 @@ use Illuminate\Support\Facades\Mail;
 class ClientServices
 {
     public function __construct(protected ValidationServices               $validationServices,
-                                protected DB_Clients                       $DB_Clients, protected DB_Exercises $DB_Exercises,
+                                protected DB_Clients    $DB_Clients,
+                                protected DB_Coaches    $DB_Coaches,
+                                protected DB_Exercises  $DB_Exercises,
                                 protected DB_OneToOneProgramExercises      $DB_OneToOneProgramExercises,
                                 protected DB_Programs                      $DB_Programs,
                                 protected DB_OneToOneProgram               $DB_OneToOneProgram,
@@ -28,6 +31,7 @@ class ClientServices
                                 protected DB_ProgramClients                $DB_ProgramClients,
                                 protected DB_PendingClients                $DB_PendingClients,
                                 protected DB_OneToOneProgramExerciseVideos $DB_OneToOneProgramExerciseVideos,
+                                protected CoachServices $coachServices,
     )
     {
     }
@@ -197,6 +201,9 @@ class ClientServices
 
         $this->DB_PendingClients->create_pending_client($coach_id, $email);
 
+        list($coach_package, $upgrade) = $this->coachServices->get_coach_package($coach_id);
+        if ($upgrade) $this->DB_Coaches->update_coach_package($coach_id, $coach_package->id);
+
         return sendResponse(['message' => "Client Invited Successfully"]);
     }
 
@@ -356,6 +363,9 @@ class ClientServices
         $status = $request['status'];
         $this->DB_Clients->archive_client(client_id: $client_id, status: $status);
         $type = $status == "2" ? "archived" : "unarchived";
+//        if ($status == "1") {
+        //  TODO::check the active clients
+//        }
         return sendResponse(['message' => "Client " . $type . " successfully"]);
     }
 

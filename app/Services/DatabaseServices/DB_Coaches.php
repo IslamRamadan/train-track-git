@@ -21,7 +21,7 @@ class DB_Coaches
 
     public function get_coach_info(mixed $coach_id)
     {
-        return Coach::query()->where('user_id', $coach_id)->first();
+        return Coach::query()->with('package')->where('user_id', $coach_id)->first();
     }
 
     public function update_coach(mixed $coach_id, $gym, $speciality, $certificates)
@@ -36,5 +36,12 @@ class DB_Coaches
     public function change_coach_status($id, mixed $status)
     {
         return Coach::query()->where('user_id', $id)->update(['status' => $status]);
+    }
+
+    public function update_coach_package(mixed $coach_id, $package_id)
+    {
+        return Coach::query()->where('user_id', $coach_id)->update([
+            'package_id' => $package_id
+        ]);
     }
 }

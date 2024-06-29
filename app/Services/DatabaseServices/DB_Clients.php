@@ -76,4 +76,9 @@ class DB_Clients
         return CoachClient::query()->where(['client_id' => $client_id])->first();
     }
 
+    public function get_active_clients($coach_id)
+    {
+        return CoachClient::query()->where(['coach_id' => $coach_id, "status" => "1"])->count();
+    }
+
 }

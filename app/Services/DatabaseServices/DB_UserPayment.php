@@ -15,13 +15,14 @@ class DB_UserPayment
         ])->first();
     }
 
-    public function create_user_payment($coach_id, $order_id, $amount, $status = "1")
+    public function create_user_payment($coach_id, $order_id, $amount, $status = "1", $first_pay = "0")
     {
         UsersPayment::query()->create([
             'coach_id' => $coach_id,
             'order_id' => $order_id,
             'amount' => $amount,
             'status' => $status,
+            'first_pay' => $first_pay,
         ]);
     }
 
