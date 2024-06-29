@@ -9,10 +9,15 @@ class Coach extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['gym', 'speciality', 'certificates', 'user_id', 'status'];
+    protected $fillable = ['gym', 'speciality', 'certificates', 'user_id', 'status', 'package_id'];
 
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function package()
+    {
+        return $this->belongsTo(Package::class, 'package_id');
     }
 }

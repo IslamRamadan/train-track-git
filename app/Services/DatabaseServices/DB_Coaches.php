@@ -3,19 +3,19 @@
 namespace App\Services\DatabaseServices;
 
 use App\Models\Coach;
-use App\Models\User;
 
 class DB_Coaches
 {
 
 
-    public function create_coach(mixed $gym, mixed $speciality, mixed $certificates, mixed $user_id)
+    public function create_coach(mixed $gym, mixed $speciality, mixed $certificates, mixed $user_id, $package_id = 1)
     {
         return Coach::query()->create([
             'gym' => $gym,
             'speciality' => $speciality,
             'certificates' => $certificates,
             'user_id' => $user_id,
+            'package_id' => $package_id,
         ]);
     }
 

@@ -171,7 +171,7 @@ class CoachService
         $due_date = Carbon::today()->addMonth()->toDateString();
         DB::beginTransaction();
         $user = $this->DB_Users->create_user($name, $email, $phone, $password, $due_date);
-        $this->DB_Coaches->create_coach($gym, $speciality, $certificates, $user->id);
+        $this->DB_Coaches->create_coach($gym, $speciality, $certificates, $user->id, $package_id);
         DB::commit();
 
         if ($pay_now == "0") {

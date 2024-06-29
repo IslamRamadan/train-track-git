@@ -50,5 +50,10 @@ class CoachController extends Controller
         return $this->coachServices->update_due_date($request);
     }
 
+    public function create_payment_link(Request $request): JsonResponse
+    {
+        return $this->coachServices->create_payment_link($request);
+    }
+
 
 }

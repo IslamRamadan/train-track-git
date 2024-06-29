@@ -7,7 +7,10 @@ use App\Services\DatabaseServices\DB_Coaches;
 use App\Services\DatabaseServices\DB_ExerciseLog;
 use App\Services\DatabaseServices\DB_Notifications;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
+use App\Services\DatabaseServices\DB_Packages;
+use App\Services\DatabaseServices\DB_UserPayment;
 use App\Services\DatabaseServices\DB_Users;
+use App\Services\PaymentServices\PaymentServices;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
@@ -21,6 +24,8 @@ class CoachServices
                                 protected DB_ExerciseLog              $DB_ExerciseLog,
                                 protected DB_OneToOneProgramExercises $DB_OneToOneProgramExercises,
                                 protected DB_Notifications            $DB_Notifications,
+                                protected DB_Packages    $DB_Packages,
+                                protected DB_UserPayment $DB_UserPayment,
     )
     {
     }
@@ -118,6 +123,37 @@ class CoachServices
         $this->DB_Users->update_user_due_date($client_id, $due_date);
         return sendResponse(['message' => "Client due date updated successfully"]);
     }
+
+    public function create_payment_link($request)
+    {
+        if ($request->user()->user_type != "0") {
+            return sendError("This user is not a coach");
+        }
+
+        $coach_id = $request->user()->id;
+
+        $user = $this->DB_Users->get_user_info($coach_id);
+        $package_id = $user->coach->package_id;
+
+        $package = $this->DB_Packages->find_package($package_id);
+
+        $payment_description = $package->name . " payment with " . $package->clients_limit . " clients limit.";
+
+        $pay = new PaymentServices();
+
+        try {
+            $payment = $pay->pay(amount: $package->amount, full_name: $user->name, email: $user->email, description: $payment_description);
+            $payment_url = $payment->client_url;
+            $order_id = $payment->order;
+            $payment_amount = $payment->amount_cents / 100;
+            $this->DB_UserPayment->create_user_payment(coach_id: $user->id, order_id: $order_id, amount: $payment_amount);
+            return sendResponse(["payment_url" => $payment_url]);
+        } catch (\Exception $exception) {
+            return sendError("Payment failed,Please try again later.");
+        }
+
+    }
+
     public function list_logs_arr(Collection|array $logs)
     {
         $logs_arr = [];
@@ -174,5 +210,6 @@ class CoachServices
         }
         return array($clients_activity, $done_workout);
     }
+
 
 }

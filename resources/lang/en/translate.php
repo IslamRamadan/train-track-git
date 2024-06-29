@@ -42,6 +42,6 @@ return [
     "PaymentSuccess" => "Payment Success",
     "Enjoy30DayFree" => "Enjoy your 30 days free trial with Train Track.",
     "RegisterSuccess" => "Successfully Registered",
-    "FailedBut30FreeTrial" => "Something went wrong but you can enjoy 30 day free trial with Train Track.",
+    "FailedBut30FreeTrial" => "Something went wrong please try again.",
     "PaymentFailed" => "Payment Failed",
 ];
