@@ -131,7 +131,7 @@ class CoachServices
         $coach_id = $request->coach_id;
         $user = $this->DB_Users->get_user_info($coach_id);
 
-        if ($request->user()->user_type != "0") {
+        if ($user->user_type != "0") {
             return sendError("This user is not a coach");
         }
 
