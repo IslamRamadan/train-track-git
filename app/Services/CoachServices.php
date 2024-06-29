@@ -26,6 +26,7 @@ class CoachServices
                                 protected DB_Notifications            $DB_Notifications,
                                 protected DB_Packages    $DB_Packages,
                                 protected DB_UserPayment $DB_UserPayment,
+                                protected PaymentServices $paymentServices,
     )
     {
     }
@@ -141,10 +142,8 @@ class CoachServices
 
         $payment_description = $package->name . " payment with " . $package->clients_limit . " clients limit.";
 
-        $pay = new PaymentServices();
-
         try {
-            $payment = $pay->pay(amount: $package->amount, full_name: $user->name, email: $user->email, description: $payment_description);
+            $payment = $this->paymentServices->pay(amount: $package->amount, full_name: $user->name, email: $user->email, description: $payment_description);
             $payment_url = $payment->client_url;
             $order_id = $payment->order;
             $payment_amount = $payment->amount_cents / 100;
@@ -215,3 +214,5 @@ class CoachServices
 
 
 }
+
+https://test.traintrackcoach.com/ar/checkout/response?id=195875503&pending=false&amount_cents=100&success=true&is_auth=false&is_capture=false&is_standalone_payment=true&is_voided=false&is_refunded=false&is_3d_secure=true&integration_id=4598040&profile_id=981700&has_parent_transaction=false&order=221683366&created_at=2024-06-29T05%3A38%3A01.132793&currency=EGP&merchant_commission=0&discount_details=%5B%5D&is_void=false&is_refund=false&error_occured=false&refunded_amount_cents=0&captured_amount=0&updated_at=2024-06-29T05%3A38%3A39.706984&is_settled=false&bill_balanced=false&is_bill=false&owner=1804864&data.message=Approved&source_data.type=card&source_data.pan=8769&source_data.sub_type=Visa&acq_response_code=00&txn_response_code=APPROVED&hmac=5219ae48722ac22131b5272a5fcd3e1a6ea1e9836e25b04aa7e61b0b0af1b4fec58dc5577f7c4359dcc9d123909f25c7abd7b06230bf024a178b0156738f7718

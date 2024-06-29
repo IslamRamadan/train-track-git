@@ -18,7 +18,9 @@ class CoachService
 {
 
     public function __construct(protected ValidationServices $validationServices, protected DB_Coaches $DB_Coaches, protected DB_Programs $DB_Programs,
-                                protected DB_Users           $DB_Users, protected DB_Packages $DB_Packages, protected DB_UserPayment $DB_UserPayment)
+                                protected DB_Users $DB_Users, protected DB_Packages $DB_Packages, protected DB_UserPayment $DB_UserPayment
+        , protected PaymentServices                $paymentServices
+    )
     {
     }
 //
@@ -179,9 +181,8 @@ class CoachService
         }
         $package = $this->DB_Packages->find_package($package_id);
         $payment_description = $package->name . " payment with " . $package->clients_limit . " clients limit.";
-        $pay = new PaymentServices();
         try {
-            $payment = $pay->pay(amount: $package->amount, full_name: $name, email: $email, description: $payment_description);
+            $payment = $this->paymentServices->pay(amount: $package->amount, full_name: $name, email: $email, description: $payment_description);
             $payment_url = $payment->client_url;
             $order_id = $payment->order;
             $payment_amount = $payment->amount_cents / 100;
