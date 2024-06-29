@@ -33,7 +33,7 @@ Route::post('client/register', [AuthController::class, 'client_register']);
 Route::post('coach/register', [AuthController::class, 'coach_register']);
 Route::post('forget/password', [AuthController::class, 'forget_password']);
 Route::post('checkout/processed', [PaymentController::class, 'checkout_processed']);
-Route::post('coach/payment/link/create', [CoachController::class, 'create_payment_link'])->middleware('auth:api');
+Route::post('coach/payment/link/create', [CoachController::class, 'create_payment_link']);
 
 Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     // Coach apis start

@@ -126,13 +126,15 @@ class CoachServices
 
     public function create_payment_link($request)
     {
+        $this->validationServices->create_payment_link($request);
+
+        $coach_id = $request->coach_id;
+        $user = $this->DB_Users->get_user_info($coach_id);
+
         if ($request->user()->user_type != "0") {
             return sendError("This user is not a coach");
         }
 
-        $coach_id = $request->user()->id;
-
-        $user = $this->DB_Users->get_user_info($coach_id);
         $package_id = $user->coach->package_id;
 
         $package = $this->DB_Packages->find_package($package_id);

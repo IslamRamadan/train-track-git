@@ -558,4 +558,11 @@ class ValidationServices
             'due_date' => 'required|date_format:Y-m-d|after_or_equal:tomorrow'
         ]);
     }
+
+    public function create_payment_link($request)
+    {
+        $request->validate([
+            'coach_id' => ['exists:users,id'],
+        ]);
+    }
 }
