@@ -43,6 +43,13 @@ return [
     'Enjoy30DayFree' => 'استمتع بالتجربة المجانية لمدة 30 يومًا مع Train Track',
     'RegisterSuccess' => 'تم التسجيل بنجاح',
     "FailedBut30FreeTrial" => "حدث خطأ ما برجاء المحاولة مرة أخري.",
-    "PaymentFailed" => "فشل الدفع"
+    "PaymentFailed" => "فشل الدفع",
+    "Paid" => "مدفوعة",
+    "UnPaid" => "غير مدفوعة",
+    "CoachesPayments" => "مدفوعات المدربين",
+    "PaymentStatus" => "حالة الدفع",
+    "Amount" => "الثمن",
+    "OrderId" => "رقم الطلب",
+    "OrderDate" => "تاريخ الطلب",
 
 ];

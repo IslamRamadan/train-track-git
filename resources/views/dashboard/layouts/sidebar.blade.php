@@ -30,11 +30,23 @@
 
 
                 <li class="nav-item">
-                    <a href="{{route('coaches.index',app()->getLocale())}}" class="nav-link active">
+                    <a href="{{route('coaches.index',app()->getLocale())}}"
+                       class="nav-link {{str_contains(Route::currentRouteName(), 'coaches')?"active":""}}">
                         <i class="nav-icon fas fa-user-alt"></i>
                         <p>
                             {{__('translate.Coaches')}}
                         </p>
+                    </a>
+
+                </li>
+                <li class="nav-item">
+                    <a href="{{route('payments.index',app()->getLocale())}}"
+                       class="nav-link {{str_contains(Route::currentRouteName(), 'payments')?"active":""}}"">
+                    <i class="nav-icon far fa-credit-card"></i>
+
+                    <p>
+                        {{__('translate.CoachesPayments')}}
+                    </p>
                     </a>
 
                 </li>

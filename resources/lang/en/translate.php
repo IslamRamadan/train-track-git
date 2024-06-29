@@ -44,4 +44,11 @@ return [
     "RegisterSuccess" => "Successfully Registered",
     "FailedBut30FreeTrial" => "Something went wrong please try again.",
     "PaymentFailed" => "Payment Failed",
+    "Paid" => "Paid",
+    "UnPaid" => "Not Paid",
+    "CoachesPayments" => "Coaches Payments",
+    "PaymentStatus" => "Payment Status",
+    "Amount" => "Amount",
+    "OrderId" => "Order Number",
+    "OrderDate" => "Order Date",
 ];

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Services\DatabaseServices\DB_UserPayment;
 use App\Services\DatabaseServices\DB_Users;
 use App\Services\PaymentServices\PaymentServices;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
@@ -16,9 +15,9 @@ class PaymentController extends Controller
 
     }
 
-    public function checkout_processed(Request $request)
+    public function index(Request $request)
     {
-        return $this->paymentServices->checkout_processed($request);
+        return $this->paymentServices->index($request);
     }
 
     public function checkout_response(Request $request)
