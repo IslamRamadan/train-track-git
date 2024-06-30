@@ -362,13 +362,14 @@ class ClientServices
         $coach_id = $request->user()->id;
         $client_id = $request['client_id'];
         $status = $request['status'];
-        $this->DB_Clients->archive_client(client_id: $client_id, status: $status);
-        $type = $status == "2" ? "archived" : "unarchived";
         if ($status == "1") {
             //  check the active clients if
             list($coach_package, $upgrade) = $this->coachServices->get_coach_package($coach_id);
             if ($upgrade) $this->DB_Coaches->update_coach_package($coach_id, $coach_package->id);
         }
+        $this->DB_Clients->archive_client(client_id: $client_id, status: $status);
+        $type = $status == "2" ? "archived" : "unarchived";
+
         return sendResponse(['message' => "Client " . $type . " successfully"]);
     }
 
