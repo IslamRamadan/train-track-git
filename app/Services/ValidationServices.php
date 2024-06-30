@@ -555,7 +555,8 @@ class ValidationServices
     {
         $request->validate([
             'coach_id' => ['exists:users,id'],
-            'due_date' => 'required|date_format:Y-m-d|after_or_equal:tomorrow'
+            'due_date' => 'required|date_format:Y-m-d'
+//            'due_date' => 'required|date_format:Y-m-d|after_or_equal:tomorrow'
         ]);
     }
 
