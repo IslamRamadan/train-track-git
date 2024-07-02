@@ -563,7 +563,15 @@ class ValidationServices
     public function create_payment_link($request)
     {
         $request->validate([
-            'coach_id' => ['required','exists:users,id'],
+            'coach_id' => ['required', 'exists:users,id'],
+        ]);
+    }
+
+    public function add_coach_video($request)
+    {
+        $request->validate([
+            'title' => 'required',
+            'link' => 'required'
         ]);
     }
 }

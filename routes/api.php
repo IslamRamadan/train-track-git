@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\CoachController;
+use App\Http\Controllers\Api\CoachVideosController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\ExerciseController;
 use App\Http\Controllers\Api\LogController;
@@ -74,6 +75,12 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     Route::post('coach/update/profile', [CoachController::class, 'update_info']);
     Route::post('coach/client/logs', [CoachController::class, 'list_client_logs']);
     Route::post('check/package/limit', [CoachController::class, 'check_package_limit']);
+
+    Route::post('coach/videos/add', [CoachVideosController::class, 'add']);
+    Route::post('coach/videos/edit', [CoachVideosController::class, 'edit']);
+    Route::post('coach/videos/list', [CoachVideosController::class, 'list']);
+    Route::post('coach/videos/delete', [CoachVideosController::class, 'delete']);
+
     // Coach apis end
 
     // Client apis start
