@@ -18,8 +18,8 @@ class CoachService
 {
 
     public function __construct(protected ValidationServices $validationServices, protected DB_Coaches $DB_Coaches, protected DB_Programs $DB_Programs,
-                                protected DB_Users $DB_Users, protected DB_Packages $DB_Packages, protected DB_UserPayment $DB_UserPayment
-        , protected PaymentServices                $paymentServices
+                                protected DB_Users           $DB_Users, protected DB_Packages $DB_Packages, protected DB_UserPayment $DB_UserPayment
+        , protected PaymentServices                          $paymentServices
     )
     {
     }
@@ -155,7 +155,11 @@ class CoachService
 
     public function register_form($package)
     {
-            return view('users.register', compact('package'));
+        $package_info = $this->DB_Packages->find_package($package);
+        if (!$package_info) return abort(404);
+        $package_amount = $package_info->amount;
+
+        return view('users.register', compact('package','package_amount'));
     }
 
     public function register($request)

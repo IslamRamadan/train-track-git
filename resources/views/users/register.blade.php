@@ -58,19 +58,22 @@
                        data-validation="required"
                        placeholder="{{__('translate.ConfirmPassword')}}">
             </div>
-
-            <div class="custom-control custom-radio custom-control-inline mb-3">
-                <input type="radio" id="pay_now" name="pay_now" value="1" class="custom-control-input"
-                    @checked(old('pay_now')=="1")
-                >
-                <label class="custom-control-label" for="pay_now">{{__('translate.PayNow')}}</label>
-            </div>
-            <div class="custom-control custom-radio custom-control-inline mb-3">
-                <input type="radio" id="free_trial" name="pay_now" value="0" class="custom-control-input"
-                    @checked(old('pay_now')=="0")
-                >
-                <label class="custom-control-label" for="free_trial">{{__('translate.30DaysFree')}}</label>
-            </div>
+            @if($package_amount>0)
+                <div class="custom-control custom-radio custom-control-inline mb-3">
+                    <input type="radio" id="pay_now" name="pay_now" value="1" class="custom-control-input"
+                        @checked(old('pay_now')=="1")
+                    >
+                    <label class="custom-control-label" for="pay_now">{{__('translate.PayNow')}}</label>
+                </div>
+                <div class="custom-control custom-radio custom-control-inline mb-3">
+                    <input type="radio" id="free_trial" name="pay_now" value="0" class="custom-control-input"
+                        @checked(old('pay_now')=="0")
+                    >
+                    <label class="custom-control-label" for="free_trial">{{__('translate.30DaysFree')}}</label>
+                </div>
+            @else
+                <input type="hidden" name="pay_now" value="0">
+            @endif
             <input type="hidden" name="package_id" value="{{$package}}">
             <div class="form-group">
                 <button type="submit" class="btn btn-dark w-100">{{__('translate.SignUp')}}</button>
