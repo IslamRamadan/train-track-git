@@ -7,6 +7,7 @@ use App\Services\DatabaseServices\DB_ExerciseLog;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_OneToOneProgramExerciseVideos;
 use App\Services\DatabaseServices\DB_OtoExerciseComments;
+use App\Services\DatabaseServices\DB_Users;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +19,8 @@ class OneToOneExerciseServices
         , protected DB_OneToOneProgramExerciseVideos         $DB_OneToOneProgramExerciseVideos
         , protected DB_ExerciseLog                           $DB_ExerciseLog, protected DB_OtoExerciseComments $DB_OtoExerciseComments
         , protected NotificationServices                     $notificationServices
-        , protected DB_Clients                               $DB_Clients
+        , protected DB_Clients $DB_Clients
+        , protected DB_Users   $DB_Users
     )
     {
     }
@@ -101,6 +103,11 @@ class OneToOneExerciseServices
         $this->validationServices->list_client_exercises_in_date($request);
         $client_id = $request->user()->id;
         $date = $request['date'];
+
+        if ($request->user()->coach_client_client->status == "2") {
+            return sendError("Archived client");
+        }
+
         $exercises = $this->DB_OneToOneProgramExercises->get_client_exercises_by_date($client_id, $date);
         $done_exercises_count = $this->DB_OneToOneProgramExercises->get_done_client_exercises_by_date($client_id, $date);
         $exercises_arr = [];
