@@ -46,7 +46,7 @@ class DB_CoachVideos
     public function edit_coach_video(mixed $video_id, mixed $link, mixed $title)
     {
         return CoachVideo::query()
-            ->where('video_id', $video_id)
+            ->where('id', $video_id)
             ->update([
                 'link' => $link,
                 'title' => $title,
@@ -56,6 +56,6 @@ class DB_CoachVideos
     public function delete_coach_video($video_id)
     {
         return CoachVideo::query()
-            ->where('video_id', $video_id)->delete();
+            ->where('id', $video_id)->delete();
     }
 }
