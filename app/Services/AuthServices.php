@@ -42,9 +42,6 @@ class AuthServices
             // successfully authenticated
             $user = $this->DB_Users->get_user_info(Auth::user()->id);
 
-//            if ($user->user_type == "1" && $user->coach_client_client->status == "2") {
-//                return sendError("Archived client");
-//            }
             if ($user->user_type == "0" && $user->coach->status == "0") {
                 return sendError("Blocked Coach");
             }

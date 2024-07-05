@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Services\DatabaseServices\DB_Clients;
+use App\Services\DatabaseServices\DB_CoachVideos;
 use App\Services\DatabaseServices\DB_ExerciseLog;
 use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
@@ -15,6 +16,7 @@ class ValidationServices
                                 protected DB_Clients                  $DB_Clients,
                                 protected DB_Programs                 $DB_Programs,
                                 protected DB_OneToOneProgram          $DB_OneToOneProgram,
+                                protected DB_CoachVideos $DB_CoachVideos,
     )
     {
     }
@@ -572,6 +574,32 @@ class ValidationServices
         $request->validate([
             'title' => 'required',
             'link' => 'required'
+        ]);
+    }
+
+    public function edit_coach_video($request)
+    {
+        $request->validate([
+            'title' => 'required',
+            'link' => 'required',
+            'video_id' => ['required', 'exists:coach_videos,id', function ($attribute, $value, $fail) use ($request) {
+                $verify_client_id = $this->DB_CoachVideos->verify_coach_id(coach_id: $request->user()->id, video_id: $value);
+                if (!$verify_client_id) {
+                    $fail('The video must be assigned to this coach');
+                }
+            }]
+        ]);
+    }
+
+    public function delete_coach_video($request)
+    {
+        $request->validate([
+            'video_id' => ['required', 'exists:coach_videos,id', function ($attribute, $value, $fail) use ($request) {
+                $verify_client_id = $this->DB_CoachVideos->verify_coach_id(coach_id: $request->user()->id, video_id: $value);
+                if (!$verify_client_id) {
+                    $fail('The video must be assigned to this coach');
+                }
+            }]
         ]);
     }
 }

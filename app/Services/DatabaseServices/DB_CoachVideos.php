@@ -37,4 +37,25 @@ class DB_CoachVideos
             'link' => $link,
         ]);
     }
+
+    public function verify_coach_id($coach_id, $video_id)
+    {
+        return CoachVideo::query()->where(['coach_id' => $coach_id, 'id' => $video_id])->exists();
+    }
+
+    public function edit_coach_video(mixed $video_id, mixed $link, mixed $title)
+    {
+        return CoachVideo::query()
+            ->where('video_id', $video_id)
+            ->update([
+                'link' => $link,
+                'title' => $title,
+            ]);
+    }
+
+    public function delete_coach_video($video_id)
+    {
+        return CoachVideo::query()
+            ->where('video_id', $video_id)->delete();
+    }
 }
