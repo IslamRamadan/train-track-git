@@ -164,7 +164,7 @@ class CoachServices
             $payment_url = $payment->client_url;
             $order_id = $payment->order;
             $payment_amount = $payment->amount_cents / 100;
-            $this->DB_UserPayment->create_user_payment(coach_id: $user->id, order_id: $order_id, amount: $payment_amount, package_id: $package_id);
+            $this->DB_UserPayment->create_user_payment(coach_id: $user->id, order_id: $order_id, amount: $payment_amount, package_id: $package_id,upgrade: $upgrade);
             return sendResponse(["payment_url" => $payment_url]);
         } catch (\Exception $exception) {
             return sendError("Payment failed,Please try again later.");

@@ -95,7 +95,7 @@ class PaymentServices
                 $coach_due_date = Carbon::parse($get_the_coach->due_date);
 
 //                get the coach due date
-                if ($coach_due_date->lt(Carbon::today()) || $get_the_order->package->amount != $amount) {
+                if ($coach_due_date->lt(Carbon::today()) || $get_the_order->upgrade == "1") {
                     $new_due_date = Carbon::today()->addMonth()->toDateString();
                 } else {
                     $new_due_date = $coach_due_date->addMonth()->toDateString();
@@ -103,7 +103,7 @@ class PaymentServices
 
                 $this->DB_Users->update_user_due_date($coach_id, $new_due_date);
                 $this->DB_UserPayment->update_user_payment_status($get_the_order, "2");
-                if ($get_the_order->package->amount == $amount) {
+                if ($get_the_order->upgrade == "0") {
                     //check if user need to downgrade the package
                     if ($get_the_order->first_pay == "0") $this->checkIfUserNeedToDowngradeThePackage($coach_id);
                 } else {
