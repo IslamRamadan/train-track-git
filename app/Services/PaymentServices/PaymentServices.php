@@ -6,6 +6,7 @@ use App\Models\UsersPayment;
 use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_Coaches;
 use App\Services\DatabaseServices\DB_Packages;
+use App\Services\DatabaseServices\DB_PendingClients;
 use App\Services\DatabaseServices\DB_UserPayment;
 use App\Services\DatabaseServices\DB_Users;
 use Carbon\Carbon;
@@ -14,11 +15,12 @@ use Yajra\DataTables\Facades\DataTables;
 
 class PaymentServices
 {
-    public function __construct(protected DB_UserPayment $DB_UserPayment,
-                                protected DB_Users       $DB_Users,
-                                protected DB_Clients     $DB_Clients,
-                                protected DB_Packages    $DB_Packages,
-                                protected DB_Coaches     $DB_Coaches,
+    public function __construct(protected DB_UserPayment    $DB_UserPayment,
+                                protected DB_Users          $DB_Users,
+                                protected DB_Clients        $DB_Clients,
+                                protected DB_Packages       $DB_Packages,
+                                protected DB_Coaches        $DB_Coaches,
+                                protected DB_PendingClients $DB_PendingClients,
     )
     {
     }
@@ -127,7 +129,9 @@ class PaymentServices
     public function checkIfUserNeedToDowngradeThePackage($coach_id): void
     {
         $coach_active_clients = $this->DB_Clients->get_active_clients($coach_id);
-        $appropriate_package = $this->DB_Packages->get_appropriate_package($coach_active_clients);
+        $pending_clients = $this->DB_PendingClients->get_pending_clients($coach_id);
+        $total_coach_clients = $coach_active_clients + $pending_clients;
+        $appropriate_package = $this->DB_Packages->get_appropriate_package($total_coach_clients);
         $this->DB_Coaches->update_coach_package($coach_id, $appropriate_package->id);
     }
 
