@@ -82,6 +82,7 @@ class PaymentServices
         $payment_link_image = asset('images/logo.png');
         return PayMob::createPaymentLink($auth->token, $payment_link_image, $amount * 100, $full_name, $email, $description);
     }
+
     public function checkout_response($request)
     {
         if ($request->success == "true") {
@@ -92,16 +93,22 @@ class PaymentServices
                 $coach_id = $get_the_order->coach_id;
                 $get_the_coach = $this->DB_Users->get_user_info($coach_id);
                 $coach_due_date = Carbon::parse($get_the_coach->due_date);
-                if ($coach_due_date->lt(Carbon::today())) {
+
+//                get the coach due date
+                if ($coach_due_date->lt(Carbon::today()) || $get_the_order->package->amount != $amount) {
                     $new_due_date = Carbon::today()->addMonth()->toDateString();
                 } else {
                     $new_due_date = $coach_due_date->addMonth()->toDateString();
                 }
+
                 $this->DB_Users->update_user_due_date($coach_id, $new_due_date);
                 $this->DB_UserPayment->update_user_payment_status($get_the_order, "2");
-
-                //check if user need to downgrade the package
-                if ($get_the_order->first_pay == "0") $this->checkIfUserNeedToDowngradeThePackage($coach_id);
+                if ($get_the_order->package->amount == $amount) {
+                    //check if user need to downgrade the package
+                    if ($get_the_order->first_pay == "0") $this->checkIfUserNeedToDowngradeThePackage($coach_id);
+                } else {
+                    $this->DB_Coaches->update_coach_package(coach_id: $coach_id, package_id: $get_the_order->package_id);
+                }
 
                 $success_msg = __('translate.PaymentSuccessMsg') . $new_due_date;
                 return view('payment.payment_done', compact('success_msg', 'order_id'));

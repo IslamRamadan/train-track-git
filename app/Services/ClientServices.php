@@ -21,9 +21,9 @@ use Illuminate\Support\Facades\Mail;
 class ClientServices
 {
     public function __construct(protected ValidationServices               $validationServices,
-                                protected DB_Clients    $DB_Clients,
-                                protected DB_Coaches    $DB_Coaches,
-                                protected DB_Exercises  $DB_Exercises,
+                                protected DB_Clients                       $DB_Clients,
+                                protected DB_Coaches                       $DB_Coaches,
+                                protected DB_Exercises                     $DB_Exercises,
                                 protected DB_OneToOneProgramExercises      $DB_OneToOneProgramExercises,
                                 protected DB_Programs                      $DB_Programs,
                                 protected DB_OneToOneProgram               $DB_OneToOneProgram,
@@ -31,7 +31,7 @@ class ClientServices
                                 protected DB_ProgramClients                $DB_ProgramClients,
                                 protected DB_PendingClients                $DB_PendingClients,
                                 protected DB_OneToOneProgramExerciseVideos $DB_OneToOneProgramExerciseVideos,
-                                protected CoachServices $coachServices,
+                                protected CoachServices                    $coachServices,
     )
     {
     }
@@ -197,12 +197,17 @@ class ClientServices
         $coach_id = $request->user()->id;
         $coach_email = $request->user()->email;
         $email = $request['email'];
-        Mail::to($email)->send(new InvitationMail($email, $coach_email));
+
+        list($coach_package, $upgrade) = $this->coachServices->get_coach_package($coach_id);
+        if ($upgrade) return sendError("Need to upgrade to package " . $coach_package->name . " that has " . $coach_package->clients_limit . " clients limit with " . $coach_package->amount." EGP monthly.");
+        try {
+            Mail::to($email)->send(new InvitationMail($email, $coach_email));
+        } catch (\Exception $exception) {
+            return sendError("Enter a valid email");
+        }
 
         $this->DB_PendingClients->create_pending_client($coach_id, $email);
 
-        list($coach_package, $upgrade) = $this->coachServices->get_coach_package($coach_id);
-        if ($upgrade) $this->DB_Coaches->update_coach_package($coach_id, $coach_package->id);
 
         return sendResponse(['message' => "Client Invited Successfully"]);
     }
@@ -365,7 +370,7 @@ class ClientServices
         if ($status == "1") {
             //  check the active clients if
             list($coach_package, $upgrade) = $this->coachServices->get_coach_package($coach_id);
-            if ($upgrade) $this->DB_Coaches->update_coach_package($coach_id, $coach_package->id);
+            if ($upgrade) return sendError("Need to upgrade to package " . $coach_package->name . " that has " . $coach_package->clients_limit . " clients limit with " . $coach_package->amount." EGP monthly.");
         }
         $this->DB_Clients->archive_client(client_id: $client_id, status: $status);
         $type = $status == "2" ? "archived" : "unarchived";

@@ -16,7 +16,7 @@ class ValidationServices
                                 protected DB_Clients                  $DB_Clients,
                                 protected DB_Programs                 $DB_Programs,
                                 protected DB_OneToOneProgram          $DB_OneToOneProgram,
-                                protected DB_CoachVideos $DB_CoachVideos,
+                                protected DB_CoachVideos              $DB_CoachVideos,
     )
     {
     }
@@ -566,6 +566,7 @@ class ValidationServices
     {
         $request->validate([
             'coach_id' => ['required', 'exists:users,id'],
+            "upgrade" => "required|in:0,1"
         ]);
     }
 

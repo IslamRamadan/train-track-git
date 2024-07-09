@@ -8,6 +8,7 @@ use App\Services\DatabaseServices\DB_ExerciseLog;
 use App\Services\DatabaseServices\DB_Notifications;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_Packages;
+use App\Services\DatabaseServices\DB_PendingClients;
 use App\Services\DatabaseServices\DB_UserPayment;
 use App\Services\DatabaseServices\DB_Users;
 use App\Services\PaymentServices\PaymentServices;
@@ -24,9 +25,10 @@ class CoachServices
                                 protected DB_ExerciseLog              $DB_ExerciseLog,
                                 protected DB_OneToOneProgramExercises $DB_OneToOneProgramExercises,
                                 protected DB_Notifications            $DB_Notifications,
-                                protected DB_Packages    $DB_Packages,
-                                protected DB_UserPayment $DB_UserPayment,
-                                protected PaymentServices $paymentServices,
+                                protected DB_Packages                 $DB_Packages,
+                                protected DB_UserPayment              $DB_UserPayment,
+                                protected PaymentServices             $paymentServices,
+                                protected DB_PendingClients           $DB_PendingClients,
     )
     {
     }
@@ -89,6 +91,7 @@ class CoachServices
         list($clients_activity) = $this->clients_activities($date, $coach_id);
         return sendResponse($clients_activity);
     }
+
     public function update_info($request)
     {
         $this->validationServices->coach_update_info($request);
@@ -134,6 +137,7 @@ class CoachServices
         $this->validationServices->create_payment_link($request);
 
         $coach_id = $request->coach_id;
+        $upgrade = $request->upgrade;
         $user = $this->DB_Users->get_user_info($coach_id);
 
         if ($user->user_type != "0") {
@@ -141,17 +145,26 @@ class CoachServices
         }
 
         $package_id = $user->coach->package_id;
-
         $package = $this->DB_Packages->find_package($package_id);
+        $amount = $package->amount;
+        $package_name = $package->name;
+        $package_clients_limit = $package->clients_limit;
+        if ($upgrade == "1") {
+            list($upgraded_package) = $this->get_coach_package($coach_id);
+            $amount = $upgraded_package->amount - $package->amount;
+            $package_id = $upgraded_package->id;
+            $package_name = $upgraded_package->name;
+            $package_clients_limit = $upgraded_package->clients_limit;
+        }
 
-        $payment_description = $package->name . " payment with " . $package->clients_limit . " clients limit.";
+        $payment_description = $package_name . " payment with " . $package_clients_limit . " clients limit.";
 
         try {
-            $payment = $this->paymentServices->pay(amount: $package->amount, full_name: $user->name, email: $user->email, description: $payment_description);
+            $payment = $this->paymentServices->pay(amount: $amount, full_name: $user->name, email: $user->email, description: $payment_description);
             $payment_url = $payment->client_url;
             $order_id = $payment->order;
             $payment_amount = $payment->amount_cents / 100;
-            $this->DB_UserPayment->create_user_payment(coach_id: $user->id, order_id: $order_id, amount: $payment_amount);
+            $this->DB_UserPayment->create_user_payment(coach_id: $user->id, order_id: $order_id, amount: $payment_amount, package_id: $package_id);
             return sendResponse(["payment_url" => $payment_url]);
         } catch (\Exception $exception) {
             return sendError("Payment failed,Please try again later.");
@@ -175,6 +188,7 @@ class CoachServices
             "package_clients_limit" => $coach_package->clients_limit,
         ]);
     }
+
     public function list_logs_arr(Collection|array $logs)
     {
         $logs_arr = [];
@@ -239,15 +253,18 @@ class CoachServices
     public function get_coach_package(mixed $coach_id): array
     {
         $active_clients = $this->DB_Clients->get_active_clients($coach_id);
+        $pending_clients = $this->DB_PendingClients->get_pending_clients($coach_id);
+        $total_coach_clients = $active_clients + $pending_clients;
         $get_coach_info = $this->DB_Coaches->get_coach_info($coach_id);
         $coach_package = $get_coach_info->package;
         $upgrade = false;
 
-        if ($active_clients + 1 > $coach_package->clients_limit) {
+        if ($total_coach_clients + 1 > $coach_package->clients_limit) {
 //          the coach now will exceed the client limit
             $upgrade = true;
 //          get the higher package
-            $coach_package = $this->DB_Packages->get_appropriate_package($active_clients);
+
+            $coach_package = $this->DB_Packages->get_appropriate_package($total_coach_clients);
         }
         return array($coach_package, $upgrade);
     }

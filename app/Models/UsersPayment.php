@@ -9,10 +9,15 @@ class UsersPayment extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['coach_id', 'order_id', 'amount', 'status', 'first_pay'];
+    protected $fillable = ['coach_id', 'order_id', 'amount', 'status', 'first_pay','package_id'];
 
     public function user()
     {
         return $this->belongsTo(User::class, 'coach_id');
+    }
+
+    public function package()
+    {
+        return $this->belongsTo(Package::class, 'package_id');
     }
 }

@@ -190,7 +190,7 @@ class CoachService
             $payment_url = $payment->client_url;
             $order_id = $payment->order;
             $payment_amount = $payment->amount_cents / 100;
-            $this->DB_UserPayment->create_user_payment(coach_id: $user->id, order_id: $order_id, amount: $payment_amount, first_pay: "1");
+            $this->DB_UserPayment->create_user_payment(coach_id: $user->id, order_id: $order_id, amount: $payment_amount, package_id: $package_id, first_pay: "1");
             return redirect($payment_url);
         } catch (\Exception $exception) {
             return view('payment.payment_failed');

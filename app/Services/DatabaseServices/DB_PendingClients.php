@@ -33,4 +33,10 @@ class DB_PendingClients
             })
             ->get();
     }
+
+    public function get_pending_clients(mixed $coach_id)
+    {
+        return PendingClient::where('coach_id', $coach_id)->count();
+
+    }
 }
