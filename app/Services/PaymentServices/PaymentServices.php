@@ -10,6 +10,7 @@ use App\Services\DatabaseServices\DB_PendingClients;
 use App\Services\DatabaseServices\DB_UserPayment;
 use App\Services\DatabaseServices\DB_Users;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use PayMob\Facades\PayMob;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -87,6 +88,7 @@ class PaymentServices
 
     public function checkout_response($request)
     {
+        DB::beginTransaction();
         if ($request->success == "true") {
             $order_id = $request->order;
             $amount = $request->amount_cents / 100;
@@ -113,6 +115,7 @@ class PaymentServices
                 }
 
                 $success_msg = __('translate.PaymentSuccessMsg') . $new_due_date;
+                DB::commit();
                 return view('payment.payment_done', compact('success_msg', 'order_id'));
             } else {
                 return view('payment.payment_failed');
@@ -131,7 +134,7 @@ class PaymentServices
         $coach_active_clients = $this->DB_Clients->get_active_clients($coach_id);
         $pending_clients = $this->DB_PendingClients->get_pending_clients($coach_id);
         $total_coach_clients = $coach_active_clients + $pending_clients;
-        $appropriate_package = $this->DB_Packages->get_appropriate_package($total_coach_clients);
+        $appropriate_package = $this->DB_Packages->get_appropriate_package($total_coach_clients, ">=");
         $this->DB_Coaches->update_coach_package($coach_id, $appropriate_package->id);
     }
 
