@@ -28,7 +28,7 @@ class PaymentServices
     public function index($request)
     {
         if ($request->ajax()) {
-            $data = UsersPayment::with(['user'])->select('*');
+            $data = UsersPayment::with(['user'])->select('*')->orderBy('created_at','desc');
             $result = Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('status_tab', function ($row) {

@@ -150,7 +150,7 @@ class CoachServices
         $active_clients = $this->DB_Clients->get_active_clients($coach_id);
         $pending_clients = $this->DB_PendingClients->get_pending_clients($coach_id);
         $total_coach_clients = $active_clients + $pending_clients;
-        $coach_package = $this->DB_Packages->get_appropriate_package($total_coach_clients);
+        $coach_package = $this->DB_Packages->get_appropriate_package($total_coach_clients, ">=");
 
         $package_id = $coach_package->id;
         $amount = $coach_package->amount;
