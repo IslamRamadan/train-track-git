@@ -144,17 +144,17 @@ class CoachServices
             return sendError("This user is not a coach");
         }
 
-        $package_id = $user->coach->package_id;
-        $package = $this->DB_Packages->find_package($package_id);
-        $amount = $package->amount;
-        $package_name = $package->name;
-        $package_clients_limit = $package->clients_limit;
+        $coach_package_id = $user->coach->package_id;
+        $old_package = $this->DB_Packages->find_package($coach_package_id);
+
+        list($coach_package) = $this->get_coach_package($coach_id);
+        $package_id = $coach_package->id;
+        $amount = $coach_package->amount;
+        $package_name = $coach_package->name;
+        $package_clients_limit = $coach_package->clients_limit;
+
         if ($upgrade == "1") {
-            list($upgraded_package) = $this->get_coach_package($coach_id);
-            $amount = $upgraded_package->amount - $package->amount;
-            $package_id = $upgraded_package->id;
-            $package_name = $upgraded_package->name;
-            $package_clients_limit = $upgraded_package->clients_limit;
+            $amount = $coach_package->amount - $old_package->amount;
         }
 
         $payment_description = $package_name . " payment with " . $package_clients_limit . " clients limit.";
