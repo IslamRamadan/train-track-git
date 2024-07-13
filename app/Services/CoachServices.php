@@ -158,7 +158,11 @@ class CoachServices
         $package_clients_limit = $coach_package->clients_limit;
 
         if ($upgrade == "1") {
+            list($upgraded_package) = $this->get_coach_package($coach_id);
+            $package_id = $upgraded_package->id;
             $amount = $coach_package->amount - $old_package->amount;
+            $package_name = $upgraded_package->name;
+            $package_clients_limit = $upgraded_package->clients_limit;
         }
 
         $payment_description = $package_name . " payment with " . $package_clients_limit . " clients limit.";
