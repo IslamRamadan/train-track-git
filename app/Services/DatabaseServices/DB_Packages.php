@@ -11,9 +11,8 @@ class DB_Packages
         return Package::query()->find($package_id);
     }
 
-    public function get_appropriate_package($coach_active_clients)
+    public function get_appropriate_package($coach_active_clients, $operator = ">")
     {
-        return Package::query()->where('clients_limit', ">", $coach_active_clients)->orderBy('clients_limit')->first();
+        return Package::query()->where('clients_limit', $operator, $coach_active_clients)->orderBy('clients_limit')->first();
     }
-
 }
