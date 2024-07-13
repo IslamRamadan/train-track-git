@@ -147,7 +147,11 @@ class CoachServices
         $coach_package_id = $user->coach->package_id;
         $old_package = $this->DB_Packages->find_package($coach_package_id);
 
-        list($coach_package) = $this->get_coach_package($coach_id);
+        $active_clients = $this->DB_Clients->get_active_clients($coach_id);
+        $pending_clients = $this->DB_PendingClients->get_pending_clients($coach_id);
+        $total_coach_clients = $active_clients + $pending_clients;
+        $coach_package = $this->DB_Packages->get_appropriate_package($total_coach_clients);
+
         $package_id = $coach_package->id;
         $amount = $coach_package->amount;
         $package_name = $coach_package->name;
