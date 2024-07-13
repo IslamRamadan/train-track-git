@@ -160,7 +160,7 @@ class CoachServices
         if ($upgrade == "1") {
             list($upgraded_package) = $this->get_coach_package($coach_id);
             $package_id = $upgraded_package->id;
-            $amount = $coach_package->amount - $old_package->amount;
+            $amount = $upgraded_package->amount - $old_package->amount;
             $package_name = $upgraded_package->name;
             $package_clients_limit = $upgraded_package->clients_limit;
         }
