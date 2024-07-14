@@ -27,7 +27,7 @@ class InvitationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            from: new Address('test@traintrackcoach.com', 'Train Track'),
+            from: new Address(env('MAIL_FROM_ADDRESS'), 'Train Track'),
             subject: 'Train-Track Invitation',
         );
     }

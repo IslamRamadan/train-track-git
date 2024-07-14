@@ -9,14 +9,14 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class ResetPasswordMail extends Mailable
+class WelcomeMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(private $email, private $name, private $password)
+    public function __construct(private $name)
     {
         //
     }
@@ -28,7 +28,7 @@ class ResetPasswordMail extends Mailable
     {
         return new Envelope(
             from: new Address(env('MAIL_FROM_ADDRESS'), 'Train Track'),
-            subject: 'Train-Track Reset Password',
+            subject: 'Train-Track Invitation',
         );
     }
 
@@ -38,8 +38,8 @@ class ResetPasswordMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'mail.reset-password-mail',
-            with: ['email' => $this->email, 'user_name' => $this->name, 'password' => $this->password]
+            view: 'mail.coach-welcome-mail',
+            with: ['name' => $this->name]
         );
     }
 

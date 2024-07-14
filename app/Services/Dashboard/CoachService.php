@@ -2,6 +2,7 @@
 
 namespace App\Services\Dashboard;
 
+use App\Mail\WelcomeMail;
 use App\Models\User;
 use App\Services\DatabaseServices\DB_Coaches;
 use App\Services\DatabaseServices\DB_Packages;
@@ -12,6 +13,7 @@ use App\Services\PaymentServices\PaymentServices;
 use App\Services\ValidationServices;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Yajra\DataTables\Facades\DataTables;
 
 class CoachService
@@ -179,6 +181,11 @@ class CoachService
         $user = $this->DB_Users->create_user($name, $email, $phone, $password, $due_date);
         $this->DB_Coaches->create_coach($gym, $speciality, $certificates, $user->id, $package_id);
         DB::commit();
+
+        try {
+            Mail::to($email)->send(new WelcomeMail(name: $name));
+        } catch (\Exception $exception) {
+        }
 
         if ($pay_now == "0") {
             return view('payment.free_trial');

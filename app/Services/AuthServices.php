@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Mail\ResetPasswordMail;
+use App\Mail\WelcomeMail;
 use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_Coaches;
 use App\Services\DatabaseServices\DB_Notifications;
@@ -93,6 +94,10 @@ class AuthServices
         $due_date = Carbon::today()->addMonth()->toDateString();
         $user = $this->DB_Users->create_user($name, $email, $phone, $password, $due_date);
         $this->DB_Coaches->create_coach($gym, $speciality, $certificates, $user->id);
+        try {
+            Mail::to($email)->send(new WelcomeMail(name: $name));
+        } catch (\Exception $exception) {
+        }
         return sendResponse(['message' => "Coach Created Successfully"]);
     }
 
