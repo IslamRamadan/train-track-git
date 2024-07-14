@@ -23,6 +23,7 @@ class ProgramServices
                                 protected DB_OneToOneProgramExerciseVideos $DB_OneToOneProgramExerciseVideos,
                                 protected DB_ExerciseLog                   $DB_ExerciseLog,
                                 protected DB_OneToOneProgramExercises      $DB_OneToOneProgramExercises,
+                                protected ImageService $imageService,
     )
     {
     }
@@ -53,7 +54,8 @@ class ProgramServices
                 "starting_date" => $program->type == "1" ? $program->starting_date : "",
                 "sync" => $program->type == "1" ? $program->sync : "",
                 "exercise_days" => $program->exercise_days,
-                "clients_number" => $program->clients_number
+                "clients_number" => $program->clients_number,
+                "image" => $program->image ? asset('storage/programs/' . $program->image) : ""
             ];
 
             $programs_arr[] = $single_program;
@@ -70,7 +72,9 @@ class ProgramServices
         $type = $request['type'];
         $sync = $request['sync'] ?? "0";
         $starting_date = $request['starting_date'];
-        $this->DB_Programs->add_program($coach_id, $name, $description, $type, $starting_date, $sync);
+        $image = $request['image'];
+        $image_path = $this->imageService->save_image($image, 'programs');
+        $this->DB_Programs->add_program($coach_id, $name, $description, $type, $starting_date, $sync, $image_path);
         return sendResponse(['message' => "Program added successfully"]);
     }
 

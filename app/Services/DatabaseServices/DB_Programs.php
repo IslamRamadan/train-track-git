@@ -16,7 +16,7 @@ class DB_Programs
             ->get();
     }
 
-    public function add_program($coach_id, mixed $name, mixed $description, $type, $starting_date, $sync)
+    public function add_program($coach_id, mixed $name, mixed $description, $type, $starting_date, $sync, $image)
     {
         return Program::create([
             'coach_id' => $coach_id,
@@ -26,6 +26,7 @@ class DB_Programs
             'sync' => $sync,
             'starting_date' => $starting_date,
             'program_type_id' => 1,
+            'image' => $image,
         ]);
     }
 
