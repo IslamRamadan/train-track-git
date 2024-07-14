@@ -55,7 +55,7 @@
                     <p>{{$success_msg}}</p>
                     <br>
                     <a class="btn btn-dark text-light w-100"
-                       href="http://app.traintrackcoach.com/">{{__('translate.GoToLoginPage')}}</a>
+                       href="https://wod-connect--test-apis-g8hinfzn.web.app/">{{__('translate.GoToLoginPage')}}</a>
                 </div>
             </div>
         </div>
