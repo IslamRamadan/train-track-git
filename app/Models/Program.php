@@ -11,7 +11,7 @@ class Program extends Model
     use HasFactory;
 
     protected $fillable = ['name', 'description', 'coach_id', 'program_type_id', 'type', 'starting_date', 'sync', 'image'];
-    protected $appends = ['exercise_days', 'clients_number', 'type_text'];
+    protected $appends = ['exercise_days', 'clients_number', 'type_text','image_path'];
 
     public function program_types()
     {
@@ -42,6 +42,12 @@ class Program extends Model
     {
         return Attribute::make(
             get: fn($value) => $this->type == "0" ? "Normal" : "Ongoing",
+        );
+    }
+    protected function imagePath(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $this->image ? asset('storage/app/public/programs/' . $this->image) : "",
         );
     }
 

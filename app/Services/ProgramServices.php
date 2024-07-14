@@ -55,7 +55,7 @@ class ProgramServices
                 "sync" => $program->type == "1" ? $program->sync : "",
                 "exercise_days" => $program->exercise_days,
                 "clients_number" => $program->clients_number,
-                "image" => $program->image ? asset('storage/programs/' . $program->image) : ""
+                "image" => $program->image_path
             ];
 
             $programs_arr[] = $single_program;
@@ -73,7 +73,11 @@ class ProgramServices
         $sync = $request['sync'] ?? "0";
         $starting_date = $request['starting_date'];
         $image = $request['image'];
-        $image_path = $this->imageService->save_image($image, 'programs');
+        try {
+            $image_path = $this->imageService->save_image($image, 'programs');
+        } catch (\Exception $exception) {
+            return sendError("Failed to upload the image");
+        }
         $this->DB_Programs->add_program($coach_id, $name, $description, $type, $starting_date, $sync, $image_path);
         return sendResponse(['message' => "Program added successfully"]);
     }
@@ -86,8 +90,15 @@ class ProgramServices
         $description = $request['description'];
         $type = $request['type'];
         $starting_date = $request['starting_date'];
+        $image = $request['image'];
         $program = $this->DB_Programs->find_program($program_id);
         DB::beginTransaction();
+        if ($image) {
+            if ($program->image) $this->imageService->delete_image(image_title: $program->image, folder_name: 'programs');
+            $image_path = $this->imageService->save_image($image, 'programs');
+            $program->image = $image_path;
+            $program->save();
+        }
         if ($program->sync == "1") {
             $this->sync_on_update_program($program_id, $name, $description);
         }
@@ -153,6 +164,7 @@ class ProgramServices
             }
         }
 //        Delete from programs table
+        if ($program->image) $this->imageService->delete_image(image_title: $program->image, folder_name: 'programs');
         $this->DB_Programs->delete_program($program_id);
         DB::commit();
 

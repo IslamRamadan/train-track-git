@@ -16,4 +16,9 @@ class ImageService
         Storage::disk('public')->put($imagePath, $image);
         return $imageName;
     }
+
+    public function delete_image(mixed $image_title, $folder_name)
+    {
+        Storage::disk('public')->delete($folder_name . '/' . $image_title);
+    }
 }

@@ -57,7 +57,8 @@ class ValidationServices
             'name' => 'required',
             'description' => 'required',
             'type' => 'required|in:0,1',
-            'starting_date' => 'required_if:type,1|date|date_format:Y-m-d'
+            'starting_date' => 'required_if:type,1|date|date_format:Y-m-d',
+            'image' => 'nullable'
         ]);
     }
 
