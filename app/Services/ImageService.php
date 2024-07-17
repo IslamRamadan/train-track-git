@@ -13,7 +13,7 @@ class ImageService
         $imageName = uniqid('image_') . '.jpg';
         $imagePath = $folder_name . '/' . $imageName; // Path within the public/images folder
 
-        Storage::disk('public')->put($imagePath, $image);
+        Storage::disk('s3')->put($imagePath, $image);
         return $imageName;
     }
 
