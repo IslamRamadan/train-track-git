@@ -23,7 +23,7 @@ class ProgramServices
                                 protected DB_OneToOneProgramExerciseVideos $DB_OneToOneProgramExerciseVideos,
                                 protected DB_ExerciseLog                   $DB_ExerciseLog,
                                 protected DB_OneToOneProgramExercises      $DB_OneToOneProgramExercises,
-                                protected ImageService $imageService,
+                                protected ImageService                     $imageService,
     )
     {
     }
@@ -73,11 +73,15 @@ class ProgramServices
         $sync = $request['sync'] ?? "0";
         $starting_date = $request['starting_date'];
         $image = $request['image'];
-        try {
-            $image_path = $this->imageService->save_image($image, 'programs');
-        } catch (\Exception $exception) {
-            return sendError("Failed to upload the image");
+
+        if ($image) {
+            try {
+                $image_path = $this->imageService->save_image($image, 'programs');
+            } catch (\Exception $exception) {
+                return sendError("Failed to upload the image");
+            }
         }
+
         $this->DB_Programs->add_program($coach_id, $name, $description, $type, $starting_date, $sync, $image_path);
         return sendResponse(['message' => "Program added successfully"]);
     }
