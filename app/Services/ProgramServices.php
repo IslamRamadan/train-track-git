@@ -73,7 +73,7 @@ class ProgramServices
         $sync = $request['sync'] ?? "0";
         $starting_date = $request['starting_date'];
         $image = $request['image'];
-
+        $image_path=null;
         if ($image) {
             try {
                 $image_path = $this->imageService->save_image($image, 'programs');
