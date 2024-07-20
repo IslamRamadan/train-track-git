@@ -54,7 +54,7 @@
                     <p>{{__('translate.FailedBut30FreeTrial')}}</p>
                     <br>
                     <a class="btn btn-dark text-light w-100"
-                       href="https://wod-connect--test-apis-g8hinfzn.web.app/">{{__('translate.GoToLoginPage')}}</a>
+                       href="{{env('PORTAL_URL')}}">{{__('translate.GoToLoginPage')}}</a>
                 </div>
             </div>
         </div>

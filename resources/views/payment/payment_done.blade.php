@@ -55,14 +55,14 @@
                     <p>{{$success_msg}}</p>
                     <br>
                     <a class="btn btn-dark text-light w-100"
-                       href="https://wod-connect--test-apis-g8hinfzn.web.app/">{{__('translate.GoToLoginPage')}}</a>
+                       href="{{env('PORTAL_URL')}}">{{__('translate.GoToLoginPage')}}</a>
                 </div>
             </div>
         </div>
         <hr>
 
 
-{{--        <div class="row justify-content-center">--}}
+        {{--        <div class="row justify-content-center">--}}
         {{--            <div class="col-md-5">--}}
         {{--                <div class="message-box _success _failed">--}}
         {{--                    <i class="fa fa-times-circle" aria-hidden="true"></i>--}}

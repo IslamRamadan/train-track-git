@@ -551,7 +551,7 @@ class ValidationServices
                     $fail('The client must be assigned to this coach');
                 }
             }],
-            'due_date' => 'required|date_format:Y-m-d|after_or_equal:tomorrow'
+            'due_date' => 'required|date_format:Y-m-d'
         ]);
     }
 

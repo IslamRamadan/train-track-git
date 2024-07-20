@@ -120,7 +120,7 @@ class OneToOneExerciseServices
                 $single_program_exercises_arr['program_id'] = $exercise->one_to_one_program->id;
                 $single_program_exercises_arr['program_name'] = $exercise->one_to_one_program->name;
                 $single_program_exercises_arr['exercise_id'] = $exercise->id;
-                $single_program_exercises_arr['exercise_arrangement'] = $exercise->arrangement;
+                $single_program_exercises_arr['exercise_arrangement'] = strval($exercise->arrangement);
                 $single_program_exercises_arr['exercise_name'] = $exercise->name;
                 $single_program_exercises_arr['exercise_description'] = $exercise->description;
                 $single_program_exercises_arr['exercise_extra_description'] = $exercise->extra_description;
@@ -444,7 +444,7 @@ class OneToOneExerciseServices
                 $single_program_comments_arr['sender'] = $comment->user_type;
                 $single_program_comments_arr['coach_id'] = strval($comment->program->coach_id);
                 $single_program_comments_arr['coach_name'] = $comment->program->coach->name;
-                $single_program_comments_arr['client_id'] = $comment->program->client_id;
+                $single_program_comments_arr['client_id'] = strval($comment->program->client_id);
                 $single_program_comments_arr['client_name'] = $comment->program->client->name;
 
                 $program_comments_arr[] = $single_program_comments_arr;
