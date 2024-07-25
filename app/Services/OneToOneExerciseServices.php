@@ -107,6 +107,12 @@ class OneToOneExerciseServices
         if ($request->user()->coach_client_client->status == "2") {
             return sendError("Archived client");
         }
+        if ($request->user()->due_date) {
+            $due_date = Carbon::parse($request->user()->due_date);
+            if ($due_date->lt(Carbon::today())) {
+                return sendError("Coach subscription expired", 401);
+            }
+        }
 
         $exercises = $this->DB_OneToOneProgramExercises->get_client_exercises_by_date($client_id, $date);
         $done_exercises_count = $this->DB_OneToOneProgramExercises->get_done_client_exercises_by_date($client_id, $date);
