@@ -38,4 +38,9 @@ class OneToOneProgram extends Model
         return $this->hasMany(OtoExerciseComment::class, 'oto_program_id');
     }
 
+    public function program_client()
+    {
+        return $this->hasOne(ProgramClient::class, 'oto_program_id');
+    }
+
 }

@@ -25,5 +25,10 @@ class PaymentController extends Controller
         return $this->paymentServices->checkout_response($request);
     }
 
+    public function checkout_processed(Request $request)
+    {
+        return sendResponse(["msg" => "Done"]);
+    }
+
 
 }

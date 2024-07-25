@@ -279,6 +279,7 @@ class ClientServices
                 $single_program_arr = [];
                 $single_program_arr['program_id'] = $program->id;
                 $single_program_arr['program_name'] = $program->name;
+                $single_program_arr['program_image'] = $program->program_client ? $program->program_client->program->imag_path : "";
                 $single_program_arr['program_exercises'] = $this->DB_OneToOneProgramExercises->get_all_program_exercises_count($program->id);
                 $single_program_arr['program_done_exercises'] = $this->DB_OneToOneProgramExercises->get_all_program_done_exercises_count($program->id);
                 $programs[] = $single_program_arr;

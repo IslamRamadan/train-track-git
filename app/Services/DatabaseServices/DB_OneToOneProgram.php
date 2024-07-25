@@ -33,7 +33,7 @@ class DB_OneToOneProgram
 
     public function get_all_client_oto_programs(mixed $client_id)
     {
-        return OneToOneProgram::query()->where(['client_id' => $client_id])
+        return OneToOneProgram::query()->with('program_client.program')->where(['client_id' => $client_id])
             ->get();
     }
 
