@@ -10,7 +10,7 @@ class DB_ExerciseLog
 
     public function create_exercise_log(mixed $client_exercise_id, mixed $sets, mixed $details, mixed $client_id)
     {
-        ExerciseLog::query()->create([
+        return ExerciseLog::query()->create([
             'oto_exercise_id' => $client_exercise_id,
             'sets' => $sets,
             'details' => $details,
@@ -63,6 +63,6 @@ class DB_ExerciseLog
 
     public function find_exercise_log($exercise_id)
     {
-        return ExerciseLog::query()->where('oto_exercise_id', $exercise_id)->first();
+        return ExerciseLog::query()->with('log_videos')->where('oto_exercise_id', $exercise_id)->first();
     }
 }

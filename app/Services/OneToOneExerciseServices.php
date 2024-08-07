@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_ExerciseLog;
+use App\Services\DatabaseServices\DB_ExerciseLogVideos;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_OneToOneProgramExerciseVideos;
 use App\Services\DatabaseServices\DB_OtoExerciseComments;
@@ -19,8 +20,8 @@ class OneToOneExerciseServices
         , protected DB_OneToOneProgramExerciseVideos         $DB_OneToOneProgramExerciseVideos
         , protected DB_ExerciseLog                           $DB_ExerciseLog, protected DB_OtoExerciseComments $DB_OtoExerciseComments
         , protected NotificationServices                     $notificationServices
-        , protected DB_Clients $DB_Clients
-        , protected DB_Users   $DB_Users
+        , protected DB_Clients                                 $DB_Clients, protected DB_Users $DB_Users,
+                                protected DB_ExerciseLogVideos $DB_ExerciseLogVideos
     )
     {
     }
@@ -304,14 +305,23 @@ class OneToOneExerciseServices
 
         $client_exercise_id = $request->client_exercise_id;
         $sets = $request->sets;
+        $videos_paths = $request->videos_paths;
         $details = $request->details;
         $exercise_log = $this->DB_ExerciseLog->find_exercise_log(exercise_id: $client_exercise_id);
+        DB::beginTransaction();
         if ($exercise_log) {
             $this->DB_ExerciseLog->update_exercise_log($exercise_log->id, $sets, $details);
+            if ($exercise_log->log_videos) $this->DB_ExerciseLogVideos->delete_exercise_log_videos($exercise_log);
         } else {
-            $this->DB_ExerciseLog->create_exercise_log($client_exercise_id, $sets, $details, $client_id);
+            $exercise_log = $this->DB_ExerciseLog->create_exercise_log($client_exercise_id, $sets, $details, $client_id);
+        }
+        if ($videos_paths) {
+            foreach ($videos_paths as $path) {
+                $this->DB_ExerciseLogVideos->create_exercise_log_videos($exercise_log->id, $path);
+            }
         }
         $this->DB_OneToOneProgramExercises->update_exercise_status($client_exercise_id, "1");
+        DB::commit();
 
         $find_exercise_details = $this->DB_OneToOneProgramExercises->find_exercise($client_exercise_id);
         $exercise_name = $find_exercise_details->name;

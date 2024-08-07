@@ -409,6 +409,7 @@ class ValidationServices
                     }
                 },],
             'sets' => 'nullable|numeric',
+            'videos_paths' => 'nullable|array',
             'details' => 'nullable'
 
         ]);
