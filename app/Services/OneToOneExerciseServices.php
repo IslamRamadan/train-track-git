@@ -425,7 +425,15 @@ class OneToOneExerciseServices
             $single_log_arr = [];
             $single_log_arr['log_id'] = $exercise->log->id;
             $single_log_arr['sets'] = "0";
+            $single_log_arr['videos'] = [];
             $single_log_arr['details'] = $exercise->log->details;
+
+            if ($exercise->log->log_videos()->exists()) {
+                foreach ($exercise->log->log_videos as $log_video) {
+                    $single_log_arr['videos'][] = $log_video->path;
+                }
+            }
+
             $single_program_exercises_arr['logs'][] = $single_log_arr;
         }
         return $single_program_exercises_arr;
