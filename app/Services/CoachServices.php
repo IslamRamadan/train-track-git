@@ -215,6 +215,13 @@ class CoachServices
                 $single_log_arr['log_details'] = $log->details;
                 $single_log_arr['log_date'] = $log->created_at->format("Y-m-d");
                 $single_log_arr['log_time'] = $log->created_at->format("H:i:s");
+                $single_log_arr['videos'] = [];
+
+                if ($log->log_videos()->exists()) {
+                    foreach ($log->log_videos as $log_video) {
+                        $single_log_arr['videos'][] = $log_video->path;
+                    }
+                }
                 $logs_arr[] = $single_log_arr;
             }
         }

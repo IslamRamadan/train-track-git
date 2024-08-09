@@ -37,4 +37,9 @@ class AuthController extends Controller
         return $this->authServices->forget_password($request);
     }
 
+    public function update_version(Request $request)
+    {
+        return $this->authServices->update_version($request);
+    }
+
 }

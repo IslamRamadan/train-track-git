@@ -10,6 +10,7 @@ use App\Services\DatabaseServices\DB_Notifications;
 use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_PendingClients;
+use App\Services\DatabaseServices\DB_settings;
 use App\Services\DatabaseServices\DB_Users;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -25,6 +26,7 @@ class AuthServices
                                 protected DB_PendingClients  $DB_PendingClients,
                                 protected DB_Coaches         $DB_Coaches,
                                 protected DB_Notifications   $DB_Notifications,
+                                protected DB_Settings $DB_Settings,
                                 protected DB_OneToOneProgram $DB_OneToOneProgram, protected DB_OneToOneProgramExercises $DB_OneToOneProgramExercises
     )
     {
@@ -46,9 +48,9 @@ class AuthServices
             if ($user->user_type == "0" && $user->coach->status == "0") {
                 return sendError("Blocked Coach");
             }
-
+            $version = $this->DB_Settings->get_version();
             $this->check_user_notification_token(token: $notification_token, user_id: $user->id);
-            return sendResponse($this->user_info_arr($user));
+            return sendResponse($this->user_info_arr($user, $version));
         } else {
             // failure to authenticate
             return sendError("Wrong credentials");
@@ -105,13 +107,14 @@ class AuthServices
      * @param $user
      * @return array that has id , email , name , phone , user_type , token
      */
-    public function user_info_arr($user): array
+    public function user_info_arr($user, $version): array
     {
         $success = [
             "id" => $user->id,
             "email" => $user->email,
             "name" => $user->name,
             "phone" => $user->phone,
+            "version" => $version,
             "user_type" => $user->user_type_text,//Coach or Athlete
             "due_date" => $user->due_date??"",
             "token" => $user->createToken('appToken')->accessToken,
@@ -164,6 +167,13 @@ class AuthServices
 
     }
 
+    public function update_version($request)
+    {
+        $this->validationServices->update_version($request);
+        $version = $request->version;
+        $this->DB_Settings->update_version($version);
+        return sendResponse(['message' => "Version Updated Successfully"]);
+    }
     private function generate_random_password()
     {
         $password = "";
@@ -176,4 +186,6 @@ class AuthServices
         }
         return $password;
     }
+
+
 }

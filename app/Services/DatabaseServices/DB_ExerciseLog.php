@@ -33,7 +33,7 @@ class DB_ExerciseLog
 
     public function list_cient_logs(mixed $client_id)
     {
-        return ExerciseLog::query()->with('exercise.one_to_one_program')->where('client_id', $client_id)
+        return ExerciseLog::query()->with('exercise.one_to_one_program','log_videos')->where('client_id', $client_id)
             ->orderBy('created_at', "desc")->get();
     }
 
@@ -54,7 +54,7 @@ class DB_ExerciseLog
 
     public function list_coach_clients_logs_today(mixed $coach_id, $today)
     {
-        return ExerciseLog::query()->whereDate('created_at', Carbon::today())->whereHas('exercise', function ($query) use ($coach_id) {
+        return ExerciseLog::query()->with('log_videos')->whereDate('created_at', Carbon::today())->whereHas('exercise', function ($query) use ($coach_id) {
             $query->whereHas('one_to_one_program', function ($userQuery) use ($coach_id) {
                 $userQuery->where('coach_id', $coach_id);
             });

@@ -51,13 +51,15 @@ class DB_OneToOneProgramExercises
 
     public function get_program_exercises_by_date(mixed $program_id, $date)
     {
-        return OneToOneProgramExercise::query()->where(['one_to_one_program_id' => $program_id, 'date' => $date])->orderBy('arrangement')->get();
+        return OneToOneProgramExercise::query()
+            ->with(['log.log_videos', 'videos'])
+            ->where(['one_to_one_program_id' => $program_id, 'date' => $date])->orderBy('arrangement')->get();
     }
 
     public function get_client_exercises_by_date(mixed $client_id, $date)
     {
         return OneToOneProgramExercise::query()
-            ->with(['one_to_one_program', 'log'])
+            ->with(['one_to_one_program', 'log.log_videos'])
             ->whereHas('one_to_one_program', function ($query) use ($client_id) {
                 $query->where('client_id', $client_id);
             })

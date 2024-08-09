@@ -606,4 +606,11 @@ class ValidationServices
             }]
         ]);
     }
+
+    public function update_version($request)
+    {
+        $request->validate([
+            'version' => 'required'
+        ]);
+    }
 }

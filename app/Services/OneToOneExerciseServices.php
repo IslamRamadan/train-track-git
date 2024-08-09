@@ -8,6 +8,7 @@ use App\Services\DatabaseServices\DB_ExerciseLogVideos;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_OneToOneProgramExerciseVideos;
 use App\Services\DatabaseServices\DB_OtoExerciseComments;
+use App\Services\DatabaseServices\DB_Settings;
 use App\Services\DatabaseServices\DB_Users;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
@@ -21,6 +22,7 @@ class OneToOneExerciseServices
         , protected DB_ExerciseLog                           $DB_ExerciseLog, protected DB_OtoExerciseComments $DB_OtoExerciseComments
         , protected NotificationServices                     $notificationServices
         , protected DB_Clients                                 $DB_Clients, protected DB_Users $DB_Users,
+                                protected DB_Settings $DB_Settings,
                                 protected DB_ExerciseLogVideos $DB_ExerciseLogVideos
     )
     {
@@ -83,8 +85,15 @@ class OneToOneExerciseServices
                 if ($exercise->log()->exists()) {
                     $single_log_arr = [];
                     $single_log_arr['log_id'] = $exercise->log->id;
+                    $single_log_arr['videos'] = [];
                     $single_log_arr['sets'] = "0";
                     $single_log_arr['details'] = $exercise->log->details;
+
+                    if ($exercise->log->log_videos()->exists()) {
+                        foreach ($exercise->log->log_videos as $log_video) {
+                            $single_log_arr['videos'][] = $log_video->path;
+                        }
+                    }
                     $single_program_exercises_arr['logs'][] = $single_log_arr;
                 }
                 $program_exercises_arr[] = $single_program_exercises_arr;
@@ -120,6 +129,7 @@ class OneToOneExerciseServices
         $exercises_arr = [];
         $exercises_arr['total_exercises'] = count($exercises);
         $exercises_arr['completed_exercises'] = $done_exercises_count;
+        $exercises_arr['version'] = $this->DB_Settings->get_version();
         $program_exercises_arr = [];
         if ($exercises) {
             foreach ($exercises as $exercise) {
@@ -136,7 +146,14 @@ class OneToOneExerciseServices
                 if ($exercise->log) {
                     $logs_arr['id'] = $exercise->log->id;
                     $logs_arr['sets'] = "0";
+                    $logs_arr['videos'] = [];
+
                     $logs_arr['details'] = $exercise->log->details;
+                    if ($exercise->log->log_videos()->exists()) {
+                        foreach ($exercise->log->log_videos as $log_video) {
+                            $logs_arr['videos'][] = $log_video->path;
+                        }
+                    }
                     $single_program_exercises_arr['log'] = [$logs_arr];
                 } else {
                     $single_program_exercises_arr['log'] = $logs_arr;
