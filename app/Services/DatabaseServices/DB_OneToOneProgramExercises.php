@@ -33,6 +33,7 @@ class DB_OneToOneProgramExercises
     public function get_program_exercises(mixed $program_id, $client_id, $dates)
     {
         return OneToOneProgramExercise::query()
+            ->with(['log.log_videos', 'videos'])
             ->when($program_id != null, function ($q) use ($program_id) {
                 $q->where('one_to_one_program_id', $program_id);
             })

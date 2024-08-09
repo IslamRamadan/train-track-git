@@ -73,17 +73,20 @@ class ProgramServices
         $sync = $request['sync'] ?? "0";
         $starting_date = $request['starting_date'];
         $image = $request['image'];
-        $image_path=null;
+        $image_name = null;
+        $image_url = null;
         if ($image) {
             try {
-                $image_path = $this->imageService->save_image($image, 'programs');
+                $image_name = $this->imageService->save_image($image, 'programs');
+//                $image_url = Storage::disk('s3')->temporaryUrl($image_path, Carbon::now()->addMinutes(5));
+
             } catch (\Exception $exception) {
                 return sendError("Failed to upload the image");
             }
         }
 
-        $this->DB_Programs->add_program($coach_id, $name, $description, $type, $starting_date, $sync, $image_path);
-        return sendResponse(['message' => "Program added successfully"]);
+        $this->DB_Programs->add_program($coach_id, $name, $description, $type, $starting_date, $sync, $image_name);
+        return sendResponse(['message' => "Program added successfully", "url" => $image_url]);
     }
 
     public function update($request)

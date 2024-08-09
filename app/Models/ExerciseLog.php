@@ -16,6 +16,11 @@ class ExerciseLog extends Model
     {
         return $this->belongsTo(OneToOneProgramExercise::class, 'oto_exercise_id');
     }
+
+    public function log_videos()
+    {
+        return $this->hasMany(ExerciseLogVideo::class, 'exercise_log_id');
+    }
     protected function sets(): Attribute
     {
         return Attribute::make(
