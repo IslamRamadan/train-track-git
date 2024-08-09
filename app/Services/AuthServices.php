@@ -10,7 +10,7 @@ use App\Services\DatabaseServices\DB_Notifications;
 use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_PendingClients;
-use App\Services\DatabaseServices\DB_settings;
+use App\Services\DatabaseServices\DB_Settings;
 use App\Services\DatabaseServices\DB_Users;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
