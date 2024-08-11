@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Services\DatabaseServices\DB_ExerciseLog;
+use App\Services\DatabaseServices\DB_ExerciseLogVideos;
 use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_OneToOneProgramExerciseVideos;
@@ -20,7 +21,8 @@ class OneToOneProgramServices
                                 protected DB_ExerciseLog                   $DB_ExerciseLog,
                                 protected DB_OtoExerciseComments           $DB_OtoExerciseComments,
                                 protected DB_ProgramClients           $DB_ProgramClients,
-                                protected DB_Users                         $DB_Users
+                                protected DB_Users             $DB_Users,
+                                protected DB_ExerciseLogVideos $DB_ExerciseLogVideos,
     )
     {
     }
@@ -78,7 +80,10 @@ class OneToOneProgramServices
                 //Delete from program exercises videos table
                 $this->DB_OneToOneProgramExerciseVideos->delete_exercise_videos($exercise);
                 //Delete from program exercises log table
-                $this->DB_ExerciseLog->delete_exercise_log($exercise);
+                if ($exercise->log()->exists()) {
+                    $this->DB_ExerciseLogVideos->delete_exercise_log_videos($exercise->log);
+                    $this->DB_ExerciseLog->delete_exercise_log($exercise);
+                }
                 //Delete from program exercises table
                 $this->DB_OneToOneProgramExercises->delete_program_exercises($exercise);
             }

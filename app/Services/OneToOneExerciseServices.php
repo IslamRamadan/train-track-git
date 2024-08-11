@@ -257,8 +257,8 @@ class OneToOneExerciseServices
                         $exercise->videos()->delete();
                     }
                     if ($exercise->log()->exists()) {
-                        //delete exercises videos
-                        $exercise->log->delete();
+                        $this->DB_ExerciseLogVideos->delete_exercise_log_videos($exercise->log);
+                        $this->DB_ExerciseLog->delete_exercise_log($exercise);
                     }
                     //delete exercises
                     $exercise->delete();
@@ -296,7 +296,7 @@ class OneToOneExerciseServices
     public function delete_client_exercise($request)
     {
         $this->validationServices->delete_client_exercise($request);
-
+        DB::beginTransaction();
         $exercise_id = $request['client_exercise_id'];
 
         $exercise = $this->DB_OneToOneProgramExercises->find_exercise($exercise_id);
@@ -308,8 +308,12 @@ class OneToOneExerciseServices
             $this->DB_OtoExerciseComments->delete_date_comments(date: $exercise->date, program_id: $exercise->one_to_one_program_id);
         }
         $this->DB_OneToOneProgramExerciseVideos->delete_exercise_videos($exercise);
-        $this->DB_ExerciseLog->delete_exercise_log($exercise);
+        if ($exercise->log()->exists()) {
+            $this->DB_ExerciseLogVideos->delete_exercise_log_videos($exercise->log);
+            $this->DB_ExerciseLog->delete_exercise_log($exercise);
+        }
         $this->DB_OneToOneProgramExercises->delete_single_exercises($exercise_id);
+        DB::commit();
 
         return sendResponse(['message' => "Exercise deleted successfully"]);
     }
@@ -554,7 +558,10 @@ class OneToOneExerciseServices
                         }
                         if ($operation_type == "cut") {
                             $this->DB_OneToOneProgramExerciseVideos->delete_exercise_videos($exercise);
-                            $this->DB_ExerciseLog->delete_exercise_log($exercise);
+                            if ($exercise->log()->exists()) {
+                                $this->DB_ExerciseLogVideos->delete_exercise_log_videos($exercise->log);
+                                $this->DB_ExerciseLog->delete_exercise_log($exercise);
+                            }
                             $this->DB_OneToOneProgramExercises->delete_single_exercises($exercise->id);
                         }
                     }

@@ -55,7 +55,7 @@
                     <p>{{$success_msg}}</p>
                     <br>
                     <a class="btn btn-dark text-light w-100"
-                       href="{{env('PORTAL_URL')}}">{{__('translate.GoToLoginPage')}}</a>
+                       href="{{env('PORTAL_URL',"https://app.traintrackcoach.com")}}">{{__('translate.GoToLoginPage')}}</a>
                 </div>
             </div>
         </div>

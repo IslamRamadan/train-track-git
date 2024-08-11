@@ -97,7 +97,7 @@ class DB_OneToOneProgramExercises
 
     public function find_exercise($exercise_id)
     {
-        return OneToOneProgramExercise::query()->with('videos')->find($exercise_id);
+        return OneToOneProgramExercise::query()->with(['videos', 'log.log_videos'])->find($exercise_id);
     }
 
     public function update_exercise($exercise, $name, $description, $extra_description, $order)
@@ -183,7 +183,7 @@ class DB_OneToOneProgramExercises
 
     public function get_oto_exercises_by_exercise_id(mixed $exercise_id)
     {
-        return OneToOneProgramExercise::query()->where(['exercise_id' => $exercise_id])
+        return OneToOneProgramExercise::query()->with('log.log_videos')->where(['exercise_id' => $exercise_id])
             ->get();
     }
 

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Services\DatabaseServices\DB_ExerciseLog;
+use App\Services\DatabaseServices\DB_ExerciseLogVideos;
 use App\Services\DatabaseServices\DB_Exercises;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_OneToOneProgramExerciseVideos;
@@ -25,7 +26,8 @@ class ExerciseServices
                                 protected DB_OtoExerciseComments           $DB_OtoExerciseComments,
                                 protected DB_ExerciseLog                   $DB_ExerciseLog,
                                 protected DB_OneToOneProgramExerciseVideos $DB_OneToOneProgramExerciseVideos,
-                                protected DB_ProgramExerciseVideos         $DB_ProgramExerciseVideos
+                                protected DB_ProgramExerciseVideos $DB_ProgramExerciseVideos,
+                                protected DB_ExerciseLogVideos     $DB_ExerciseLogVideos
     )
     {
     }
@@ -411,7 +413,10 @@ class ExerciseServices
                     $this->DB_OtoExerciseComments->delete_date_comments(date: $oto_exercise->date, program_id: $oto_exercise->one_to_one_program_id);
                 }
                 $this->DB_OneToOneProgramExerciseVideos->delete_exercise_videos($oto_exercise);
-                $this->DB_ExerciseLog->delete_exercise_log($oto_exercise);
+                if ($oto_exercise->log()->exists()) {
+                    $this->DB_ExerciseLogVideos->delete_exercise_log_videos($oto_exercise->log);
+                    $this->DB_ExerciseLog->delete_exercise_log($oto_exercise);
+                }
                 $this->DB_OneToOneProgramExercises->delete_program_exercises($oto_exercise);
             }
         }
