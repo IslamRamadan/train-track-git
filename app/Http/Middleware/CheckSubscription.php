@@ -32,7 +32,7 @@ class CheckSubscription
             $coach_info = Coach::query()->with('package')->where('user_id', $coach_id)->first();
             $coach_package_amount = $coach_info->package->amount;
             if ($coach_package_amount > 0) {
-                return sendError("Coach subscription expired", 401);
+                return sendError("Coach subscription expired", 403);
             }
         }
         return $next($request);
