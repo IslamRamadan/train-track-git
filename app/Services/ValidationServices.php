@@ -613,4 +613,13 @@ class ValidationServices
             'version' => 'required'
         ]);
     }
+
+    public function send_coaches_notification($request)
+    {
+        $request->validate([
+            'title' => "required",
+            'message' => "required",
+            'user_type' => 'required|in:coach,client,all'
+        ]);
+    }
 }

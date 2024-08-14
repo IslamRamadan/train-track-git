@@ -3,12 +3,16 @@
 namespace App\Services;
 
 use App\Services\DatabaseServices\DB_Notifications;
+use App\Services\DatabaseServices\DB_UserNotificationTokens;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class NotificationServices
 {
-    public function __construct(protected ValidationServices $validation, protected DB_Notifications $DB_Notifications)
+    public function __construct(protected ValidationServices        $validation,
+                                protected DB_Notifications          $DB_Notifications,
+                                protected DB_UserNotificationTokens $DB_UserNotificationTokens
+    )
     {
     }
 
@@ -144,5 +148,22 @@ class NotificationServices
             $this->DB_Notifications->storeGeneralNotification($request);
         }
         return redirect()->back()->with("msg", "notification successfully sent");
+    }
+
+    public function send_coaches_notification(Request $request)
+    {
+        $this->validation->send_coaches_notification($request);
+        $message = $request->message;
+        $title = $request->title;
+        $user_type = $request->user_type;
+        $tokens = $this->DB_UserNotificationTokens->get_users_tokens($user_type);
+        try {
+            foreach ($tokens as $token) {
+                $this->send($token, $title, $message);
+            }
+        } catch (\Exception $exception) {
+            return sendError('Error');
+        }
+        return sendResponse(['message' => "Notification sent successfully"]);
     }
 }

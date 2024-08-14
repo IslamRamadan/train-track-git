@@ -102,6 +102,7 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
 
     // Mutual apis start
     Route::post('notification/list', [NotificationController::class, 'list_notifications']);
+    Route::post('send/coaches/notification', [NotificationController::class, 'send_coaches_notification']);
     Route::post('comment/add', [CommentController::class, 'add']);
     Route::post('comment/delete', [CommentController::class, 'delete']);
     Route::post('version/update', [AuthController::class, 'update_version']);
