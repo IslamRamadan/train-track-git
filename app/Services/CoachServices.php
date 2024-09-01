@@ -78,7 +78,14 @@ class CoachServices
             'done_workouts' => $done_workout,
             'clients_activity' => $clients_activity,
             'today_logs' => $list_logs_arr,
-            'unread_notifications' => $unread_notifications ? "1" : "0"
+            'unread_notifications' => $unread_notifications ? "1" : "0",
+            'subscription'=>[
+                'coach_package_id' => $coach_info->coach->package->id,
+                'coach_package_name' => $coach_info->coach->package->name,
+                'coach_package_amount' => $coach_info->coach->package->amount,
+                'coach_package_clients_limit' => $coach_info->coach->package->clients_limit,
+                'coach_due_date' => $coach_info->due_date,
+            ]
         ]);
     }
 
@@ -147,10 +154,7 @@ class CoachServices
         $coach_package_id = $user->coach->package_id;
         $old_package = $this->DB_Packages->find_package($coach_package_id);
 
-        $active_clients = $this->DB_Clients->get_active_clients($coach_id);
-        $pending_clients = $this->DB_PendingClients->get_pending_clients($coach_id);
-        $total_coach_clients = $active_clients + $pending_clients;
-        $coach_package = $this->DB_Packages->get_appropriate_package($total_coach_clients, ">=");
+        $coach_package = $this->getCoachCurrentPackage($coach_id);
 
         $package_id = $coach_package->id;
         $amount = $coach_package->amount;
@@ -282,5 +286,13 @@ class CoachServices
             $coach_package = $this->DB_Packages->get_appropriate_package($total_coach_clients);
         }
         return array($coach_package, $upgrade);
+    }
+
+    public function getCoachCurrentPackage(mixed $coach_id)
+    {
+        $active_clients = $this->DB_Clients->get_active_clients($coach_id);
+        $pending_clients = $this->DB_PendingClients->get_pending_clients($coach_id);
+        $total_coach_clients = $active_clients + $pending_clients;
+        return $this->DB_Packages->get_appropriate_package($total_coach_clients, ">=");
     }
 }
