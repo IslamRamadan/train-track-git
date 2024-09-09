@@ -15,4 +15,9 @@ class DB_Packages
     {
         return Package::query()->where('clients_limit', $operator, $coach_active_clients)->orderBy('clients_limit')->first();
     }
+
+    public function list_packages()
+    {
+        return Package::query()->where('id', '!=', 4)->get();
+    }
 }

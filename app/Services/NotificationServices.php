@@ -104,13 +104,15 @@ class NotificationServices
     public function sendPushNotification($fields)
     {
         // Set POST variables
-        $url = 'https://fcm.googleapis.com/fcm/send';
+//        $url = 'https://fcm.googleapis.com/fcm/send';
+        $url = 'https://fcm.googleapis.com/v1/projects/myproject-b5ae1/messages:send';
 
         $headers = array(
 //            FIREBASE_API_KEY we take from mobile team
-            'Authorization: key=' . env('FIREBASE_API_KEY'),
+            'Authorization: Bearer ' . env('FIREBASE_API_KEY'),
             'Content-Type: application/json'
         );
+        dd($url,$headers);
         // Open connection
         $ch = curl_init();
 

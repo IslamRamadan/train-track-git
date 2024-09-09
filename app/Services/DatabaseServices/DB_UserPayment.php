@@ -32,4 +32,11 @@ class DB_UserPayment
     {
         $user_payment->update(['status' => $status]);
     }
+
+    public function get_coach_payment_orders($coach_id)
+    {
+        return UsersPayment::query()->with('package')->where([
+            'coach_id' => $coach_id,
+        ])->get();
+    }
 }

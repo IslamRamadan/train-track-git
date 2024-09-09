@@ -82,6 +82,9 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     Route::post('coach/videos/list', [CoachVideosController::class, 'list']);
     Route::post('coach/videos/delete', [CoachVideosController::class, 'delete']);
 
+    Route::post('packages/list', [CoachController::class, 'list_packages']);
+    Route::post('coach/list/payments', [CoachController::class, 'list_payments']);
+
     // Coach apis end
 
     // Client apis start

@@ -29,6 +29,7 @@ class CoachServices
                                 protected DB_UserPayment              $DB_UserPayment,
                                 protected PaymentServices             $paymentServices,
                                 protected DB_PendingClients           $DB_PendingClients,
+                                protected NotificationServices $notificationServices,
     )
     {
     }
@@ -43,6 +44,8 @@ class CoachServices
      */
     public function coach_dashboard($request)
     {
+//        $notification = $this->notificationServices->send("eIdRM75qS3GFAJN8aZbf9q:APA91bFTcWr3BhPV3HgjO7253CyGD5p7_rmGP010XPFPLRkXbAPG2ZSyT6Zf0cHWcE2jLwiAame3QtJ-ZrjufjP8EaxCkUWZ0wp73LS4jVRYZ0M56vuLAJhEE_9fIHs_9d5kErc9gvPG", "Hi", "Hi");
+//        dd($notification);
         $coach_id = $request->user()->id;
 //        number of clients
         $number_of_clients = $this->DB_Clients->get_coach_clients_count($coach_id);
@@ -294,5 +297,37 @@ class CoachServices
         $pending_clients = $this->DB_PendingClients->get_pending_clients($coach_id);
         $total_coach_clients = $active_clients + $pending_clients;
         return $this->DB_Packages->get_appropriate_package($total_coach_clients, ">=");
+    }
+
+    public function list_packages()
+    {
+        $packages = $this->DB_Packages->list_packages()->toArray();
+        $packages_arr = array_map(function ($package) {
+            return [
+                'id' => $package['id'],
+                'name' => $package['name'],
+                'amount' => $package['amount'],
+                'clients_limit' => $package['clients_limit'],
+            ];
+        }, $packages);
+
+        return sendResponse($packages_arr);
+    }
+
+    public function list_payments($request)
+    {
+        $coach_id = $request->user()->id;
+        $coach_payments = $this->DB_UserPayment->get_coach_payment_orders($coach_id)->toArray();
+        $payments_arr = array_map(function ($payment) {
+            return [
+                'id' => $payment['id'],
+                'order_id' => $payment['order_id'],
+                'amount' => $payment['amount'],
+                'status' => $payment['status_text'],
+                'package_name' => $payment['package']['name'],
+            ];
+        }, $coach_payments);
+
+        return sendResponse($payments_arr);
     }
 }

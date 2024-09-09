@@ -84,5 +84,13 @@ class CoachController extends Controller
         return sendResponse(["msg" => "Done"]);
     }
 
+    public function list_packages(Request $request): JsonResponse
+    {
+        return $this->coachServices->list_packages($request);
+    }
+  public function list_payments(Request $request): JsonResponse
+    {
+        return $this->coachServices->list_payments($request);
+    }
 
 }
