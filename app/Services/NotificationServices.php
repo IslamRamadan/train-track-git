@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Services\DatabaseServices\DB_Notifications;
 use App\Services\DatabaseServices\DB_UserNotificationTokens;
 use Carbon\Carbon;
+use Google\Client as GoogleClient;
 use Illuminate\Http\Request;
 
 class NotificationServices
@@ -64,17 +65,6 @@ class NotificationServices
         return response()->json($notifications_list);
     }
 
-    // sending push message to single user by firebase reg id
-    public function send($to, $title, $body)
-    {
-        $fields = array(
-            'to' => $to, //token
-            'notification' => ["title" => $title, "body" => $body],
-            'priority' => 'high',
-            'content_available' => true,
-        );
-        return $this->sendPushNotification($fields);
-    }
 
 
     // Sending message to a topic by topic name
@@ -100,18 +90,58 @@ class NotificationServices
         return $this->sendPushNotification($fields);
     }
 
-    // function makes curl request to firebase servers
+    public function send($user_token, $title, $description)
+    {
+        $projectId = "wod-connect";
+
+        $credentialsFilePath = storage_path('app/json/wod-connect-firebase-adminsdk-xour6-1ca0510951.json');
+        $client = new GoogleClient();
+        $client->setAuthConfig($credentialsFilePath);
+        $client->addScope('https://www.googleapis.com/auth/firebase.messaging');
+        $client->refreshTokenWithAssertion();
+        $token = $client->getAccessToken();
+        $access_token = $token['access_token'];
+
+        $headers = [
+            "Authorization: Bearer $access_token",
+            'Content-Type: application/json'
+        ];
+
+        $data = [
+            "message" => [
+                "token" => $user_token,
+                "notification" => [
+                    "title" => $title,
+                    "body" => $description,
+                ],
+            ]
+        ];
+        $payload = json_encode($data);
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, "https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send");
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        curl_setopt($ch, CURLOPT_VERBOSE, true); // Enable verbose output for debugging
+        $response = curl_exec($ch);
+        $err = curl_error($ch);
+        curl_close($ch);
+        return $response;
+    }
     public function sendPushNotification($fields)
     {
         // Set POST variables
 //        $url = 'https://fcm.googleapis.com/fcm/send';
-        $url = 'https://fcm.googleapis.com/v1/projects/myproject-b5ae1/messages:send';
+        $url = 'https://fcm.googleapis.com/v1/projects/wod-connect/messages:send';
 
-        $headers = array(
-//            FIREBASE_API_KEY we take from mobile team
-            'Authorization: Bearer ' . env('FIREBASE_API_KEY'),
-            'Content-Type: application/json'
-        );
+        $headers =
+            [
+                'Authorization' => 'Bearer ' . env('FIREBASE_API_KEY'),
+                'Content-Type' => 'application/json'
+            ];
         dd($url,$headers);
         // Open connection
         $ch = curl_init();
