@@ -53,5 +53,8 @@ return [
     "OrderDate" => "تاريخ الطلب",
     "Package" => "الباقة",
     "UpdatePackage" => "تعديل الباقة",
+    "UpdateOrderStatus" => "تعديل حالة الطلب",
+    "Cancelled" => "تم الالغاء",
+    "Status" => "الحالة",
 
 ];

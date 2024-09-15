@@ -20,6 +20,11 @@ class PaymentController extends Controller
         return $this->paymentServices->index($request);
     }
 
+    public function update_order_status($lang,$order_id,Request $request)
+    {
+        return $this->paymentServices->update_order_status($order_id,$request);
+    }
+
     public function checkout_response(Request $request)
     {
         return $this->paymentServices->checkout_response($request);

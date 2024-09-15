@@ -62,8 +62,6 @@
                 $('#updateDueDateForm').attr('action', url);
             });
             tbody.on('click', '.updatePackage', function () {
-
-                console.log("dffd")
                 let url = '{{ route("coach.update.package", [app()->getLocale(),":id"]) }}';
                 url = url.replace(':id', $(this).attr('data-id'));
                 $('#updatePackageForm').attr('action', url);

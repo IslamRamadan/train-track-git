@@ -9,6 +9,7 @@ use App\Services\DatabaseServices\DB_Packages;
 use App\Services\DatabaseServices\DB_PendingClients;
 use App\Services\DatabaseServices\DB_UserPayment;
 use App\Services\DatabaseServices\DB_Users;
+use App\Services\ValidationServices;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use PayMob\Facades\PayMob;
@@ -22,6 +23,7 @@ class PaymentServices
                                 protected DB_Packages       $DB_Packages,
                                 protected DB_Coaches        $DB_Coaches,
                                 protected DB_PendingClients $DB_PendingClients,
+                                protected ValidationServices $validationServices,
     )
     {
     }
@@ -58,6 +60,13 @@ class PaymentServices
                 ->addColumn('creation_date', function ($row) {
                     return Carbon::parse($row->created_at)->toDateString();
                 })
+                ->addColumn('action', function ($row) {
+                    return '
+                            <button type="button" class="btn btn-sm btn-primary updateOrderStatus mb-2" data-id=' . $row->id . ' data-status=' . $row->status . ' data-toggle="modal" data-target="#updateOrderStatus">
+                              ' . __('translate.UpdateOrderStatus') . '
+                            </button>
+';
+                })
                 ->filterColumn('creation_date', function ($query, $keyword) {
                     $query->where('created_at', 'like', "%$keyword%");
                 })
@@ -71,7 +80,7 @@ class PaymentServices
                         $query->where('phone', 'like', "%$keyword%");
                     });
                 })
-                ->rawColumns(['user_name', 'user_phone', 'creation_date', 'status_tab'])
+                ->rawColumns(['user_name', 'user_phone', 'creation_date', 'status_tab', 'action'])
                 ->make();
             return $result;
         }
@@ -136,6 +145,15 @@ class PaymentServices
         $total_coach_clients = $coach_active_clients + $pending_clients;
         $appropriate_package = $this->DB_Packages->get_appropriate_package($total_coach_clients, ">=");
         $this->DB_Coaches->update_coach_package($coach_id, $appropriate_package->id);
+    }
+
+    public function update_order_status($order_id, $request)
+    {
+        $this->validationServices->update_order_status($request);
+        $status = $request->order_status;
+        $payment = $this->DB_UserPayment->find_user_payment_with_id($order_id);
+        $this->DB_UserPayment->update_user_payment_status($payment, $status);
+        return redirect()->back()->with(['msg' => "Updated successfully"]);
     }
 
 

@@ -20,6 +20,8 @@
                             <th>{{__('translate.Amount')}}</th>
                             <th>{{__('translate.PaymentStatus')}}</th>
                             <th>{{__('translate.OrderDate')}}</th>
+                            <th>{{__('translate.Action')}}</th>
+
                         </tr>
                         </thead>
                         <tbody id="tbody">
@@ -31,6 +33,9 @@
             <!-- /.card -->
         </div>
     </div>
+
+    <!-- Update Order Status Modal -->
+    @include('dashboard.partials.payments.updateOrderStatus')
 
 @endsection
 @section('script')
@@ -53,9 +58,22 @@
                     {data: 'amount', name: 'amount'},
                     {data: 'status_tab', name: 'status_tab'},
                     {data: 'creation_date', name: 'creation_date'},
+                    {data: 'action', name: 'action', orderable: false, searchable: false, class: "action-buttons"},
+
                 ]
             });
+        });
 
+        $(document).ready(function () {
+            const tbody = $('#tbody');
+
+            tbody.on('click', '.updateOrderStatus', function () {
+                console.log("gdfd")
+                let url = '{{ route("coach.update.order.status", [app()->getLocale(),":id"]) }}';
+                url = url.replace(':id', $(this).attr('data-id'));
+                $('#updateOrderStatusForm').attr('action', url);
+                $('#order_status_select').val($(this).attr('data-status'));
+            });
         });
 
     </script>

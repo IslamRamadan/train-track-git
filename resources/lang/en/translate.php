@@ -53,4 +53,7 @@ return [
     "OrderDate" => "Order Date",
     "Package" => "Package",
     "UpdatePackage" => "Update Package",
+    "UpdateOrderStatus" => "Update Order Status",
+    "Cancelled" => "Cancelled",
+    "Status" => "Status",
 ];

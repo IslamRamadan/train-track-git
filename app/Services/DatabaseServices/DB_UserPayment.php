@@ -15,6 +15,12 @@ class DB_UserPayment
         ])->first();
     }
 
+    public function find_user_payment_with_id($id)
+    {
+        return UsersPayment::query()
+            ->find($id);
+    }
+
     public function create_user_payment($coach_id, $order_id, $amount, $package_id,$upgrade, $status = "1", $first_pay = "0")
     {
         UsersPayment::query()->create([

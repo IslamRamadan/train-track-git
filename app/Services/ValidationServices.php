@@ -630,4 +630,12 @@ class ValidationServices
             'package' => 'required|exists:packages,id'
         ]);
     }
+
+    public function update_order_status($request)
+    {
+        $request->validate([
+            'order_id' => ['exists:users_payments,id'],
+            'order_status' => 'required|in:0,1,2'
+        ]);
+    }
 }
