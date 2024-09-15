@@ -21,7 +21,7 @@ class CoachService
 
     public function __construct(protected ValidationServices $validationServices, protected DB_Coaches $DB_Coaches, protected DB_Programs $DB_Programs,
                                 protected DB_Users           $DB_Users, protected DB_Packages $DB_Packages, protected DB_UserPayment $DB_UserPayment
-        , protected PaymentServices                          $paymentServices
+        , protected PaymentServices $paymentServices
     )
     {
     }
@@ -88,7 +88,7 @@ class CoachService
     public function index($request)
     {
         if ($request->ajax()) {
-            $data = User::where('user_type', "0")->with(['coach', 'coach_client_coach'])->select('*');
+            $data = User::where('user_type', "0")->with(['coach.package', 'coach_client_coach'])->select('*');
             $result = Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -110,6 +110,10 @@ class CoachService
                             </button>
 ';
                     }
+                    $btn .= '
+                            <button type="button" class="btn btn-sm btn-success updatePackage mb-2" data-id=' . $row->id . ' data-package=' . $row->coach->package_id . ' data-toggle="modal" data-target="#updatePackage" >
+                              ' . __('translate.UpdatePackage') . '
+                            </button>';
                     return $btn;
                 })
                 ->addColumn('due_date_tab', function ($row) {
@@ -131,6 +135,8 @@ class CoachService
                 })
                 ->addColumn('programs_number', function ($row) {
                     return $this->DB_Programs->coach_programs_count($row->id);
+                })->addColumn('package_name', function ($row) {
+                    return $row->coach->package->name;
                 })
                 ->addColumn('creation_date', function ($row) {
                     return Carbon::parse($row->created_at)->toDateString();
@@ -145,7 +151,8 @@ class CoachService
                 ->make();
             return $result;
         }
-        return view('dashboard.coaches.index');
+        $packages = $this->DB_Packages->list_packages();
+        return view('dashboard.coaches.index', compact('packages'));
     }
 
     public function block($id, $request)
@@ -209,6 +216,14 @@ class CoachService
         $this->validationServices->update_coach_due_date($request);
         $due_date = $request->due_date;
         $this->DB_Users->update_user_due_date($coach_id, $due_date);
+        return redirect()->back()->with(['msg' => "Updated successfully"]);
+    }
+
+    public function update_coach_package($coach_id, $request)
+    {
+        $this->validationServices->update_coach_package($request);
+        $package = $request->package;
+        $this->DB_Coaches->update_coach_package($coach_id, $package);
         return redirect()->back()->with(['msg' => "Updated successfully"]);
     }
 }

@@ -36,4 +36,9 @@ class CoachController extends Controller
     {
         return $this->coachService->update_coach_due_date($id, $request);
     }
+
+    public function update_package($lang, $id, Request $request)
+    {
+        return $this->coachService->update_coach_package($id, $request);
+    }
 }

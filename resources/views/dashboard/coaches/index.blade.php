@@ -10,7 +10,7 @@
             <div class="card">
                 <!-- /.card-header -->
                 <div class="card-body table-responsive">
-                    <table class="table table-responsive table-bordered data-table">
+                    <table class="table table-responsive table-bordered data-table table-scrollable">
                         <thead>
                         <tr>
                             <th>{{__('translate.Num')}}</th>
@@ -19,6 +19,7 @@
                             <th>{{__('translate.Phone')}}</th>
                             <th>{{__('translate.ActiveClients')}}</th>
                             <th>{{__('translate.ProgramsNumber')}}</th>
+                            <th>{{__('translate.Package')}}</th>
                             <th>{{__('translate.CreationDate')}}</th>
                             <th>{{__('translate.DueDate')}}</th>
                             <th style="width: 900%">{{__('translate.Action')}}</th>
@@ -33,69 +34,13 @@
             <!-- /.card -->
         </div>
     </div>
-    <!-- Modal -->
-    <div class="modal fade" id="blockCoach" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <form action="#" method="post"
-                      id="blockUser">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="myModalLabel">{{__("translate.BlockUnblockCoach")}}</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row">
-                            <input type="hidden" id="status" name="status" value="">
-                            <p>{{__('translate.AreYouSure')}}</p>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        {{ csrf_field() }}
-                        <button type="button" class="btn btn-secondary"
-                                data-dismiss="modal">{{__('translate.Close')}}</button>
-                        <button type="submit" class="btn btn-primary">{{__('translate.Confirm')}}</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    <!-- Modal -->
-    <div class="modal fade" id="updateDueDate" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <form action="#" method="post"
-                      id="updateDueDateForm">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="myModalLabel">{{__("translate.UpdateDueDate")}}</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body p-0">
-                        <div class="row">
-                            <div class="card-body">
-                                <div class="form-group">
-                                    <label for="DueDate">{{__('translate.DueDate')}}</label>
-                                    <input type="date" name="due_date" class="form-control" id="DueDate"
-                                           placeholder="{{__('translate.DueDate')}}"
-                                           data-validation="required"
-                                    >
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        {{ csrf_field() }}
-                        <button type="button" class="btn btn-secondary"
-                                data-dismiss="modal">{{__('translate.Close')}}</button>
-                        <button type="submit" class="btn btn-primary">{{__('translate.Update')}}</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    <!-- Block Coach Modal -->
+    @include('dashboard.partials.coaches.blockCoach')
+    <!-- Update Due date Modal -->
+    @include('dashboard.partials.coaches.updateDueDate')
+    <!-- Update Package Modal -->
+    @include('dashboard.partials.coaches.updatePackage',['packages'=>$packages])
+
 @endsection
 @section('script')
     <script src="{{ asset('front/js/jquery.form-validator.min.js') }}"></script>
@@ -116,6 +61,14 @@
                 url = url.replace(':id', $(this).attr('data-id'));
                 $('#updateDueDateForm').attr('action', url);
             });
+            tbody.on('click', '.updatePackage', function () {
+
+                console.log("dffd")
+                let url = '{{ route("coach.update.package", [app()->getLocale(),":id"]) }}';
+                url = url.replace(':id', $(this).attr('data-id'));
+                $('#updatePackageForm').attr('action', url);
+                $('#packages_select').val($(this).attr('data-package'));
+            });
         });
 
     </script>
@@ -126,19 +79,6 @@
             var table = $('.data-table').DataTable({
                 processing: true,
                 serverSide: true,
-                autoWidth: false,
-                "columnDefs": [
-                    {"width": "5%", "targets": 0}, // Set 10% width for the first column
-                    {"width": "15%", "targets": 1}, // Set 150px width for the second column
-                    {"width": "10%", "targets": 2}, // Set 150px width for the second column
-                    {"width": "10%", "targets": 3}, // Set 150px width for the second column
-                    {"width": "5%", "targets": 4}, // Set 150px width for the second column
-                    {"width": "5%", "targets": 5}, // Set 150px width for the second column
-                    {"width": "10%", "targets": 6}, // Set 150px width for the second column
-                    {"width": "10%", "targets": 7}, // Set 150px width for the second column
-                    {"width": "20%", "targets": 8}, // Set 150px width for the second column
-                    // ... define widths for other columns
-                ],
                 scrollX: "1000px",
                 scrollCollapse: true,
                 ajax: url,
@@ -149,9 +89,10 @@
                     {data: 'phone', name: 'phone'},
                     {data: 'active_clients', name: 'active_clients'},
                     {data: 'programs_number', name: 'programs_number'},
+                    {data: 'package_name', name: 'package_name'},
                     {data: 'creation_date', name: 'creation_date'},
                     {data: 'due_date_tab', name: 'due_date_tab'},
-                    {data: 'action', name: 'action', orderable: false, searchable: false},
+                    {data: 'action', name: 'action', orderable: false, searchable: false, class: "action-buttons"},
                 ]
             });
 

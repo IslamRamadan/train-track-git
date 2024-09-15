@@ -30,6 +30,7 @@ Route::prefix('{locale?}')->middleware(['localized', 'AdminAuth'])->group(functi
     Route::get('/payments', [PaymentController::class, "index"])->name('payments.index');
     Route::post('/coaches/block/{id}', [CoachController::class, "block"])->name('coaches.block');
     Route::post('/coaches/update/due/date/{id}', [CoachController::class, "update_due_date"])->name('coach.update.due.date');
+    Route::post('/coaches/update/package/{id}', [CoachController::class, "update_package"])->name('coach.update.package');
 });
 
 Route::prefix('{locale?}')->middleware('localized')->group(function () {

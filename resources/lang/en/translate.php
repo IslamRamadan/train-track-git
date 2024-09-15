@@ -51,4 +51,6 @@ return [
     "Amount" => "Amount",
     "OrderId" => "Order Number",
     "OrderDate" => "Order Date",
+    "Package" => "Package",
+    "UpdatePackage" => "Update Package",
 ];

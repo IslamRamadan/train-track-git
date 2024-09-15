@@ -622,4 +622,12 @@ class ValidationServices
             'user_type' => 'required|in:coach,client,all'
         ]);
     }
+
+    public function update_coach_package($request)
+    {
+        $request->validate([
+            'coach_id' => ['exists:users,id'],
+            'package' => 'required|exists:packages,id'
+        ]);
+    }
 }

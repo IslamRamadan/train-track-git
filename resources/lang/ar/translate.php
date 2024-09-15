@@ -51,5 +51,7 @@ return [
     "Amount" => "الثمن",
     "OrderId" => "رقم الطلب",
     "OrderDate" => "تاريخ الطلب",
+    "Package" => "الباقة",
+    "UpdatePackage" => "تعديل الباقة",
 
 ];

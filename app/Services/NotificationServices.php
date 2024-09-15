@@ -114,6 +114,7 @@ class NotificationServices
                     "title" => $title,
                     "body" => $description,
                 ],
+                'priority' => 'high',
             ]
         ];
         $payload = json_encode($data);
