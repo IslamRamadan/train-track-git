@@ -6,6 +6,7 @@ use App\Services\DatabaseServices\DB_UserPayment;
 use App\Services\DatabaseServices\DB_Users;
 use App\Services\PaymentServices\PaymentServices;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
@@ -32,6 +33,11 @@ class PaymentController extends Controller
 
     public function checkout_processed(Request $request)
     {
+        Log::info(
+            $request->success
+            . "----" . $request->order
+            . "----" . $request->amount_cents
+        );
         return sendResponse(["msg" => "Done"]);
     }
 
