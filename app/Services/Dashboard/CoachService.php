@@ -147,6 +147,9 @@ class CoachService
                 ->filterColumn('due_date_tab', function ($query, $keyword) {
                     $query->where('due_date', 'like', "%$keyword%");
                 })
+                ->orderColumn('due_date_tab', function ($query,$order) {
+                    $query->orderBy('due_date', $order); // Sort in descending order
+                })
                 ->rawColumns(['active_clients', 'action', 'due_date_tab', 'programs_number'])
                 ->make();
             return $result;
