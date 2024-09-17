@@ -66,7 +66,6 @@ class NotificationServices
     }
 
 
-
     // Sending message to a topic by topic name
     public function sendToTopic($to, $title, $body)
     {
@@ -99,6 +98,7 @@ class NotificationServices
         $client->setAuthConfig($credentialsFilePath);
         $client->addScope('https://www.googleapis.com/auth/firebase.messaging');
         $client->refreshTokenWithAssertion();
+
         $token = $client->getAccessToken();
         $access_token = $token['access_token'];
 
@@ -114,7 +114,9 @@ class NotificationServices
                     "title" => $title,
                     "body" => $description,
                 ],
-                'priority' => 'high',
+                "android" => [
+                    "priority" => "high" // HTTP v1 protocol
+                ]
             ]
         ];
         $payload = json_encode($data);
@@ -132,6 +134,7 @@ class NotificationServices
         curl_close($ch);
         return $response;
     }
+
     public function sendPushNotification($fields)
     {
         // Set POST variables
@@ -143,7 +146,7 @@ class NotificationServices
                 'Authorization' => 'Bearer ' . env('FIREBASE_API_KEY'),
                 'Content-Type' => 'application/json'
             ];
-        dd($url,$headers);
+        dd($url, $headers);
         // Open connection
         $ch = curl_init();
 

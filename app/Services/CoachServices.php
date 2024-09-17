@@ -29,7 +29,7 @@ class CoachServices
                                 protected DB_UserPayment              $DB_UserPayment,
                                 protected PaymentServices             $paymentServices,
                                 protected DB_PendingClients           $DB_PendingClients,
-                                protected NotificationServices $notificationServices,
+                                protected NotificationServices        $notificationServices,
     )
     {
     }
@@ -82,12 +82,13 @@ class CoachServices
             'clients_activity' => $clients_activity,
             'today_logs' => $list_logs_arr,
             'unread_notifications' => $unread_notifications ? "1" : "0",
-            'subscription'=>[
+            'subscription' => [
                 'coach_package_id' => $coach_info->coach->package->id,
                 'coach_package_name' => $coach_info->coach->package->name,
                 'coach_package_amount' => $coach_info->coach->package->amount,
                 'coach_package_clients_limit' => $coach_info->coach->package->clients_limit,
                 'coach_due_date' => $coach_info->due_date,
+                'in_trial' => $coach_info->coach->in_trial,
             ]
         ]);
     }
@@ -179,7 +180,7 @@ class CoachServices
             $payment_url = $payment->client_url;
             $order_id = $payment->order;
             $payment_amount = $payment->amount_cents / 100;
-            $this->DB_UserPayment->create_user_payment(coach_id: $user->id, order_id: $order_id, amount: $payment_amount, package_id: $package_id,upgrade: $upgrade);
+            $this->DB_UserPayment->create_user_payment(coach_id: $user->id, order_id: $order_id, amount: $payment_amount, package_id: $package_id, upgrade: $upgrade);
             return sendResponse(["payment_url" => $payment_url]);
         } catch (\Exception $exception) {
             return sendError("Payment failed,Please try again later.");
@@ -324,7 +325,8 @@ class CoachServices
                 'order_id' => $payment['order_id'],
                 'amount' => $payment['amount'],
                 'status' => $payment['status_text'],
-                'package_name' => $payment['package']['name'],
+                'order_date' => Carbon::parse($payment['created_at'])->toDateString(),
+                'order_time' => Carbon::parse($payment['created_at'])->toTimeString(),
             ];
         }, $coach_payments);
 
