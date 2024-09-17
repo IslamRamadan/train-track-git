@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Services\DatabaseServices\DB_UserPayment;
 use App\Services\DatabaseServices\DB_Users;
 use App\Services\PaymentServices\PaymentServices;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
@@ -33,12 +35,7 @@ class PaymentController extends Controller
 
     public function checkout_processed(Request $request)
     {
-        Log::info(
-            $request->success
-            . "----" . $request->order
-            . "----" . $request->amount_cents
-        );
-        return sendResponse(["msg" => "Done"]);
+        return $this->paymentServices->checkout_processed($request);
     }
 
 

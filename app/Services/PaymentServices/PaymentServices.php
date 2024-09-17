@@ -12,6 +12,7 @@ use App\Services\DatabaseServices\DB_Users;
 use App\Services\ValidationServices;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use PayMob\Facades\PayMob;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -97,34 +98,16 @@ class PaymentServices
 
     public function checkout_response($request)
     {
-        DB::beginTransaction();
         if ($request->success == "true") {
             $order_id = $request->order;
             $amount = $request->amount_cents / 100;
-            $get_the_order = $this->DB_UserPayment->find_user_payment($order_id, $amount, "1");
+            $get_the_order = $this->DB_UserPayment->find_user_payment($order_id, $amount, "2");
             if ($get_the_order) {
                 $coach_id = $get_the_order->coach_id;
                 $get_the_coach = $this->DB_Users->get_user_info($coach_id);
-                $coach_due_date = Carbon::parse($get_the_coach->due_date);
+                $coach_due_date = $get_the_coach->due_date;
 
-//                get the coach due date
-                if ($coach_due_date->lt(Carbon::today()) || $get_the_order->upgrade == "1") {
-                    $new_due_date = Carbon::today()->addMonth()->toDateString();
-                } else {
-                    $new_due_date = $coach_due_date->addMonth()->toDateString();
-                }
-
-                $this->DB_Users->update_user_due_date($coach_id, $new_due_date);
-                $this->DB_UserPayment->update_user_payment_status($get_the_order, "2");
-                if ($get_the_order->upgrade == "0") {
-                    //check if user need to downgrade the package
-                    if ($get_the_order->first_pay == "0") $this->checkIfUserNeedToDowngradeThePackage($coach_id);
-                } else {
-                    $this->DB_Coaches->update_coach_package(coach_id: $coach_id, package_id: $get_the_order->package_id);
-                }
-
-                $success_msg = __('translate.PaymentSuccessMsg') . $new_due_date;
-                DB::commit();
+                $success_msg = __('translate.PaymentSuccessMsg') . $coach_due_date;
                 return view('payment.payment_done', compact('success_msg', 'order_id'));
             } else {
                 return view('payment.payment_failed');
@@ -154,6 +137,47 @@ class PaymentServices
         $payment = $this->DB_UserPayment->find_user_payment_with_id($order_id);
         $this->DB_UserPayment->update_user_payment_status($payment, $status);
         return redirect()->back()->with(['msg' => "Updated successfully"]);
+    }
+
+    public function checkout_processed($request)
+    {
+        // DB::beginTransaction();
+        if ($request['obj']['success'] == "true") {
+            $order_id = $request['obj']['order'];
+            $amount = $request['obj']['amount_cents'] / 100;
+            $get_the_order = $this->DB_UserPayment->find_user_payment($order_id, $amount, "1");
+            if ($get_the_order) {
+                $coach_id = $get_the_order->coach_id;
+                $get_the_coach = $this->DB_Users->get_user_info($coach_id);
+                $coach_due_date = Carbon::parse($get_the_coach->due_date);
+
+//                get the coach due date
+                if ($coach_due_date->lt(Carbon::today()) || $get_the_order->upgrade == "1") {
+                    $new_due_date = Carbon::today()->addMonth()->toDateString();
+                } else {
+                    $new_due_date = $coach_due_date->addMonth()->toDateString();
+                }
+
+                $this->DB_Users->update_user_due_date($coach_id, $new_due_date);
+                $this->DB_UserPayment->update_user_payment_status($get_the_order, "2");
+                if ($get_the_order->upgrade == "0") {
+                    //check if user need to downgrade the package
+                    if ($get_the_order->first_pay == "0") $this->checkIfUserNeedToDowngradeThePackage($coach_id);
+                } else {
+                    $this->DB_Coaches->update_coach_package(coach_id: $coach_id, package_id: $get_the_order->package_id);
+                }
+
+                $success_msg = __('translate.PaymentSuccessMsg') . $new_due_date;
+                return sendResponse(["msg" => $success_msg]);
+            } else {
+                $success_msg = "Payment Failed";
+                return sendResponse(["msg" => $success_msg]);
+            }
+        }
+        // DB::commit();
+        $success_msg = "Payment Failed";
+        Log::info($success_msg . "-----" . json_encode($request->all()));
+        return sendResponse(["msg" => $success_msg]);
     }
 
 
