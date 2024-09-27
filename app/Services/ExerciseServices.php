@@ -26,8 +26,8 @@ class ExerciseServices
                                 protected DB_OtoExerciseComments           $DB_OtoExerciseComments,
                                 protected DB_ExerciseLog                   $DB_ExerciseLog,
                                 protected DB_OneToOneProgramExerciseVideos $DB_OneToOneProgramExerciseVideos,
-                                protected DB_ProgramExerciseVideos $DB_ProgramExerciseVideos,
-                                protected DB_ExerciseLogVideos     $DB_ExerciseLogVideos
+                                protected DB_ProgramExerciseVideos         $DB_ProgramExerciseVideos,
+                                protected DB_ExerciseLogVideos             $DB_ExerciseLogVideos
     )
     {
     }
@@ -112,8 +112,8 @@ class ExerciseServices
         if ($exercise->videos()->exists()) {
             $this->add_exercises_videos($copied_exercise->id, $exercise->videos);
         }
-        if ($exercise->program->sync == "1") {
-            $this->sync_on_add_exercise($exercise->program->starting_date, $day, $to_program_id, $exercise->name,
+        if ($copied_exercise->program->sync == "1") {
+            $this->sync_on_add_exercise($copied_exercise->program->starting_date, $day, $to_program_id, $exercise->name,
                 $exercise->description, $exercise->extra_description, $copied_exercise->id, $exercise->videos);
         }
         DB::commit();
@@ -336,25 +336,31 @@ class ExerciseServices
      */
     private function copy_days_logic($days_arr, mixed $from_program_id, mixed $to_program_id, int $start_day, string $operation_type = "copy"): void
     {
+        $copied_exercises_arr = [];
         foreach ($days_arr as $single_day) {
+            Log::info("single day " . $single_day['day'] . " start");
+
             if ($single_day['copy']) {
                 $day_exercises = $this->DB_Exercises->get_program_exercises_by_day(program_id: $from_program_id,
-                    day: $single_day['day']);
+                    day: $single_day['day'], copied_exercises_arr: $copied_exercises_arr);
                 if ($day_exercises) {
                     DB::beginTransaction();
                     foreach ($day_exercises as $exercise) {
+                        Log::info("exercise $exercise->id start");
+
                         $exercise_arrangement = $this->DB_Exercises->get_exercise_arrangement($to_program_id, $start_day);
-                        Log::info($exercise_arrangement);
                         $copied_exercise = $this->DB_Exercises->add_exercise($exercise->name, $exercise->description,
                             $exercise->extra_description, $start_day, $exercise_arrangement, $to_program_id);
+                        $copied_exercises_arr[] = $copied_exercise->id;//add the new copied/cut exercise to avoid the cut issue
+
                         if ($exercise->videos()->exists()) {
                             $this->add_exercises_videos($copied_exercise->id, $exercise->videos);
                         }
-                        if ($exercise->program->sync == "1") {
+                        if ($copied_exercise->program->sync == "1") {
                             if ($operation_type == "cut") {
                                 $this->sync_on_delete_exercise($exercise->id);
                             }
-                            $this->sync_on_add_exercise($exercise->program->starting_date, $start_day, $to_program_id, $exercise->name,
+                            $this->sync_on_add_exercise($copied_exercise->program->starting_date, $start_day, $to_program_id, $exercise->name,
                                 $exercise->description, $exercise->extra_description, $copied_exercise->id, $exercise->videos);
                         }
                         if ($operation_type == "cut") {

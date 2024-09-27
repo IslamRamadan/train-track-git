@@ -3,7 +3,6 @@
 namespace App\Services\DatabaseServices;
 
 use App\Models\ProgramExercise;
-use function Termwind\ask;
 
 class DB_Exercises
 {
@@ -39,10 +38,11 @@ class DB_Exercises
             ->get()->groupBy('day');
     }
 
-    public function get_program_exercises_by_day(mixed $program_id, $day)
+    public function get_program_exercises_by_day(mixed $program_id, $day, $copied_exercises_arr = [])
     {
         return ProgramExercise::with(['videos', 'program'])
             ->where(['program_id' => $program_id, 'day' => $day])
+            ->whereNotIn('id', $copied_exercises_arr)
             ->orderBy('arrangement')
             ->get();
     }
