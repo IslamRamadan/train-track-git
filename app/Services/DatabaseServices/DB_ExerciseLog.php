@@ -63,6 +63,6 @@ class DB_ExerciseLog
 
     public function find_exercise_log($exercise_id)
     {
-        return ExerciseLog::query()->with('log_videos')->where('oto_exercise_id', $exercise_id)->first();
+        return ExerciseLog::query()->with(['log_videos','exercise'])->where('oto_exercise_id', $exercise_id)->first();
     }
 }

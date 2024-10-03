@@ -24,8 +24,8 @@ class NotificationController extends Controller
     {
         return $this->notificationServices->callSendToTopic($request);
     }
-    public function send_coaches_notification(Request $request)
-    {
-        return $this->notificationServices->send_coaches_notification($request);
-    }
+//    public function send_coaches_notification(Request $request)
+//    {
+//        return $this->notificationServices->send_coaches_notification($request);
+//    }
 }

@@ -347,10 +347,14 @@ class OneToOneExerciseServices
         $find_exercise_details = $this->DB_OneToOneProgramExercises->find_exercise($client_exercise_id);
         $exercise_name = $find_exercise_details->name;
         $exercise_date = $find_exercise_details->date;
+
         $this->send_notification_to_coach(
             user_id: $client_id,
             title: "New Log",
-            message: $client_name . ' added a new log for ' . $exercise_name . ' exercise on ' . $exercise_date . "!");
+            message: $client_name . ' added a new log for ' . $exercise_name . ' exercise on ' . $exercise_date . "!",
+            oto_program_id: $exercise_log->exercise->one_to_one_program_id,
+            date: $exercise_log->exercise->date
+        );
 
         return sendResponse(['message' => "Log created successfully"]);
     }
@@ -380,11 +384,14 @@ class OneToOneExerciseServices
             $status_name = $status == "1" ? "Done" : "Missed";
             $find_exercise_details = $this->DB_OneToOneProgramExercises->find_exercise($client_exercise_id);
             $exercise_name = $find_exercise_details->name;
+            $exercise_oto_program_id = $find_exercise_details->one_to_one_program_id;
             $exercise_date = $find_exercise_details->date;
             $this->send_notification_to_coach(
                 user_id: $user_id,
                 title: $status_name . " Exercise",
-                message: $user_name . " Marked " . $exercise_name . " exercise on " . $exercise_date . " as " . $status_name . "!");
+                message: $user_name . " Marked " . $exercise_name . " exercise on " . $exercise_date . " as " . $status_name . "!",
+                oto_program_id: $exercise_oto_program_id,
+                date: $exercise_date);
         }
         return sendResponse(['message' => "exercise status successfully"]);
     }
@@ -575,9 +582,14 @@ class OneToOneExerciseServices
         }
     }
 
-    private function send_notification_to_coach($user_id, $title, $message)
+    private function send_notification_to_coach($user_id, $title, $message, $oto_program_id, $date)
     {
         $coach_id = $this->DB_Clients->find_coach_id(client_id: $user_id)->coach_id;
-        $this->notificationServices->send_notification_to_user($coach_id, $title, $message);
+        $payload = [
+            'user_id' => $coach_id,
+            'oto_program_id' => $oto_program_id,
+            'date' => $date,
+        ];
+        $this->notificationServices->send_notification_to_user($coach_id, $title, $message, $payload);
     }
 }
