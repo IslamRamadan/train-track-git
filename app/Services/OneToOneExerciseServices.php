@@ -113,14 +113,18 @@ class OneToOneExerciseServices
         $this->validationServices->list_client_exercises_in_date($request);
         $client_id = $request->user()->id;
         $date = $request['date'];
-
         if ($request->user()->coach_client_client->status == "2") {
             return sendError("Archived client");
         }
         if ($request->user()->due_date) {
             $due_date = Carbon::parse($request->user()->due_date);
             if ($due_date->lte(Carbon::today())) {
-                return sendError("Client subscription expired", 403);
+                $response = [
+                    'success' => false,
+                    'message' => "Client subscription expired",
+                    'payment_link' => $request->user()->client ? $request->user()->client->payment_link : ""
+                ];
+                return response()->json($response, 403);
             }
         }
 
