@@ -139,10 +139,21 @@ class CoachServices
         $this->validationServices->update_due_date($request);
         $client_id = $request->client_id;
         $due_date = $request->due_date;
+        $payment_link = $request->payment_link;
         $this->DB_Users->update_user_due_date($client_id, $due_date);
-        return sendResponse(['message' => "Client due date updated successfully"]);
+        if ($payment_link) $this->update_user_payment_link($client_id, $payment_link);
+        return sendResponse(['message' => "Updated successfully"]);
     }
 
+    public function update_user_payment_link(mixed $client_id, mixed $payment_link)
+    {
+        $client_info = $this->DB_Clients->get_client_info($client_id);
+        if ($client_info) {
+            $this->DB_Clients->update_client_payment_link($client_info, $payment_link);
+        } else {
+            $this->DB_Clients->create_client_payment_link($client_id, $payment_link);
+        }
+    }
     public function create_payment_link($request)
     {
         $this->validationServices->create_payment_link($request);

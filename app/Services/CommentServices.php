@@ -31,8 +31,14 @@ class CommentServices
         $create_comment = $this->DB_OtoExerciseComments->create_comment(date: $date, comment: $comment,
             sender: $sender, oto_program_id: $oto_program_id);
 
+        $payload = [
+            'user_id' => $user_id,
+            'oto_program_id' => $oto_program_id,
+            'date' => $date,
+        ];
+
         $this->notificationServices->send_notification_to_user(user_id: $user_id, title: "New Comment",
-            message: $user_name . " added a new comment for you on " . $date . "!");
+            message: $user_name . " added a new comment for you on " . $date . "!", payload: $payload);
 
 
         return sendResponse(['comment_id' => $create_comment->id, 'message' => "Comment added successfully"]);

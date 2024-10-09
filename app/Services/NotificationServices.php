@@ -17,7 +17,7 @@ class NotificationServices
     {
     }
 
-    public function send_notification_to_user($user_id, $title, $message)
+    public function send_notification_to_user($user_id, $title, $message, $payload = [])
     {
         // send notification to supplier to telling hin that thre exist user reserved appointment with him
         $this->DB_Notifications->create_user_notification($user_id, $title, $message);
@@ -26,10 +26,8 @@ class NotificationServices
         if ($userNotificationToken) {
             $body = $message;
 
-            $sent = $this->send($userNotificationToken->token, $title, $body);
-//            $res = json_decode($sent);
-//            if ($res && $res->success) {
-//            }
+          $this->send($userNotificationToken->token, $title, $body,$payload);
+
         }
     }
 
@@ -89,7 +87,7 @@ class NotificationServices
         return $this->sendPushNotification($fields);
     }
 
-    public function send($user_token, $title, $description)
+    public function send($user_token, $title, $description, $payloadData = [])
     {
         $projectId = "wod-connect";
 
@@ -116,7 +114,8 @@ class NotificationServices
                 ],
                 "android" => [
                     "priority" => "high" // HTTP v1 protocol
-                ]
+                ],
+                "data" => $payloadData
             ]
         ];
         $payload = json_encode($data);
@@ -186,20 +185,20 @@ class NotificationServices
         return redirect()->back()->with("msg", "notification successfully sent");
     }
 
-    public function send_coaches_notification(Request $request)
-    {
-        $this->validation->send_coaches_notification($request);
-        $message = $request->message;
-        $title = $request->title;
-        $user_type = $request->user_type;
-        $tokens = $this->DB_UserNotificationTokens->get_users_tokens($user_type);
-        try {
-            foreach ($tokens as $token) {
-                $this->send($token, $title, $message);
-            }
-        } catch (\Exception $exception) {
-            return sendError('Error');
-        }
-        return sendResponse(['message' => "Notification sent successfully"]);
-    }
+//    public function send_coaches_notification(Request $request)
+//    {
+//        $this->validation->send_coaches_notification($request);
+//        $message = $request->message;
+//        $title = $request->title;
+//        $user_type = $request->user_type;
+//        $tokens = $this->DB_UserNotificationTokens->get_users_tokens($user_type);
+//        try {
+//            foreach ($tokens as $token) {
+//                $this->send($token, $title, $message);
+//            }
+//        } catch (\Exception $exception) {
+//            return sendError('Error');
+//        }
+//        return sendResponse(['message' => "Notification sent successfully"]);
+//    }
 }

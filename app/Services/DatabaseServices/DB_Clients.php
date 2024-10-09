@@ -2,6 +2,7 @@
 
 namespace App\Services\DatabaseServices;
 
+use App\Models\Client;
 use App\Models\CoachClient;
 use App\Models\User;
 
@@ -79,6 +80,30 @@ class DB_Clients
     public function get_active_clients($coach_id)
     {
         return CoachClient::query()->where(['coach_id' => $coach_id, "status" => "1"])->count();
+    }
+
+
+    public function get_client_info(mixed $client_id)
+    {
+        return Client::query()
+            ->where('user_id', $client_id)
+            ->first();
+    }
+
+    public function update_client_payment_link(mixed $client_info, mixed $payment_link)
+    {
+        $client_info->update([
+            'payment_link' => $payment_link
+        ]);
+    }
+
+    public function create_client_payment_link(mixed $client_id, mixed $payment_link)
+    {
+        Client::query()
+            ->create([
+                'user_id' => $client_id,
+                'payment_link' => $payment_link
+            ]);
     }
 
 }
