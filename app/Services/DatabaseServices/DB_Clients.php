@@ -11,7 +11,7 @@ class DB_Clients
 
     public function get_all_clients(mixed $coach_id, mixed $search, $status)
     {
-        return CoachClient::with('coach', 'client')->where(['coach_id' => $coach_id])
+        return CoachClient::with('coach', 'client.client')->where(['coach_id' => $coach_id])
             ->when(!empty($search), function ($q) use ($search) {
                 $q->whereHas('client', function ($query) use ($search) {
                     $query->where('name', 'LIKE', '%' . $search . '%')

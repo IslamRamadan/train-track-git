@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('gym_coaches', function (Blueprint $table) {
             $table->id();
+            $table->foreign('gym_id')->references('id')->on('gyms');
+            $table->unsignedBigInteger('gym_id')->nullable();
+
             $table->timestamps();
         });
     }

@@ -51,6 +51,8 @@ class ClientServices
 
     /**
      * @param $clients
+     * @param $pending_clients
+     * @param $status
      * @return array that has id,name,email,phone,status
      */
     public function client_info_arr($clients, $pending_clients, $status): array
@@ -62,6 +64,7 @@ class ClientServices
                 "name" => $client->client->name,
                 "email" => $client->client->email,
                 "phone" => $client->client->phone,
+                "payment_link" => $client->client->client->payment_link ?? "",
                 "due_date" => $client->client->due_date ?? "",
                 "status" => $client->status//0 for pending , 1 for active,2 for archived
             ];
@@ -75,6 +78,7 @@ class ClientServices
                         "name" => "",
                         "email" => $client->email,
                         "phone" => "",
+                        "payment_link" => "",
                         "due_date" => "",
                         "status" => "0"//0 for pending , 1 for active,2 for archived
                     ];
@@ -199,7 +203,7 @@ class ClientServices
         $email = $request['email'];
 
         list($coach_package, $upgrade) = $this->coachServices->get_coach_package($coach_id);
-        if ($upgrade) return sendError("Need to upgrade to package " . $coach_package->name . " that has " . $coach_package->clients_limit . " clients limit with " . $coach_package->amount." EGP monthly.");
+        if ($upgrade) return sendError("Need to upgrade to package " . $coach_package->name . " that has " . $coach_package->clients_limit . " clients limit with " . $coach_package->amount . " EGP monthly.");
         try {
             Mail::to($email)->send(new InvitationMail($email, $coach_email));
         } catch (\Exception $exception) {
@@ -371,7 +375,7 @@ class ClientServices
         if ($status == "1") {
             //  check the active clients if
             list($coach_package, $upgrade) = $this->coachServices->get_coach_package($coach_id);
-            if ($upgrade) return sendError("Need to upgrade to package " . $coach_package->name . " that has " . $coach_package->clients_limit . " clients limit with " . $coach_package->amount." EGP monthly.");
+            if ($upgrade) return sendError("Need to upgrade to package " . $coach_package->name . " that has " . $coach_package->clients_limit . " clients limit with " . $coach_package->amount . " EGP monthly.");
         }
         $this->DB_Clients->archive_client(client_id: $client_id, status: $status);
         $type = $status == "2" ? "archived" : "unarchived";

@@ -78,8 +78,6 @@ class ProgramServices
         if ($image) {
             try {
                 $image_name = $this->imageService->save_image($image, 'programs');
-//                $image_url = Storage::disk('s3')->temporaryUrl($image_path, Carbon::now()->addMinutes(5));
-
             } catch (\Exception $exception) {
                 return sendError("Failed to upload the image");
             }
