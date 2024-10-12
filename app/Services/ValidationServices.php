@@ -8,6 +8,7 @@ use App\Services\DatabaseServices\DB_ExerciseLog;
 use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_Programs;
+use App\Services\DatabaseServices\DB_Users;
 
 class ValidationServices
 {
@@ -17,6 +18,7 @@ class ValidationServices
                                 protected DB_Programs                 $DB_Programs,
                                 protected DB_OneToOneProgram          $DB_OneToOneProgram,
                                 protected DB_CoachVideos              $DB_CoachVideos,
+                                protected DB_Users $DB_Users,
     )
     {
     }
@@ -637,6 +639,26 @@ class ValidationServices
         $request->validate([
             'order_id' => ['exists:users_payments,id'],
             'order_status' => 'required|in:0,1,2'
+        ]);
+    }
+
+    public function add_gym($request)
+    {
+        $request->validate([
+            'name' => ['required', 'max:20'],
+            'description' => 'required|max:200',
+            'logo' => "nullable"
+        ]);
+    }
+
+    public function invite_coach_to_gym($request,$check_email_belongs_to_client)
+    {
+        $request->validate([
+            'email' => ['required', 'email', function ($attribute, $value, $fail) use ($request,$check_email_belongs_to_client) {
+                if ($check_email_belongs_to_client && $check_email_belongs_to_client->user_type == "1") {
+                    $fail('The email belongs to a client');
+                }
+            }],
         ]);
     }
 }

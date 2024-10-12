@@ -2,6 +2,8 @@
 
 namespace App\Http;
 
+use App\Http\Middleware\CheckCoachUser;
+use App\Http\Middleware\CheckSubscription;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 class Kernel extends HttpKernel
@@ -66,7 +68,8 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'AdminAuth' => \App\Http\Middleware\AdminAuth::class,
         'AdminGuest' => \App\Http\Middleware\AdminGuest::class,
-        'CheckSubscription' => \App\Http\Middleware\CheckSubscription::class,
+        'CheckSubscription' => CheckSubscription::class,
+        'CheckCoachUser' => CheckCoachUser::class,
     ];
     protected $routeMiddleware = [
         // ... other middlewares

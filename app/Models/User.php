@@ -64,6 +64,11 @@ class User extends Authenticatable
         return $this->hasOne(CoachClient::class, 'client_id');
     }
 
+    public function gym_coach()
+    {
+        return $this->hasOne(GymCoach::class, 'coach_id');
+    }
+
     public function coach_client_coach()
     {
         return $this->hasMany(CoachClient::class, 'coach_id');
@@ -104,6 +109,20 @@ class User extends Authenticatable
     {
         return Attribute::make(
             get: fn($value) => $this->user_type == 0 ? "Coach" : "Athlete",
+        );
+    }
+
+    protected function hasGym(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $this->gym_coach && $this->gym_coach == "1" ? 1 : 0,
+        );
+    }
+
+    protected function isGymAdmin(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $this->gym_coach ? 1 : 0,
         );
     }
 

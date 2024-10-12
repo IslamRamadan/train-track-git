@@ -8,4 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class GymJoinRequest extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'gym_id',
+        'coach_id',
+        'admin_id',
+        'status',
+    ];
 }

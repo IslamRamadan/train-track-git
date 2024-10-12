@@ -8,4 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 class GymPendingCoach extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'gym_id',
+        'admin_id',
+        'email'
+    ];
 }

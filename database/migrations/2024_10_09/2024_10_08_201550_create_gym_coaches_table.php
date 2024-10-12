@@ -15,7 +15,9 @@ return new class extends Migration
             $table->id();
             $table->foreign('gym_id')->references('id')->on('gyms');
             $table->unsignedBigInteger('gym_id')->nullable();
-
+            $table->foreign('coach_id')->references('id')->on('users');
+            $table->unsignedBigInteger('coach_id')->nullable();
+            $table->enum('privilege', ['1', '2', '3'])->default('1');//1 owner ,2 admin ,3 coach
             $table->timestamps();
         });
     }
