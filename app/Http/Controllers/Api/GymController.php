@@ -52,4 +52,12 @@ class GymController extends Controller
     {
         return $this->gymServices->invite_coach_to_gym($request);
     }
+
+    /**
+     * list gym coaches
+     */
+    public function list_gym_coaches(Request $request)
+    {
+        return $this->gymServices->list_gym_coaches($request);
+    }
 }

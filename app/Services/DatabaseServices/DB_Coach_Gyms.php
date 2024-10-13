@@ -26,4 +26,31 @@ class DB_Coach_Gyms
             })
             ->exists();
     }
+
+    public function get_gym_coaches(int $gym_id, int $admin_id, string|null $search, string|null $privilege)
+    {
+        $where = [
+            'gym_id' => $gym_id,
+        ];
+
+        if (!empty($search)) {
+            dd("it has a problem");
+            $where['has:coach'] = [
+                'orWhereHas' => [
+                    'name' => 'LIKE', '%' . $search . '%',
+                    'email' => 'LIKE', '%' . $search . '%',
+                    'phone' => 'LIKE', '%' . $search . '%',
+                ],
+            ];
+        }
+        if (!empty($privilege)) {
+            $where['privilege'] = $privilege ;
+        }
+        return GymCoach::query()
+            ->where($where)
+            ->where("coach_id", '!=', $admin_id)
+            ->with(['coach'])
+            ->get();
+
+    }
 }

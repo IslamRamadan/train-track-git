@@ -113,7 +113,7 @@ class GymServices
 
 //            send notification to coach to notify him with the invitation
             $title = "Gym Invitation";
-            $message="$admin_name "
+            $message = "$admin_name invited you to join his gym";
             $this->notificationServices->send_notification_to_user($coach_id, $title, $message);
 
 
@@ -139,5 +139,74 @@ class GymServices
     private function check_coach_is_gym_admin($request)
     {
         return $request->user()->isGymAdmin == 1;
+    }
+
+    /**
+     * @param $request
+     * @return JsonResponse
+     */
+    public function list_gym_coaches($request)
+    {
+        $this->validationServices->list_gym_coaches($request);
+
+        // Check if the sender coach is already a gym admin
+        $check_coach_is_gym_admin = $this->check_coach_is_gym_admin($request);
+        if (!$check_coach_is_gym_admin) {
+            return sendError("Coach is not a gym admin", 403);
+        }
+        $admin_gym_id = $request->user()->gym_coach->gym_id;
+        $admin_id = $request->user()->id;
+        $search = $request['search'];
+        $privilege = $request['privilege'];
+//      get gym coaches except the logged in coach
+        $gym_coaches = $this->DB_Coach_Gyms->get_gym_coaches($admin_gym_id, $admin_id, $search, $privilege);
+//        $pending_gym_coaches = $this->DB_GymPendingCoach->get_gym_pending_coaches($coach_id, $search);
+        $coaches_arr = $this->gym_coaches_arr($gym_coaches);
+        return sendResponse($coaches_arr);
+    }
+
+
+    public function gym_coaches_arr($gym_coaches): array
+    {
+        $coaches_arr = [];
+
+        foreach ($gym_coaches as $coach) {
+            $privilege = match ($coach->privilege) {
+                "1" => "Owner",
+                "2" => "Admin",
+                default => "Coach",
+            };
+
+//            $status = match ($coach->client->status) {
+//                1 => "Active",
+//                2 => "Archived",
+//                default => "Pending",
+//            };
+
+            $coaches_arr[] = [
+                "id" => $coach->coach->id,
+                "name" => $coach->coach->name,
+                "email" => $coach->coach->email,
+                "phone" => $coach->coach->phone,
+                "due_date" => $coach->coach->due_date??"",
+                "privilege" => $privilege,
+            ];
+        }
+
+//        if ($status === "all" || $status === "pending") {
+//            foreach ($pending_gym_coaches as $coach) {
+//                $coaches_arr[] = [
+//                    "id" => "",
+//                    "name" => "",
+//                    "email" => $coach->email,
+//                    "phone" => "",
+//                    "due_date" => "",
+//                    "privilege" => "0", // 0 for pending, 1 for active, 2 for archived
+//                    "status" => "Pending",
+//                ];
+//            }
+//        }
+
+        return $coaches_arr;
     }
 }

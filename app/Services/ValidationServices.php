@@ -661,4 +661,12 @@ class ValidationServices
             }],
         ]);
     }
+
+    public function list_gym_coaches($request)
+    {
+        $request->validate([
+            'search' => 'nullable|max:20',
+            'status' => 'nullable|in:1,2,3',
+        ]);
+    }
 }
