@@ -336,6 +336,7 @@ class CoachServices
                 'order_id' => $payment['order_id'],
                 'amount' => $payment['amount'],
                 'status' => $payment['status_text'],
+                'package_name' => $payment['package']?$payment['package']['name']:"",
                 'order_date' => Carbon::parse($payment['created_at'])->toDateString(),
                 'order_time' => Carbon::parse($payment['created_at'])->toTimeString(),
             ];
