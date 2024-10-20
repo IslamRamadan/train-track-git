@@ -669,4 +669,12 @@ class ValidationServices
             'status' => 'nullable|in:1,2,3',
         ]);
     }
+
+    public function change_join_request_status($request)
+    {
+        $request->validate([
+            'join_request_id' => 'required|exists:gym_join_requests,id',
+            'status' => 'required|in:0,2',
+        ]);
+    }
 }

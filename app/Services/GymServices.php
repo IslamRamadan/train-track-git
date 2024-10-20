@@ -8,6 +8,7 @@ use App\Services\DatabaseServices\DB_GymJoinRequest;
 use App\Services\DatabaseServices\DB_GymPendingCoach;
 use App\Services\DatabaseServices\DB_Gyms;
 use App\Services\DatabaseServices\DB_Users;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -90,18 +91,14 @@ class GymServices
 
         $this->validationServices->invite_coach_to_gym($request, $check_email_belongs_to_client);
 
-        // Check if the sender coach is already a gym admin
-        $check_coach_is_gym_admin = $this->check_coach_is_gym_admin($request);
-        if (!$check_coach_is_gym_admin) {
-            return sendError("Sender coach is not a gym admin", 403);
-        }
+
         $coach_id = $request->user()->id;
         $admin_gym_id = $request->user()->gym_coach->gym_id;
         $email = $request->email;
         $admin_email = $request->user()->email;
         $admin_name = $request->user()->name;
 //        check email is invited to gym
-        if ($this->DB_GymPendingCoach->check_email_is_invited_to_gym($admin_gym_id, $email)) return sendError("Coach is already invited to your gym", 403);;
+        if ($this->DB_GymJoinRequest->check_email_is_invited_to_gym($email, $admin_gym_id)) return sendError("Coach is already invited to your gym", 403);;
 
 //      check if the invited coach is assigned to another gym
         if ($this->DB_Coach_Gyms->check_coach_assigned_to_gym($admin_gym_id, $email)) return sendError("Coach is already assigned to gym", 403);
@@ -117,17 +114,16 @@ class GymServices
             $this->notificationServices->send_notification_to_user($coach_id, $title, $message);
 
 
-            // add the request directly with the coach id
-            $this->DB_GymJoinRequest->create_gym_join_request($admin_gym_id, $check_email_belongs_to_client->id, $coach_id);
         } else {
-            // else then will add email to pending gym coaches
+            // else then will send email to coach
             try {
                 Mail::to($email)->send(new InvitationMail($email, $admin_email));
             } catch (\Exception $exception) {
                 return sendError("Failed to send the email,Please try again later.");
             }
-            $this->DB_GymPendingCoach->add_email_to_pending_gym_requests($coach_id, $admin_gym_id, $email);
         }
+        // add the join request
+        $this->DB_GymJoinRequest->create_gym_join_request($admin_gym_id, $check_email_belongs_to_client?->id, $coach_id, $email);
         return sendResponse(['message' => "Coach invited successfully"]);
     }
 
@@ -149,22 +145,16 @@ class GymServices
     {
         $this->validationServices->list_gym_coaches($request);
 
-        // Check if the sender coach is already a gym admin
-        $check_coach_is_gym_admin = $this->check_coach_is_gym_admin($request);
-        if (!$check_coach_is_gym_admin) {
-            return sendError("Coach is not a gym admin", 403);
-        }
-        $admin_gym_id = $request->user()->gym_coach->gym_id;
+        $gym_id = $request->user()->gym_coach->gym_id;
         $admin_id = $request->user()->id;
         $search = $request['search'];
         $privilege = $request['privilege'];
 //      get gym coaches except the logged in coach
-        $gym_coaches = $this->DB_Coach_Gyms->get_gym_coaches($admin_gym_id, $admin_id, $search, $privilege);
+        $gym_coaches = $this->DB_Coach_Gyms->get_gym_coaches($gym_id, $admin_id, $search, $privilege);
 //        $pending_gym_coaches = $this->DB_GymPendingCoach->get_gym_pending_coaches($coach_id, $search);
         $coaches_arr = $this->gym_coaches_arr($gym_coaches);
         return sendResponse($coaches_arr);
     }
-
 
     public function gym_coaches_arr($gym_coaches): array
     {
@@ -209,4 +199,95 @@ class GymServices
 
         return $coaches_arr;
     }
+
+    public function list_join_requests($request)
+    {
+        $search = $request['search'];
+//        if coach is admin then he will get all his gym join requests (Received and Sent)
+        if ($this->check_coach_is_gym_admin($request)) {
+            $is_admin = true;
+            $admin_gym_id = $request->user()->gym_coach->gym_id;
+            $gym_join_requests = $this->DB_GymJoinRequest->get_gym_join_requests($admin_gym_id, $search);
+        } else {
+//        if coach is not an admin then he will get all gyms join requests (Received and Sent)
+            $is_admin = false;
+            $coach_id = $request->user()->id;
+            $gym_join_requests = $this->DB_GymJoinRequest->get_coach_gym_join_requests($coach_id, $search);
+        }
+        $coaches_arr = $this->join_requests_arr($gym_join_requests, $is_admin);
+        return sendResponse($coaches_arr);
+    }
+
+    public function join_requests_arr($gym_join_requests, $is_admin): array
+    {
+        $coaches_arr = [];
+
+        foreach ($gym_join_requests as $join_request) {
+            $send_type = $this->getRequestType($is_admin, $join_request->admin_id);
+            $request_status = match ($join_request->status) {
+                "0" => "Rejected",
+                "1" => "Pending",
+                default => "Accepted",
+            };
+
+            $coaches_arr[] = [
+                "id" => strval($join_request->id),
+                "gym_name" => $join_request->gym->name,
+                "gym_admin_email" => $join_request->admin ? $join_request->admin->email : "",
+                "coach_email" => $join_request->coach->email,
+                "request_date" => Carbon::parse($join_request->created_at)->toDateString(),
+                "request_time" => Carbon::parse($join_request->created_at)->toTimeString(),
+                "request_type" => $send_type,
+                "request_status" => $request_status,
+            ];
+        }
+
+        return $coaches_arr;
+    }
+
+    /**
+     * change join request status logic
+     *
+     * @param $request
+     * @return JsonResponse
+     */
+    public function change_join_request_status($request)
+    {
+        $this->validationServices->change_join_request_status($request);
+        $status = $request->status;
+        $gym_id = null;
+        $coach_id = null;
+        if ($this->check_coach_is_gym_admin($request)) {
+            $is_admin = true;
+            $gym_id = $request->user()->gym_coach->gym_id;
+        } else {
+            $is_admin = false;
+            $coach_id = $request->user()->id;
+        }
+
+        $join_request = $this->DB_GymJoinRequest->find_join_request($request->join_request_id, $gym_id, $coach_id);
+
+        if ($join_request) {
+            $send_type = $this->getRequestType($is_admin, $join_request->admin_id);
+            if ($send_type == "Sent") {
+                return sendError("You can't change a request that you sent");
+            }
+            $this->DB_GymJoinRequest->update_join_request($join_request, null, $status);
+        } else {
+            return sendError("Join request is not found");
+        }
+        return sendResponse(['message' => "Join request status updated successfully"]);
+
+    }
+
+    /**
+     * @param bool $is_admin
+     * @param $admin_id
+     * @return string
+     */
+    private function getRequestType(bool $is_admin, $admin_id): string
+    {
+        return $is_admin ? ($admin_id == null ? 'Received' : 'Sent') : ($admin_id == null ? 'Sent' : 'Received');
+    }
+
 }

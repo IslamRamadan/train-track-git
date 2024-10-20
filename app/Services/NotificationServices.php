@@ -27,7 +27,6 @@ class NotificationServices
             $body = $message;
 
           $this->send($userNotificationToken->token, $title, $body,$payload);
-
         }
     }
 

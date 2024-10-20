@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\GymServices;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class GymController extends Controller
@@ -55,9 +56,46 @@ class GymController extends Controller
 
     /**
      * list gym coaches
+     *
+     * @param Request $request
+     * @return JsonResponse
      */
     public function list_gym_coaches(Request $request)
     {
         return $this->gymServices->list_gym_coaches($request);
     }
+
+    /**
+     * list gym join requests
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function list_join_requests(Request $request)
+    {
+        return $this->gymServices->list_join_requests($request);
+    }
+
+    /**
+     * list gym Admins
+     *
+     * @param Request $request
+     * @return mixed
+     */
+    public function list_gym_admins(Request $request)
+    {
+        return $this->gymServices->list_gym_admins($request);
+    }
+
+    /**
+     * change join request status
+     *
+     * @param Request $request
+     * @return mixed
+     */
+    public function change_join_request_status(Request $request)
+    {
+        return $this->gymServices->change_join_request_status($request);
+    }
+
 }

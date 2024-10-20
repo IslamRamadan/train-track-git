@@ -6,6 +6,7 @@ use App\Mail\ResetPasswordMail;
 use App\Mail\WelcomeMail;
 use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_Coaches;
+use App\Services\DatabaseServices\DB_GymJoinRequest;
 use App\Services\DatabaseServices\DB_Notifications;
 use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
@@ -27,7 +28,8 @@ class AuthServices
                                 protected DB_Coaches         $DB_Coaches,
                                 protected DB_Notifications   $DB_Notifications,
                                 protected DB_Settings $DB_Settings,
-                                protected DB_OneToOneProgram $DB_OneToOneProgram, protected DB_OneToOneProgramExercises $DB_OneToOneProgramExercises
+                                protected DB_OneToOneProgram $DB_OneToOneProgram, protected DB_OneToOneProgramExercises $DB_OneToOneProgramExercises,
+                                protected DB_GymJoinRequest  $DB_GymJoinRequest,
     )
     {
     }
@@ -94,8 +96,14 @@ class AuthServices
         $speciality = $request['speciality'];
         $certificates = $request['certificates'];
         $due_date = Carbon::today()->addMonth()->toDateString();
+        DB::beginTransaction();
         $user = $this->DB_Users->create_user($name, $email, $phone, $password, $due_date);
         $this->DB_Coaches->create_coach($gym, $speciality, $certificates, $user->id);
+        $email_is_invited_to_gym = $this->DB_GymJoinRequest->find_email_is_invited_to_gym($email);
+        if ($email_is_invited_to_gym) {
+            $this->DB_GymJoinRequest->update_join_request($email_is_invited_to_gym, $user->id);
+        }
+        DB::commit();
         try {
             Mail::to($email)->send(new WelcomeMail(name: $name));
         } catch (\Exception $exception) {
@@ -105,11 +113,12 @@ class AuthServices
 
     /**
      * @param $user
+     * @param $version
      * @return array that has id , email , name , phone , user_type , token
      */
     public function user_info_arr($user, $version): array
     {
-        $success = [
+        return [
             "id" => $user->id,
             "email" => $user->email,
             "name" => $user->name,
@@ -119,7 +128,6 @@ class AuthServices
             "due_date" => $user->due_date??"",
             "token" => $user->createToken('appToken')->accessToken,
         ];
-        return $success;
     }
 
     public function change_password($request)

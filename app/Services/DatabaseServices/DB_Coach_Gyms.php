@@ -29,28 +29,23 @@ class DB_Coach_Gyms
 
     public function get_gym_coaches(int $gym_id, int $admin_id, string|null $search, string|null $privilege)
     {
-        $where = [
-            'gym_id' => $gym_id,
-        ];
+        $query = GymCoach::query()
+            ->where('gym_id', $gym_id)
+            ->where("coach_id", '!=', $admin_id)
+            ->with('coach');
 
         if (!empty($search)) {
-            dd("it has a problem");
-            $where['has:coach'] = [
-                'orWhereHas' => [
-                    'name' => 'LIKE', '%' . $search . '%',
-                    'email' => 'LIKE', '%' . $search . '%',
-                    'phone' => 'LIKE', '%' . $search . '%',
-                ],
-            ];
+            $query->whereHas('coach', function ($query) use ($search) {
+                $query->where('name', 'LIKE', '%' . $search . '%')
+                    ->orWhere('email', 'LIKE', '%' . $search . '%')
+                    ->orWhere('phone', 'LIKE', '%' . $search . '%');
+            });
         }
-        if (!empty($privilege)) {
-            $where['privilege'] = $privilege ;
-        }
-        return GymCoach::query()
-            ->where($where)
-            ->where("coach_id", '!=', $admin_id)
-            ->with(['coach'])
-            ->get();
 
+        if (!empty($privilege)) {
+            $query->where('privilege', $privilege);
+        }
+
+        return $query->get();
     }
 }
