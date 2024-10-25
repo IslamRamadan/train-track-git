@@ -20,7 +20,7 @@ class DB_Coach_Gyms
     public function check_coach_assigned_to_gym(mixed $coach_gym_id, mixed $email)
     {
         return GymCoach::query()
-            ->where('coach_id', $coach_gym_id)
+            ->where('gym_id', $coach_gym_id)
             ->whereHas('coach', function ($query) use ($email) {
                 $query->where('email', "=", $email);
             })
@@ -47,5 +47,17 @@ class DB_Coach_Gyms
         }
 
         return $query->get();
+    }
+
+    public function gym_coach(mixed $gym_id, mixed $coach_id)
+    {
+        return GymCoach::query()
+            ->where(['coach_id' => $coach_id, 'gym_id' => $gym_id])
+            ->first();
+    }
+
+    public function delete_gym_coach($gym_coach)
+    {
+        return $gym_coach->delete();
     }
 }

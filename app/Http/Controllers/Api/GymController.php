@@ -98,4 +98,36 @@ class GymController extends Controller
         return $this->gymServices->change_join_request_status($request);
     }
 
+    /**
+     * send leave request
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function send_leave_request(Request $request)
+    {
+        return $this->gymServices->send_leave_request($request);
+    }
+
+    /**
+     * list leave requests
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function list_leave_requests(Request $request)
+    {
+        return $this->gymServices->list_leave_requests($request);
+    }
+    /**
+     * change leave request status
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function change_leave_request_status(Request $request)
+    {
+        return $this->gymServices->change_leave_request_status($request);
+    }
+
 }

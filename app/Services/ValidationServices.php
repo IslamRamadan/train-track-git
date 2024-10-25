@@ -677,4 +677,20 @@ class ValidationServices
             'status' => 'required|in:0,2',
         ]);
     }
+
+    public function list_leave_requests($request)
+    {
+        $request->validate([
+            'search' => 'nullable|max:20',
+            'status' => 'nullable|in:0,1,2',
+        ]);
+    }
+
+    public function change_leave_request_status($request)
+    {
+        $request->validate([
+            'leave_request_id' => 'required|exists:gym_leave_requests,id',
+            'status' => 'required|in:0,2',
+        ]);
+    }
 }

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('gym_id')->nullable();
             $table->foreign('coach_id')->references('id')->on('users');
             $table->unsignedBigInteger('coach_id')->nullable();
-            $table->enum('status', ['0', '1', '2'])->default('0');//0 rejected ,1 pending ,2 accepted
+            $table->enum('status', ['0', '1', '2'])->default('1');//0 rejected ,1 pending ,2 accepted
             $table->timestamps();
         });
     }

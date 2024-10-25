@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Mail\InvitationMail;
 use App\Services\DatabaseServices\DB_Coach_Gyms;
 use App\Services\DatabaseServices\DB_GymJoinRequest;
+use App\Services\DatabaseServices\DB_GymLeaveRequest;
 use App\Services\DatabaseServices\DB_GymPendingCoach;
 use App\Services\DatabaseServices\DB_Gyms;
 use App\Services\DatabaseServices\DB_Users;
@@ -19,7 +20,7 @@ class GymServices
         , protected DB_Gyms                                    $DB_Gyms, protected DB_Coach_Gyms $DB_Coach_Gyms,
                                 protected ImageService         $imageService, protected DB_GymPendingCoach $DB_GymPendingCoach,
                                 protected DB_Users             $DB_Users, protected DB_GymJoinRequest $DB_GymJoinRequest,
-                                protected NotificationServices $notificationServices
+                                protected NotificationServices $notificationServices, protected DB_GymLeaveRequest $DB_GymLeaveRequest
     )
     {
     }
@@ -288,6 +289,81 @@ class GymServices
     private function getRequestType(bool $is_admin, $admin_id): string
     {
         return $is_admin ? ($admin_id == null ? 'Received' : 'Sent') : ($admin_id == null ? 'Sent' : 'Received');
+    }
+
+    public function send_leave_request($request)
+    {
+        $gym_id = $request->user()->gym_coach->gym_id;
+        $coach_id = $request->user()->id;
+        $find_leave_request = $this->DB_GymLeaveRequest->find_leave_request($gym_id, $coach_id);
+        if ($find_leave_request) {
+            return sendError("There is already a pending leave request for this gym", 403);
+        }
+        $this->DB_GymLeaveRequest->create_leave_request($gym_id, $coach_id);
+        return sendResponse(['message' => "Leave request added successfully"]);
+    }
+
+    public function list_leave_requests($request)
+    {
+        $this->validationServices->list_leave_requests($request);
+        $gym_id = $request->user()->gym_coach->gym_id;
+        $search = $request->search;
+        $status = $request->status;
+
+        $gym_leave_requests = $this->DB_GymLeaveRequest->list_leave_requests($gym_id, $search, $status);
+        $leave_requests_arr = $this->list_leave_requests_arr($gym_leave_requests);
+        return sendResponse($leave_requests_arr);
+    }
+
+    public function list_leave_requests_arr($gym_leave_requests): array
+    {
+        $leave_requests_arr = [];
+
+        foreach ($gym_leave_requests as $leave_request) {
+            $request_status = match ($leave_request->status) {
+                "0" => "Rejected",
+                "1" => "Pending",
+                default => "Accepted",
+            };
+
+            $leave_requests_arr[] = [
+                "id" => strval($leave_request->id),
+                "gym_name" => $leave_request->gym->name,
+                "coach_email" => $leave_request->coach->email,
+                "request_date" => Carbon::parse($leave_request->created_at)->toDateString(),
+                "request_time" => Carbon::parse($leave_request->created_at)->toTimeString(),
+                "request_status" => $request_status,
+            ];
+        }
+
+        return $leave_requests_arr;
+    }
+
+    public function change_leave_request_status($request)
+    {
+        $this->validationServices->change_leave_request_status($request);
+        $status = $request->status;
+        $gym_id = $request->user()->gym_coach->gym_id;
+
+        $leave_request = $this->DB_GymLeaveRequest->find_leave_request_with_id($request->leave_request_id, $gym_id);
+
+        if ($leave_request) {
+            $coach_id = $leave_request->coach_id;
+            $gym_coach = $this->DB_Coach_Gyms->gym_coach($gym_id, $coach_id);
+            if ($gym_coach) {
+                DB::beginTransaction();
+                if ($status == "2") $this->DB_Coach_Gyms->delete_gym_coach($gym_coach);
+                $this->DB_GymLeaveRequest->update_leave_request($leave_request, $status);
+                DB::commit();
+            } else {
+                return sendError("Coach is not found in gym");
+            }
+
+        } else {
+            return sendError("Leave request is not found");
+        }
+        return sendResponse(['message' => "Leave request status updated successfully"]);
+
     }
 
 }
