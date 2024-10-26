@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Mail\GymInvitationMail;
 use App\Mail\InvitationMail;
 use App\Services\DatabaseServices\DB_Coach_Gyms;
 use App\Services\DatabaseServices\DB_GymJoinRequest;
@@ -92,7 +93,6 @@ class GymServices
 
         $this->validationServices->invite_coach_to_gym($request, $check_email_belongs_to_client);
 
-
         $coach_id = $request->user()->id;
         $admin_gym_id = $request->user()->gym_coach->gym_id;
         $email = $request->email;
@@ -108,12 +108,17 @@ class GymServices
         if ($check_email_belongs_to_client) {
             // check if this email coach is not invited before with status pending to this gym
             if ($this->DB_GymJoinRequest->check_coach_is_requested_to_gym($admin_gym_id, $check_email_belongs_to_client->id)) return sendError("Coach is already invited to your gym", 403);;
+            $gym_name = $request->user()->gym_coach->gym->name;
 
 //            send notification to coach to notify him with the invitation
-            $title = "Gym Invitation";
-            $message = "$admin_name invited you to join his gym";
-            $this->notificationServices->send_notification_to_user($coach_id, $title, $message);
-
+            try {
+                Mail::to($email)->send(new GymInvitationMail($email, $gym_name, $admin_gym_id, $check_email_belongs_to_client->id));
+                $title = "Gym Invitation";
+                $message = "You are invited to join $gym_name gym";
+                $this->notificationServices->send_notification_to_user($check_email_belongs_to_client->id, $title, $message);
+            } catch (\Exception $exception) {
+                return sendError("Failed to send the email,Please try again later.");
+            }
 
         } else {
             // else then will send email to coach

@@ -84,13 +84,18 @@ class DB_GymJoinRequest
         }
     }
 
-    public function find_join_request($id, mixed $gym_id = null, mixed $coach_id = null, mixed $status = "1")
+    public function find_join_request($id = null, mixed $gym_id = null, mixed $coach_id = null, mixed $status = "1")
     {
         $query = GymJoinRequest::query()
-            ->where(['id' => $id, 'status' => $status]);
+            ->with('gym')
+            ->where(['status' => $status]);
+        if ($id != null) {
+            $query->where('id', $id);
+        }
         if ($gym_id != null) {
             $query->where('gym_id', $gym_id);
         }
+
         if ($coach_id != null) {
             $query->where('coach_id', $coach_id);
         }
