@@ -20,15 +20,17 @@ class DB_GymJoinRequest
             ]);
     }
 
-    public function check_coach_is_requested_to_gym(mixed $gym_id, mixed $coach_id, mixed $status = "1")
+    public function check_coach_is_requested_to_gym(mixed $gym_id , mixed $coach_id, mixed $status = "1")
     {
-        return GymJoinRequest::query()
+        $query = GymJoinRequest::query()
             ->where([
-                'gym_id' => $gym_id,
                 'coach_id' => $coach_id,
                 'status' => $status,
-            ])
-            ->exists();
+            ]);
+        if ($gym_id != null) {
+            $query->where('gym_id', $gym_id);
+        }
+        return $query->exists();
     }
 
     public function get_gym_join_requests(mixed $gym_id, $search)

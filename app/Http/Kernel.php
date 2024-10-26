@@ -6,6 +6,8 @@ use App\Http\Middleware\AdminAuth;
 use App\Http\Middleware\AdminGuest;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\CheckCoachIsAdmin;
+use App\Http\Middleware\CheckCoachIsOwner;
+use App\Http\Middleware\CheckCoachNotInGym;
 use App\Http\Middleware\CheckCoachUser;
 use App\Http\Middleware\CheckSubscription;
 use App\Http\Middleware\Localized;
@@ -86,6 +88,8 @@ class Kernel extends HttpKernel
         'CheckSubscription' => CheckSubscription::class,
         'CheckCoachUser' => CheckCoachUser::class,
         'CheckCoachIsAdmin' => CheckCoachIsAdmin::class,
+        'CheckCoachIsOwner' => CheckCoachIsOwner::class,
+        'CheckCoachNotInGym' => CheckCoachNotInGym::class,
     ];
     protected $routeMiddleware = [
         // ... other middlewares

@@ -60,4 +60,11 @@ class DB_Coach_Gyms
     {
         return $gym_coach->delete();
     }
+
+    public function update_coach_privilege($gym_coach, mixed $privilege)
+    {
+        $gym_coach->update([
+            'privilege' => $privilege,
+        ]);
+    }
 }

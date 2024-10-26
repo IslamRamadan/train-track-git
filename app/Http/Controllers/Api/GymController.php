@@ -130,4 +130,59 @@ class GymController extends Controller
         return $this->gymServices->change_leave_request_status($request);
     }
 
+    /**
+     * Edit coach privilege
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function edit_coach_privilege(Request $request)
+    {
+        return $this->gymServices->edit_coach_privilege($request);
+    }
+
+    /**
+     * Remove coach from gym
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function remove_coach_from_gym(Request $request)
+    {
+        return $this->gymServices->remove_coach_from_gym($request);
+    }
+
+    /**
+     * Send join request
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function send_join_request(Request $request)
+    {
+        return $this->gymServices->send_join_request($request);
+    }
+
+    /**
+     * List Gyms
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function list(Request $request)
+    {
+        return $this->gymServices->list($request);
+    }
+
+    /**
+     * Edit Gym info
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function edit(Request $request)
+    {
+        return $this->gymServices->edit($request);
+    }
+
 }

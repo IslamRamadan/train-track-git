@@ -43,8 +43,8 @@ class ValidationServices
     public function add_program($request)
     {
         $request->validate([
-            'name' => 'required',
-            'description' => 'required',
+            'name' => 'required|max:15',
+            'description' => 'required|max:150',
             'type' => 'required|in:0,1',
             'starting_date' => 'required_if:type,1|date|date_format:Y-m-d',
             'sync' => 'required_if:type,1|in:0,1',
@@ -691,6 +691,44 @@ class ValidationServices
         $request->validate([
             'leave_request_id' => 'required|exists:gym_leave_requests,id',
             'status' => 'required|in:0,2',
+        ]);
+    }
+
+    public function edit_coach_privilege($request)
+    {
+        $request->validate([
+            'coach_id' => 'required|exists:gym_coaches,coach_id',
+            'privilege' => 'required|in:2,3',
+        ]);
+    }
+
+    public function remove_coach_from_gym($request)
+    {
+        $request->validate([
+            'coach_id' => 'required|exists:gym_coaches,coach_id',
+        ]);
+    }
+
+    public function send_join_request($request)
+    {
+        $request->validate([
+            'gym_id' => 'required|exists:gyms,id',
+        ]);
+    }
+
+    public function list_gyms($request)
+    {
+        $request->validate([
+            'search' => 'nullable|max:20',
+        ]);
+    }
+
+    public function edit_gym($request)
+    {
+        $request->validate([
+            'name' => 'required|max:15',
+            'description' => 'required|max:200',
+            'logo' => "nullable"
         ]);
     }
 }

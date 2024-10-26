@@ -17,4 +17,22 @@ class DB_Gyms
             'logo' => $logo
         ]);
     }
+
+    public function list_gyms(mixed $search)
+    {
+        $query = Gym::query();
+        if (!empty($search)) {
+            $query->where('name', 'LIKE', '%' . $search . '%');
+        }
+
+        return $query->get();
+    }
+
+    public function update_gym(mixed $gym, mixed $name, mixed $description)
+    {
+        $gym->update([
+            'name' => $name,
+            'description' => $description
+        ]);
+    }
 }

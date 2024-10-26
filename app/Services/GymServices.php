@@ -46,12 +46,6 @@ class GymServices
         $description = $request->description;
         $logo = $request->logo;
 
-        // Check if the coach is already a gym admin
-        $check_coach_is_gym_admin = $this->check_coach_is_gym_admin($request);
-        if ($check_coach_is_gym_admin) {
-            return sendError("Coach is already gym admin", 403);
-        }
-
         // Save the gym logo if provided
         $logo_name = null;
         if ($logo) {
@@ -279,6 +273,7 @@ class GymServices
                 return sendError("You can't change a request that you sent");
             }
             $this->DB_GymJoinRequest->update_join_request($join_request, null, $status);
+            $this->DB_Coach_Gyms->create_gym_coach($gym_id, $join_request->coach_id, "3");
         } else {
             return sendError("Join request is not found");
         }
@@ -370,5 +365,97 @@ class GymServices
         return sendResponse(['message' => "Leave request status updated successfully"]);
 
     }
+
+    /**
+     * Edit coach privilege
+     *
+     * @param $request
+     * @return JsonResponse
+     */
+    public function edit_coach_privilege($request)
+    {
+        $this->validationServices->edit_coach_privilege($request);
+        $gym_id = $request->user()->gym_coach->gym_id;
+        $privilege = $request->privilege;
+        $coach_id = $request->coach_id;
+        $gym_coach = $this->DB_Coach_Gyms->gym_coach(gym_id: $gym_id, coach_id: $coach_id);
+        if ($gym_coach) {
+            $this->DB_Coach_Gyms->update_coach_privilege($gym_coach, $privilege);
+            return sendResponse(['message' => "Coach privilege updated successfully"]);
+        }
+        return sendError("This coach is not found in gym");
+    }
+
+    public function remove_coach_from_gym($request)
+    {
+        $this->validationServices->remove_coach_from_gym($request);
+        $gym_id = $request->user()->gym_coach->gym_id;
+        $coach_id = $request->coach_id;
+        $gym_coach = $this->DB_Coach_Gyms->gym_coach(gym_id: $gym_id, coach_id: $coach_id);
+        if ($gym_coach) {
+            $this->DB_Coach_Gyms->delete_gym_coach($gym_coach);
+            return sendResponse(['message' => "Coach removed from gym successfully"]);
+        }
+        return sendError("This coach is not found in gym");
+    }
+
+    public function send_join_request($request)
+    {
+        $this->validationServices->send_join_request($request);
+        $coach_id = $request->user()->id;
+        $coach_email = $request->user()->email;
+        $gym_id = $request->gym_id;
+        $check_coach_is_requested_to_gym = $this->DB_GymJoinRequest->check_coach_is_requested_to_gym(gym_id: null, coach_id: $coach_id);
+        if ($check_coach_is_requested_to_gym) {
+            return sendError("You already have a pending join request", 403);
+        }
+        $this->DB_GymJoinRequest->create_gym_join_request(gym_id: $gym_id, coach_id: $coach_id, admin_id: null, email: $coach_email);
+        return sendResponse(['message' => "Request sent to gym successfully"]);
+    }
+
+    public function list($request)
+    {
+        $this->validationServices->list_gyms($request);
+        $search = $request['search'];
+        $gyms = $this->DB_Gyms->list_gyms($search);
+        $gyms_arr = $this->gyms_arr($gyms);
+        return sendResponse($gyms_arr);
+    }
+
+    public function gyms_arr($gyms): array
+    {
+        $gyms_arr = [];
+        foreach ($gyms as $gym) {
+            $gyms_arr[] = [
+                "id" => strval($gym->id),
+                "name" => $gym->name,
+                "description" => $gym->description,
+                "logo" => $gym->image_path,
+            ];
+        }
+        return $gyms_arr;
+    }
+
+    public function edit($request)
+    {
+        $this->validationServices->edit_gym($request);
+
+        $name = $request['name'];
+        $description = $request['description'];
+        $logo = $request['logo'];
+        $gym = $request->user()->gym_coach->gym;
+        DB::beginTransaction();
+        if ($logo) {
+            if ($gym->logo) $this->imageService->delete_image(image_title: $gym->logo, folder_name: 'gym_logos');
+            $image_path = $this->imageService->save_image($logo, 'gym_logos');
+            $gym->logo = $image_path;
+            $gym->save();
+        }
+
+        $this->DB_Gyms->update_gym($gym, $name, $description);
+        DB::commit();
+        return sendResponse(['message' => "Gym updated successfully"]);
+    }
+
 
 }

@@ -112,10 +112,10 @@ class User extends Authenticatable
         );
     }
 
-    protected function hasGym(): Attribute
+    protected function withGym(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => $this->gym_coach && $this->gym_coach?->privilege == "1" ? 1 : 0,
+            get: fn($value) => $this->gym_coach ? 1 : 0,
         );
     }
 
@@ -123,6 +123,13 @@ class User extends Authenticatable
     {
         return Attribute::make(
             get: fn($value) => $this->gym_coach && $this->gym_coach?->privilege != "3"? 1 : 0,
+        );
+    }
+
+    protected function isGymOwner(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $this->gym_coach && $this->gym_coach?->privilege == "1" ? 1 : 0,
         );
     }
 
