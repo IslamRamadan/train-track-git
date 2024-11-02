@@ -14,28 +14,11 @@ class GymController extends Controller
     }
 
     /**
-     * Display a listing of gyms.
-     */
-    public function index(Request $request)
-    {
-        return $this->gymServices->index($request);
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
         return $this->gymServices->store($request);
-    }
-
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request)
-    {
-        return $this->gymServices->update($request);
     }
 
     /**
@@ -76,16 +59,6 @@ class GymController extends Controller
         return $this->gymServices->list_join_requests($request);
     }
 
-    /**
-     * list gym Admins
-     *
-     * @param Request $request
-     * @return mixed
-     */
-    public function list_gym_admins(Request $request)
-    {
-        return $this->gymServices->list_gym_admins($request);
-    }
 
     /**
      * change join request status
@@ -184,5 +157,17 @@ class GymController extends Controller
     {
         return $this->gymServices->edit($request);
     }
+
+    /**
+     * Get Gym info
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function info(Request $request)
+    {
+        return $this->gymServices->info($request);
+    }
+
 
 }

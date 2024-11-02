@@ -6,6 +6,7 @@ use App\Http\Middleware\AdminAuth;
 use App\Http\Middleware\AdminGuest;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\CheckCoachIsAdmin;
+use App\Http\Middleware\CheckCoachIsInGym;
 use App\Http\Middleware\CheckCoachIsOwner;
 use App\Http\Middleware\CheckCoachNotInGym;
 use App\Http\Middleware\CheckCoachUser;
@@ -90,6 +91,7 @@ class Kernel extends HttpKernel
         'CheckCoachIsAdmin' => CheckCoachIsAdmin::class,
         'CheckCoachIsOwner' => CheckCoachIsOwner::class,
         'CheckCoachNotInGym' => CheckCoachNotInGym::class,
+        'CheckCoachIsInGym' => CheckCoachIsInGym::class,
     ];
     protected $routeMiddleware = [
         // ... other middlewares

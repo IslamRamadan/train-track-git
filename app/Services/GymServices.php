@@ -26,10 +26,6 @@ class GymServices
     {
     }
 
-    public function index($request)
-    {
-
-    }
 
     /**
      * add a new gym logic
@@ -109,7 +105,7 @@ class GymServices
                 Mail::to($email)->send(new GymInvitationMail($email, $gym_name, $admin_gym_id, $check_email_belongs_to_client->id));
                 $title = "Gym Invitation";
                 $message = "You are invited to join $gym_name gym";
-                $this->notificationServices->send_notification_to_user($check_email_belongs_to_client->id, $title, $message);
+                $this->notificationServices->send_notification_to_user($check_email_belongs_to_client->id, $title, $message, ["gym_name" => $gym_name]);
             } catch (\Exception $exception) {
                 return sendError("Failed to send the email,Please try again later.");
             }
@@ -256,10 +252,12 @@ class GymServices
         $this->validationServices->change_join_request_status($request);
         $status = $request->status;
         $gym_id = null;
+        $gym_name = null;
         $coach_id = null;
         if ($this->check_coach_is_gym_admin($request)) {
             $is_admin = true;
             $gym_id = $request->user()->gym_coach->gym_id;
+            $gym_name = $request->user()->gym_coach->gym->name;
         } else {
             $is_admin = false;
             $coach_id = $request->user()->id;
@@ -273,7 +271,12 @@ class GymServices
                 return sendError("You can't change a request that you sent");
             }
             $this->DB_GymJoinRequest->update_join_request($join_request, null, $status);
+            if ($status == "2") {
             $this->DB_Coach_Gyms->create_gym_coach($gym_id, $join_request->coach_id, "3");
+                $title = "Join Request Accepted";
+                $message = "Your request to join $gym_name gym is accepted";
+                $this->notificationServices->send_notification_to_user($join_request->coach_id, $title, $message, ["gym_name" => $gym_name]);
+            }
         } else {
             return sendError("Join request is not found");
         }
@@ -344,6 +347,7 @@ class GymServices
         $this->validationServices->change_leave_request_status($request);
         $status = $request->status;
         $gym_id = $request->user()->gym_coach->gym_id;
+        $gym_name = $request->user()->gym_coach->gym->name;
 
         $leave_request = $this->DB_GymLeaveRequest->find_leave_request_with_id($request->leave_request_id, $gym_id);
 
@@ -352,7 +356,12 @@ class GymServices
             $gym_coach = $this->DB_Coach_Gyms->gym_coach($gym_id, $coach_id);
             if ($gym_coach) {
                 DB::beginTransaction();
-                if ($status == "2") $this->DB_Coach_Gyms->delete_gym_coach($gym_coach);
+                if ($status == "2") {
+                    $this->DB_Coach_Gyms->delete_gym_coach($gym_coach);
+                    $title = "Leave Request Accepted";
+                    $message = "Your request to leave $gym_name gym is accepted";
+                    $this->notificationServices->send_notification_to_user($coach_id, $title, $message, ["gym_name" => $gym_name]);
+                }
                 $this->DB_GymLeaveRequest->update_leave_request($leave_request, $status);
                 DB::commit();
             } else {
@@ -457,5 +466,21 @@ class GymServices
         return sendResponse(['message' => "Gym updated successfully"]);
     }
 
+    public function info($request)
+    {
+        $gym = $request->user()->gym_coach->gym;
+        $gyms_arr = $this->gym_info($gym);
+        return sendResponse($gyms_arr);
+    }
 
+    public function gym_info($gym)
+    {
+        $gyms_arr = [
+            "id" => strval($gym->id),
+            "name" => $gym->name,
+            "description" => $gym->description,
+            "logo" => $gym->image_path,
+        ];
+        return $gyms_arr;
+    }
 }
