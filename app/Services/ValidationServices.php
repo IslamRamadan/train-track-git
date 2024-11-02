@@ -8,6 +8,7 @@ use App\Services\DatabaseServices\DB_ExerciseLog;
 use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_Programs;
+use App\Services\DatabaseServices\DB_Users;
 
 class ValidationServices
 {
@@ -17,6 +18,7 @@ class ValidationServices
                                 protected DB_Programs                 $DB_Programs,
                                 protected DB_OneToOneProgram          $DB_OneToOneProgram,
                                 protected DB_CoachVideos              $DB_CoachVideos,
+                                protected DB_Users $DB_Users,
     )
     {
     }
@@ -41,8 +43,8 @@ class ValidationServices
     public function add_program($request)
     {
         $request->validate([
-            'name' => 'required',
-            'description' => 'required',
+            'name' => 'required|max:15',
+            'description' => 'required|max:150',
             'type' => 'required|in:0,1',
             'starting_date' => 'required_if:type,1|date|date_format:Y-m-d',
             'sync' => 'required_if:type,1|in:0,1',
@@ -637,6 +639,96 @@ class ValidationServices
         $request->validate([
             'order_id' => ['exists:users_payments,id'],
             'order_status' => 'required|in:0,1,2'
+        ]);
+    }
+
+    public function add_gym($request)
+    {
+        $request->validate([
+            'name' => ['required', 'max:20'],
+            'description' => 'required|max:200',
+            'logo' => "nullable"
+        ]);
+    }
+
+    public function invite_coach_to_gym($request,$check_email_belongs_to_client)
+    {
+        $request->validate([
+            'email' => ['required', 'email', function ($attribute, $value, $fail) use ($request,$check_email_belongs_to_client) {
+                if ($check_email_belongs_to_client && $check_email_belongs_to_client->user_type == "1") {
+                    $fail('The email belongs to a client');
+                }
+            }],
+        ]);
+    }
+
+    public function list_gym_coaches($request)
+    {
+        $request->validate([
+            'search' => 'nullable|max:20',
+            'status' => 'nullable|in:1,2,3',
+        ]);
+    }
+
+    public function change_join_request_status($request)
+    {
+        $request->validate([
+            'join_request_id' => 'required|exists:gym_join_requests,id',
+            'status' => 'required|in:0,2',
+        ]);
+    }
+
+    public function list_leave_requests($request)
+    {
+        $request->validate([
+            'search' => 'nullable|max:20',
+            'status' => 'nullable|in:0,1,2',
+        ]);
+    }
+
+    public function change_leave_request_status($request)
+    {
+        $request->validate([
+            'leave_request_id' => 'required|exists:gym_leave_requests,id',
+            'status' => 'required|in:0,2',
+        ]);
+    }
+
+    public function edit_coach_privilege($request)
+    {
+        $request->validate([
+            'coach_id' => 'required|exists:gym_coaches,coach_id',
+            'privilege' => 'required|in:2,3',
+        ]);
+    }
+
+    public function remove_coach_from_gym($request)
+    {
+        $request->validate([
+            'coach_id' => 'required|exists:gym_coaches,coach_id',
+        ]);
+    }
+
+    public function send_join_request($request)
+    {
+        $request->validate([
+            'gym_id' => 'required|exists:gyms,id',
+        ]);
+    }
+
+    public function list_gyms($request)
+    {
+        $request->validate([
+            'search' => 'nullable|max:20',
+        ]);
+    }
+
+    public function edit_gym($request)
+    {
+        $request->validate([
+            'name' => 'required|max:15',
+            'description' => 'required|max:200',
+            'logo' => "nullable"
         ]);
     }
 }

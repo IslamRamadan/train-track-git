@@ -82,6 +82,9 @@ class CoachServices
             'clients_activity' => $clients_activity,
             'today_logs' => $list_logs_arr,
             'unread_notifications' => $unread_notifications ? "1" : "0",
+            'is_owner' => strval($coach_info->isGymOwner),
+            'is_admin' => strval($coach_info->isGymAdmin),
+            'is_gym_coach' => strval($coach_info->withGym),
             'subscription' => [
                 'coach_package_id' => $coach_info->coach->package->id,
                 'coach_package_name' => $coach_info->coach->package->name,
@@ -336,6 +339,7 @@ class CoachServices
                 'order_id' => $payment['order_id'],
                 'amount' => $payment['amount'],
                 'status' => $payment['status_text'],
+                'package_name' => $payment['package']?$payment['package']['name']:"",
                 'order_date' => Carbon::parse($payment['created_at'])->toDateString(),
                 'order_time' => Carbon::parse($payment['created_at'])->toTimeString(),
             ];

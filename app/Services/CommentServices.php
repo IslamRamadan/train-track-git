@@ -32,8 +32,8 @@ class CommentServices
             sender: $sender, oto_program_id: $oto_program_id);
 
         $payload = [
-            'user_id' => $user_id,
-            'oto_program_id' => $oto_program_id,
+            'user_id' => strval($user_id),
+            'oto_program_id' => strval($oto_program_id),
             'date' => $date,
         ];
 
