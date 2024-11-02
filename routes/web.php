@@ -22,10 +22,7 @@ Route::prefix('{locale?}')->middleware(['localized', 'AdminGuest'])->group(funct
     Route::get('/login', [AuthController::class, "login_form"])->name('login_view');
     Route::post('/login', [AuthController::class, "login"])->name('login');
     Route::get('/welcome', function () {
-//        return view('mail.gym-invitation-accepted');
-        $gym_id=1;
-        $coach_id=2;
-        return view('mail.coach-gym-invitation-mail',compact('gym_id','coach_id'));
+        return view('welcome');
     })->name("name");
 });
 Route::prefix('{locale?}')->middleware(['localized', 'AdminAuth'])->group(function () {

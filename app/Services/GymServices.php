@@ -475,12 +475,11 @@ class GymServices
 
     public function gym_info($gym)
     {
-        $gyms_arr = [
+        return [
             "id" => strval($gym->id),
             "name" => $gym->name,
             "description" => $gym->description,
             "logo" => $gym->image_path,
         ];
-        return $gyms_arr;
     }
 }
