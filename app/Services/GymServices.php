@@ -21,7 +21,8 @@ class GymServices
         , protected DB_Gyms                                    $DB_Gyms, protected DB_Coach_Gyms $DB_Coach_Gyms,
                                 protected ImageService         $imageService, protected DB_GymPendingCoach $DB_GymPendingCoach,
                                 protected DB_Users             $DB_Users, protected DB_GymJoinRequest $DB_GymJoinRequest,
-                                protected NotificationServices $notificationServices, protected DB_GymLeaveRequest $DB_GymLeaveRequest
+                                protected NotificationServices $notificationServices, protected DB_GymLeaveRequest $DB_GymLeaveRequest,
+                                protected ClientServices       $clientServices
     )
     {
     }
@@ -481,5 +482,17 @@ class GymServices
             "description" => $gym->description,
             "logo" => $gym->image_path,
         ];
+    }
+
+    public function list_coach_clients($request)
+    {
+        $coach_id = $request['coach_id'];
+        $gym_id = $request->user()->gym_coach->gym_id;
+
+        $check_coach_assigned_to_gym = $this->DB_Coach_Gyms->gym_coach(gym_id: $gym_id, coach_id: $coach_id);
+        if (!$check_coach_assigned_to_gym) {
+            return sendError("Coach is not assigned to your gym", 403);
+        }
+        return $this->clientServices->index($request);
     }
 }
