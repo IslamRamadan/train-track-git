@@ -177,6 +177,7 @@ class GymServices
                 "phone" => $coach->coach->phone,
                 "due_date" => $coach->coach->due_date??"",
                 "privilege" => $privilege,
+                "active_clients" => $coach->coach->active_clients,
             ];
         }
 
