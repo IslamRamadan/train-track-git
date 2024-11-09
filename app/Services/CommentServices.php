@@ -23,6 +23,7 @@ class CommentServices
         $oto_program_id = $request->client_program_id;
         $comment = $request->comment;
         $sender = $request->user()->user_type;
+        $receiver_type = $request->user()->user_type == "0" ? "Client" : "Coach";
         $user_name = $request->user()->name;
 
         $program = $this->DB_OneToOneProgram->find_oto_program(program_id: $oto_program_id);
@@ -33,6 +34,7 @@ class CommentServices
 
         $payload = [
             'user_id' => strval($user_id),
+            'user_type' => $receiver_type,
             'oto_program_id' => strval($oto_program_id),
             'date' => $date,
         ];

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\ClientServices;
 use App\Services\GymServices;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -167,6 +168,17 @@ class GymController extends Controller
     public function info(Request $request)
     {
         return $this->gymServices->info($request);
+    }
+
+    /**
+     * List coach clients
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function list_coach_clients(Request $request)
+    {
+        return $this->gymServices->list_coach_clients($request);
     }
 
 

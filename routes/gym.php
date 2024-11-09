@@ -36,6 +36,7 @@ Route::middleware(['auth:api', 'CheckSubscription', 'CheckCoachUser'])->group(fu
         Route::post('gym/list/coaches', [GymController::class, 'list_gym_coaches']);
         Route::post('gym/list/leave/requests', [GymController::class, 'list_leave_requests']);
         Route::post('gym/change/leave/request/status', [GymController::class, 'change_leave_request_status']);
+        Route::post('gym/coach/clients/list', [GymController::class, 'list_coach_clients']);
     });
     Route::group(['middleware' => 'CheckCoachIsInGym'], function () {
         Route::post('gym/send/leave/request', [GymController::class, 'send_leave_request']);

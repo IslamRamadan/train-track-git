@@ -40,7 +40,7 @@ class ClientServices
     public function index($request)
     {
         $this->validationServices->list_clients($request);
-        $coach_id = $request->user()->id;
+        $coach_id = $request['coach_id'] ?: $request->user()->id;
         $search = $request['search'];
         $status = $request['status'];
         $clients = $this->DB_Clients->get_all_clients($coach_id, $search, $status);
