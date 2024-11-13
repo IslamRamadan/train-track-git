@@ -113,7 +113,7 @@ class OneToOneExerciseServices
         $this->validationServices->list_client_exercises_in_date($request);
         $client_id = $request->user()->id;
         $date = $request['date'];
-        if ($request->user()->coach_client_client->status == "2") {
+        if ($request->user()?->coach_client_client?->status == "2") {
             return sendError("Archived client");
         }
         if ($request->user()->due_date) {
@@ -495,6 +495,7 @@ class OneToOneExerciseServices
             foreach ($comments_in_this_day as $comment) {
                 $single_program_comments_arr = [];
                 $single_program_comments_arr['comment_id'] = $comment->id;
+                $single_program_comments_arr['oto_program_id'] = $comment->oto_program_id;
                 $single_program_comments_arr['comment_content'] = $comment->comment;
                 $single_program_comments_arr['comment_date'] = Carbon::parse($comment->created_at)->format('Y-m-d');
                 $single_program_comments_arr['sender'] = $comment->user_type;
