@@ -41,7 +41,12 @@ class Program extends Model
     protected function typeText(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => $this->type == "0" ? "Normal" : "Ongoing",
+            get: fn($value) => match ($this->type) {
+                "0" => "Normal",
+                "1" => "Ongoing",
+                "2" => "Nutrition",
+                default => null,
+            },
         );
     }
     protected function imagePath(): Attribute

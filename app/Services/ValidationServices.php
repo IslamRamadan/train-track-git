@@ -43,9 +43,9 @@ class ValidationServices
     public function add_program($request)
     {
         $request->validate([
-            'name' => 'required|max:15',
+            'name' => 'required|max:25',
             'description' => 'required|max:150',
-            'type' => 'required|in:0,1',
+            'type' => 'required|in:0,1,2',
             'starting_date' => 'required_if:type,1|date|date_format:Y-m-d',
             'sync' => 'required_if:type,1|in:0,1',
             'image' => 'nullable'
@@ -56,7 +56,7 @@ class ValidationServices
     {
         $request->validate([
             'program_id' => 'required|exists:programs,id',
-            'name' => 'required',
+            'name' => 'required|max:25',
             'description' => 'required',
             'type' => 'required|in:0,1',
             'starting_date' => 'required_if:type,1|date|date_format:Y-m-d',
@@ -726,7 +726,7 @@ class ValidationServices
     public function edit_gym($request)
     {
         $request->validate([
-            'name' => 'required|max:15',
+            'name' => 'required|max:20',
             'description' => 'required|max:200',
             'logo' => "nullable"
         ]);
