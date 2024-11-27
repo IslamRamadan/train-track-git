@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\ClientServices;
 use App\Services\GymServices;
+use App\Services\OneToOneExerciseServices;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class GymController extends Controller
 {
-    public function __construct(protected GymServices $gymServices)
+    public function __construct(protected GymServices $gymServices, protected OneToOneExerciseServices $oneToOneExerciseServices)
     {
     }
 
@@ -179,6 +179,17 @@ class GymController extends Controller
     public function list_coach_clients(Request $request)
     {
         return $this->gymServices->list_coach_clients($request);
+    }
+
+    /**
+     * list program exercises by day
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function list_client_program_exercises_by_date(Request $request)
+    {
+        return $this->oneToOneExerciseServices->list_client_program_exercises_by_date($request);
     }
 
 
