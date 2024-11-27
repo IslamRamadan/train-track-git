@@ -49,11 +49,14 @@ class DB_OneToOneProgramExercises
             ->get()->groupBy('date');
     }
 
-    public function get_program_exercises_by_date(mixed $program_id, $date)
+    public function get_program_exercises_by_date(mixed $program_id, $date,$copied_exercises_arr=[])
     {
         return OneToOneProgramExercise::query()
             ->with(['log.log_videos', 'videos'])
-            ->where(['one_to_one_program_id' => $program_id, 'date' => $date])->orderBy('arrangement')->get();
+            ->where(['one_to_one_program_id' => $program_id, 'date' => $date])
+            ->whereNotIn('id', $copied_exercises_arr)
+            ->orderBy('arrangement')
+            ->get();
     }
 
     public function get_client_exercises_by_date(mixed $client_id, $date)

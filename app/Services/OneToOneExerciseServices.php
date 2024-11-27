@@ -556,15 +556,18 @@ class OneToOneExerciseServices
         , mixed                       $to_client_program_id, string $operation_type = "copy"): void
     {
         $date = $start_date;
+        $copied_exercises_arr=[];
         $copied_days_arr = $this->make_copied_days_arr($copied_dates);//define which day that will be copied and which day will not
         foreach ($copied_days_arr as $copied_date) {
             if ($copied_date['copy']) {
-                $day_exercises = $this->DB_OneToOneProgramExercises->get_program_exercises_by_date(program_id: $from_client_program_id, date: $copied_date['day']);
+                $day_exercises = $this->DB_OneToOneProgramExercises->get_program_exercises_by_date(program_id: $from_client_program_id, date: $copied_date['day'],copied_exercises_arr: $copied_exercises_arr);
                 if ($day_exercises) {
                     foreach ($day_exercises as $exercise) {
                         $exercise_arrangement = $this->DB_OneToOneProgramExercises->get_exercise_arrangement($to_client_program_id, $date);
                         $copied_exercise = $this->DB_OneToOneProgramExercises->add_oto_exercise($exercise->name,
                             $exercise->description, $exercise->extra_description, $date, $exercise_arrangement, $to_client_program_id);
+                        $copied_exercises_arr[] = $copied_exercise->id;//add the new copied/cut exercise to avoid the cut issue
+
                         if ($exercise->videos()->exists()) {
                             $this->add_exercises_videos($copied_exercise->id, $exercise->videos);
                         }

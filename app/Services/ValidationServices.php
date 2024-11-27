@@ -43,7 +43,7 @@ class ValidationServices
     public function add_program($request)
     {
         $request->validate([
-            'name' => 'required|max:25',
+            'name' => 'required|max:30',
             'description' => 'required|max:150',
             'type' => 'required|in:0,1,2',
             'starting_date' => 'required_if:type,1|date|date_format:Y-m-d',
@@ -56,7 +56,7 @@ class ValidationServices
     {
         $request->validate([
             'program_id' => 'required|exists:programs,id',
-            'name' => 'required|max:25',
+            'name' => 'required|max:30',
             'description' => 'required',
             'type' => 'required|in:0,1',
             'starting_date' => 'required_if:type,1|date|date_format:Y-m-d',
@@ -645,7 +645,7 @@ class ValidationServices
     public function add_gym($request)
     {
         $request->validate([
-            'name' => ['required', 'max:20'],
+            'name' => ['required', 'max:30'],
             'description' => 'required|max:200',
             'logo' => "nullable"
         ]);
@@ -665,7 +665,7 @@ class ValidationServices
     public function list_gym_coaches($request)
     {
         $request->validate([
-            'search' => 'nullable|max:20',
+            'search' => 'nullable|max:30',
             'status' => 'nullable|in:1,2,3',
         ]);
     }
@@ -681,7 +681,7 @@ class ValidationServices
     public function list_leave_requests($request)
     {
         $request->validate([
-            'search' => 'nullable|max:20',
+            'search' => 'nullable|max:30',
             'status' => 'nullable|in:0,1,2',
         ]);
     }
@@ -719,14 +719,14 @@ class ValidationServices
     public function list_gyms($request)
     {
         $request->validate([
-            'search' => 'nullable|max:20',
+            'search' => 'nullable|max:30',
         ]);
     }
 
     public function edit_gym($request)
     {
         $request->validate([
-            'name' => 'required|max:20',
+            'name' => 'required|max:30',
             'description' => 'required|max:200',
             'logo' => "nullable"
         ]);

@@ -26,7 +26,8 @@ class NotificationServices
         if ($userNotificationToken) {
             $body = $message;
 
-          $this->send($userNotificationToken->token, $title, $body,$payload);
+            $notification = $this->send($userNotificationToken->token, $title, $body, $payload);
+            \Illuminate\Support\Facades\Log::info($notification);
         }
     }
 
@@ -110,6 +111,7 @@ class NotificationServices
                 "notification" => [
                     "title" => $title,
                     "body" => $description,
+                    "sound" => "default",
                 ],
                 "android" => [
                     "priority" => "high" // HTTP v1 protocol
