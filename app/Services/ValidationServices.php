@@ -475,6 +475,7 @@ class ValidationServices
     {
         $request->validate([
             'client_program_id' => 'required|exists:one_to_one_programs,id',
+            'client_id' => 'nullable|exists:users,id'
         ]);
     }
 

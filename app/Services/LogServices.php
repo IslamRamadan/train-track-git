@@ -22,7 +22,7 @@ class LogServices
     public function client_programs_logs_list($request)
     {
         $this->validationServices->client_programs_logs_list($request);
-        $client_id = $request->user()->id;
+        $client_id = $request->client_id ?: $request->user()->id;
         $program_id = $request->client_program_id;
         $logs = $this->DB_ExerciseLog->list_cient_program_logs($client_id, $program_id);
         return $this->list_logs_arr($logs);
