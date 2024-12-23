@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Services\DatabaseServices\DB_Clients;
+use App\Services\DatabaseServices\DB_CoachExerciseTemplates;
 use App\Services\DatabaseServices\DB_CoachVideos;
 use App\Services\DatabaseServices\DB_ExerciseLog;
 use App\Services\DatabaseServices\DB_OneToOneProgram;
@@ -18,7 +19,8 @@ class ValidationServices
                                 protected DB_Programs                 $DB_Programs,
                                 protected DB_OneToOneProgram          $DB_OneToOneProgram,
                                 protected DB_CoachVideos              $DB_CoachVideos,
-                                protected DB_Users $DB_Users,
+                                protected DB_Users                    $DB_Users,
+                                protected DB_CoachExerciseTemplates $DB_ExerciseTemplates
     )
     {
     }
@@ -580,16 +582,16 @@ class ValidationServices
     public function add_coach_video($request)
     {
         $request->validate([
-            'title' => 'required',
-            'link' => 'required'
+            'title' => 'required|max:30',
+            'link' => 'required|max:300'
         ]);
     }
 
     public function edit_coach_video($request)
     {
         $request->validate([
-            'title' => 'required',
-            'link' => 'required',
+            'title' => 'required|max:30',
+            'link' => 'required|max:300',
             'video_id' => ['required', 'exists:coach_videos,id', function ($attribute, $value, $fail) use ($request) {
                 $verify_client_id = $this->DB_CoachVideos->verify_coach_id(coach_id: $request->user()->id, video_id: $value);
                 if (!$verify_client_id) {
@@ -606,6 +608,40 @@ class ValidationServices
                 $verify_client_id = $this->DB_CoachVideos->verify_coach_id(coach_id: $request->user()->id, video_id: $value);
                 if (!$verify_client_id) {
                     $fail('The video must be assigned to this coach');
+                }
+            }]
+        ]);
+    }
+
+    public function add_exercise_template($request)
+    {
+        $request->validate([
+            'title' => 'required|max:30',
+            'description' => 'nullable|max:200',
+        ]);
+    }
+
+    public function edit_exercise_template($request)
+    {
+        $request->validate([
+            'title' => 'required|max:30',
+            'description' => 'nullable|max:200',
+            'exercise_template_id' => ['required', 'exists:coach_exercise_templates,id', function ($attribute, $value, $fail) use ($request) {
+                $verify_client_id = $this->DB_ExerciseTemplates->verify_coach_id(coach_id: $request->user()->id, exercise_template_id: $value);
+                if (!$verify_client_id) {
+                    $fail('The exercise template must be assigned to this coach');
+                }
+            }]
+        ]);
+    }
+
+    public function delete_exercise_template($request)
+    {
+        $request->validate([
+            'exercise_template_id' => ['required', 'exists:coach_exercise_templates,id', function ($attribute, $value, $fail) use ($request) {
+                $verify_client_id = $this->DB_ExerciseTemplates->verify_coach_id(coach_id: $request->user()->id, exercise_template_id: $value);
+                if (!$verify_client_id) {
+                    $fail('The exercise template must be assigned to this coach');
                 }
             }]
         ]);

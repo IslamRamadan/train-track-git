@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\CoachController;
 use App\Http\Controllers\Api\CoachVideosController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\ExerciseController;
+use App\Http\Controllers\Api\ExerciseTemplateController;
 use App\Http\Controllers\Api\LogController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OneToOneExerciseController;
@@ -81,6 +82,11 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     Route::post('coach/videos/edit', [CoachVideosController::class, 'edit']);
     Route::post('coach/videos/list', [CoachVideosController::class, 'list']);
     Route::post('coach/videos/delete', [CoachVideosController::class, 'delete']);
+
+    Route::post('coach/exercise/templates/add', [ExerciseTemplateController::class, 'add']);
+    Route::post('coach/exercise/templates/edit', [ExerciseTemplateController::class, 'edit']);
+    Route::post('coach/exercise/templates/list', [ExerciseTemplateController::class, 'list']);
+    Route::post('coach/exercise/templates/delete', [ExerciseTemplateController::class, 'delete']);
 
     Route::post('packages/list', [CoachController::class, 'list_packages']);
     Route::post('coach/list/payments', [CoachController::class, 'list_payments']);
