@@ -45,7 +45,7 @@ class ValidationServices
     public function add_program($request)
     {
         $request->validate([
-            'name' => 'required|max:30',
+            'name' => 'required|max:50',
             'description' => 'required|max:150',
             'type' => 'required|in:0,1,2',
             'starting_date' => 'required_if:type,1|date|date_format:Y-m-d',
@@ -58,7 +58,7 @@ class ValidationServices
     {
         $request->validate([
             'program_id' => 'required|exists:programs,id',
-            'name' => 'required|max:30',
+            'name' => 'required|max:50',
             'description' => 'required',
             'type' => 'required|in:0,1',
             'starting_date' => 'required_if:type,1|date|date_format:Y-m-d',
@@ -582,7 +582,7 @@ class ValidationServices
     public function add_coach_video($request)
     {
         $request->validate([
-            'title' => 'required|max:30',
+            'title' => 'required|max:50',
             'link' => 'required|max:300'
         ]);
     }
@@ -590,7 +590,7 @@ class ValidationServices
     public function edit_coach_video($request)
     {
         $request->validate([
-            'title' => 'required|max:30',
+            'title' => 'required|max:50',
             'link' => 'required|max:300',
             'video_id' => ['required', 'exists:coach_videos,id', function ($attribute, $value, $fail) use ($request) {
                 $verify_client_id = $this->DB_CoachVideos->verify_coach_id(coach_id: $request->user()->id, video_id: $value);
@@ -616,7 +616,7 @@ class ValidationServices
     public function add_exercise_template($request)
     {
         $request->validate([
-            'title' => 'required|max:30',
+            'title' => 'required|max:50',
             'description' => 'nullable|max:200',
         ]);
     }
@@ -624,7 +624,7 @@ class ValidationServices
     public function edit_exercise_template($request)
     {
         $request->validate([
-            'title' => 'required|max:30',
+            'title' => 'required|max:50',
             'description' => 'nullable|max:200',
             'exercise_template_id' => ['required', 'exists:coach_exercise_templates,id', function ($attribute, $value, $fail) use ($request) {
                 $verify_client_id = $this->DB_ExerciseTemplates->verify_coach_id(coach_id: $request->user()->id, exercise_template_id: $value);
@@ -682,7 +682,7 @@ class ValidationServices
     public function add_gym($request)
     {
         $request->validate([
-            'name' => ['required', 'max:30'],
+            'name' => ['required', 'max:50'],
             'description' => 'required|max:200',
             'logo' => "nullable"
         ]);
@@ -702,7 +702,7 @@ class ValidationServices
     public function list_gym_coaches($request)
     {
         $request->validate([
-            'search' => 'nullable|max:30',
+            'search' => 'nullable|max:50',
             'status' => 'nullable|in:1,2,3',
         ]);
     }
@@ -718,7 +718,7 @@ class ValidationServices
     public function list_leave_requests($request)
     {
         $request->validate([
-            'search' => 'nullable|max:30',
+            'search' => 'nullable|max:50',
             'status' => 'nullable|in:0,1,2',
         ]);
     }
@@ -756,14 +756,14 @@ class ValidationServices
     public function list_gyms($request)
     {
         $request->validate([
-            'search' => 'nullable|max:30',
+            'search' => 'nullable|max:50',
         ]);
     }
 
     public function edit_gym($request)
     {
         $request->validate([
-            'name' => 'required|max:30',
+            'name' => 'required|max:50',
             'description' => 'required|max:200',
             'logo' => "nullable"
         ]);
