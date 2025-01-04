@@ -16,11 +16,12 @@ class DB_CoachExerciseTemplates
      */
     public function get_exercise_templates(mixed $coach_id, mixed $search): Collection
     {
-        return CoachExerciseTemplate::query()->where('coach_id', $coach_id)
+        return CoachExerciseTemplate::query()
             ->when(!empty($search), function ($q) use ($search) {
                 $q->where('title', 'LIKE', '%' . $search . '%')
                     ->orWhere('description', 'LIKE', '%' . $search . '%');;
             })
+            ->where('coach_id', $coach_id)
             ->get();
     }
 
