@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClientController;
+use App\Http\Controllers\Api\ClientTagController;
 use App\Http\Controllers\Api\CoachController;
 use App\Http\Controllers\Api\CoachVideosController;
 use App\Http\Controllers\Api\CommentController;
@@ -87,6 +88,8 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     Route::post('coach/exercise/templates/edit', [ExerciseTemplateController::class, 'edit']);
     Route::post('coach/exercise/templates/list', [ExerciseTemplateController::class, 'list']);
     Route::post('coach/exercise/templates/delete', [ExerciseTemplateController::class, 'delete']);
+
+    Route::post('clients/tag/update', [ClientTagController::class, 'update']);
 
     Route::post('packages/list', [CoachController::class, 'list_packages']);
     Route::post('coach/list/payments', [CoachController::class, 'list_payments']);

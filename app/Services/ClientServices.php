@@ -65,6 +65,7 @@ class ClientServices
                 "email" => $client->client->email,
                 "phone" => $client->client->phone,
                 "payment_link" => $client->client->client->payment_link ?? "",
+                "tag" => $client->client->client->tag ?? "",
                 "due_date" => $client->client->due_date ?? "",
                 "status" => $client->status//0 for pending , 1 for active,2 for archived
             ];

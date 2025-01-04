@@ -768,4 +768,18 @@ class ValidationServices
             'logo' => "nullable"
         ]);
     }
+
+    public function update_client_tag($request)
+    {
+        $request->validate([
+            'client_id' => ['required', 'exists:users,id', function ($attribute, $value, $fail) use ($request) {
+                $verify_client_id = $this->DB_Clients->verify_client_id(coach_id: $request->user()->id, client_id: $value);
+                if (!$verify_client_id) {
+                    $fail('The client must be assigned to this coach');
+                }
+            }],
+            'tag' => "nullable|max:50"
+        ]);
+    }
+
 }
