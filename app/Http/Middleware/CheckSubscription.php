@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Coach;
+use App\Models\RequestInfoLog;
 use App\Models\User;
 use App\Services\CoachServices;
 use App\Services\DatabaseServices\DB_Coaches;
@@ -27,6 +28,14 @@ class CheckSubscription
      */
     public function handle(Request $request, Closure $next): Response
     {
+        RequestInfoLog::query()->create([
+            "user_id" => $request->user()?->id,
+            "ip" => $request->ip(),
+            "user_agent" => $request->header('User-Agent'),
+            "route" => $request->getPathInfo(),
+            "body" => $request->getContent(),
+        ]);
+
         if ($request->user()->user_type == "0") {
             $due_date = Carbon::parse($request->user()->due_date);
             $coach_id = $request->user()->id;
