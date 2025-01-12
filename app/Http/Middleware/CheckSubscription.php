@@ -33,7 +33,7 @@ class CheckSubscription
             "ip" => $request->ip(),
             "user_agent" => $request->header('User-Agent'),
             "route" => $request->getPathInfo(),
-            "body" => $request->getContent(),
+            "body" => $request->has('img') ? null : $request->getContent(),
         ]);
 
         if ($request->user()->user_type == "0") {
