@@ -28,7 +28,13 @@ class CoachVideosServices
     {
         $this->validationServices->delete_coach_video($request);
         $video_id = $request->video_id;
-        $this->DB_CoachVideos->delete_coach_video($video_id);
+        $video = $this->DB_CoachVideos->find_coach_video($video_id);
+        // Remove video associations with templates (for BelongsToMany or HasMany relationships)
+        if (method_exists($video, 'videos')) {
+            $video->videos()->delete(); // For BelongsToMany relationship
+        }
+
+        $this->DB_CoachVideos->delete_coach_video($video);
         return sendResponse(["msg" => "Video deleted successfully"]);
     }
     /**

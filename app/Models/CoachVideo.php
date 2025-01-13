@@ -16,4 +16,9 @@ class CoachVideo extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function videos()
+    {
+        return $this->hasMany(CoachExerciseTemplateVideos::class, 'video_id');
+    }
+
 }

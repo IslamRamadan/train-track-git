@@ -17,6 +17,7 @@ class DB_CoachExerciseTemplates
     public function get_exercise_templates(mixed $coach_id, mixed $search): Collection
     {
         return CoachExerciseTemplate::query()
+            ->with('videos')
             ->when(!empty($search), function ($q) use ($search) {
                 $q->where('title', 'LIKE', '%' . $search . '%')
                     ->orWhere('description', 'LIKE', '%' . $search . '%');;
@@ -41,20 +42,26 @@ class DB_CoachExerciseTemplates
     }
 
 
-    public function edit_exercise_template(mixed $exercise_template_id, mixed $description, mixed $title)
+    public function edit_exercise_template(mixed $exercise_template, mixed $description, mixed $title)
     {
-        return CoachExerciseTemplate::query()
-            ->where('id', $exercise_template_id)
+        return $exercise_template
             ->update([
                 'description' => $description,
                 'title' => $title,
             ]);
     }
 
-    public function delete_exercise_template($exercise_template_id)
+    public function find_exercise_template(mixed $exercise_template_id)
     {
         return CoachExerciseTemplate::query()
-            ->where('id', $exercise_template_id)->delete();
+            ->with('videos')
+            ->where('id', $exercise_template_id)
+            ->first();
+    }
+
+    public function delete_exercise_template($exercise_template)
+    {
+        return $exercise_template->delete();
     }
 
     public function verify_coach_id($coach_id, $exercise_template_id)

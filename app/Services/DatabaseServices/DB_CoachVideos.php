@@ -53,9 +53,15 @@ class DB_CoachVideos
             ]);
     }
 
-    public function delete_coach_video($video_id)
+    public function find_coach_video($video_id)
     {
         return CoachVideo::query()
-            ->where('id', $video_id)->delete();
+            ->with('videos')
+            ->where('id', $video_id)->first();
+    }
+
+    public function delete_coach_video($video)
+    {
+        return $video->delete();
     }
 }

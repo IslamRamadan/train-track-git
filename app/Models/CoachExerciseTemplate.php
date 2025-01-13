@@ -17,6 +17,10 @@ class CoachExerciseTemplate extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function videos()
+    {
+        return $this->hasMany(CoachExerciseTemplateVideos::class, 'template_id');
+    }
     protected function description(): Attribute
     {
         return Attribute::make(
