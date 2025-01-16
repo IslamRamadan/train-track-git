@@ -56,7 +56,6 @@ class DB_CoachVideos
     public function find_coach_video($video_id)
     {
         return CoachVideo::query()
-            ->with('videos')
             ->where('id', $video_id)->first();
     }
 

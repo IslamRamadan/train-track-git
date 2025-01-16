@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Rules\ValidateCoachVideos;
 use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_CoachExerciseTemplates;
 use App\Services\DatabaseServices\DB_CoachVideos;
@@ -614,23 +613,25 @@ class ValidationServices
         ]);
     }
 
-    public function add_exercise_template($request, $coach_id)
+    public function add_exercise_template($request)
     {
         $request->validate([
             'title' => 'required|max:50',
             'description' => 'nullable|max:500',
-            'video_ids' => ['nullable', 'array', new ValidateCoachVideos($coach_id)],
-            'video_ids.*' => ['exists:coach_videos,id'],
+            'videos' => ['nullable', 'array'],
+            'videos.*.title' => ['required', 'string', 'max:255'], // Validate title
+            'videos.*.link' => ['required', 'max:500'], // Validate link as a valid URL
         ]);
     }
 
-    public function edit_exercise_template($request, $coach_id)
+    public function edit_exercise_template($request)
     {
         $request->validate([
             'title' => 'required|max:50',
             'description' => 'nullable|max:500',
-            'video_ids' => ['nullable', 'array', new ValidateCoachVideos($coach_id)],
-            'video_ids.*' => ['exists:coach_videos,id'],
+            'videos' => ['nullable', 'array'],
+            'videos.*.title' => ['required', 'string', 'max:255'], // Validate title
+            'videos.*.link' => ['required', 'max:500'], // Validate link as a valid URL
             'exercise_template_id' => ['required', 'exists:coach_exercise_templates,id', function ($attribute, $value, $fail) use ($request) {
                 $verify_client_id = $this->DB_ExerciseTemplates->verify_coach_id(coach_id: $request->user()->id, exercise_template_id: $value);
                 if (!$verify_client_id) {

@@ -18,11 +18,11 @@ class ExerciseTemplateServices
     {
         $coach_id = $request->user()->id;
 
-        $this->validationServices->edit_exercise_template($request, $coach_id);
+        $this->validationServices->edit_exercise_template($request);
         $exercise_template_id = $request->exercise_template_id;
         $description = $request->description;
         $title = $request->title;
-        $video_ids = $request->video_ids;
+        $videos = $request->videos;
 
         $template = $this->DB_ExerciseTemplates->find_exercise_template($exercise_template_id);
         DB::beginTransaction();
@@ -30,8 +30,8 @@ class ExerciseTemplateServices
         // Remove old videos
         $template->videos()->delete();
         // Attach videos by creating new records
-        if ($video_ids != null) {
-            $this->add_template_video($video_ids, $template);
+        if ($videos != null) {
+            $this->add_template_video($videos, $template);
         }
 
         DB::commit();
@@ -57,15 +57,15 @@ class ExerciseTemplateServices
     public function add($request)
     {
         $coach_id = $request->user()->id;
-        $this->validationServices->add_exercise_template($request, $coach_id);
+        $this->validationServices->add_exercise_template($request);
         $description = $request->description;
         $title = $request->title;
-        $video_ids = $request->video_ids;
+        $videos = $request->videos;
         DB::beginTransaction();
         $template = $this->DB_ExerciseTemplates->add_exercise_template($coach_id, $title, $description);
         // Attach videos by creating new records
-        if ($video_ids != null) {
-            $this->add_template_video($video_ids, $template);
+        if ($videos != null) {
+            $this->add_template_video($videos, $template);
         }
 
 
@@ -123,23 +123,22 @@ class ExerciseTemplateServices
 
         return $videos->map(function ($video) {
             return [
-                'video_id' => $video->video_id,
-                'title' => $video->video->title,
-                'link' => $video->video->link,
+                'title' => $video->title,
+                'link' => $video->link,
             ];
         })->toArray();
     }
 
     /**
-     * @param mixed $video_ids
+     * @param mixed $videos
      * @param Model|Builder $template
      * @return void
      */
-    private function add_template_video(mixed $video_ids, Model|Builder $template): void
+    private function add_template_video(mixed $videos, Model|Builder $template): void
     {
         $videosData = [];
-        foreach ($video_ids as $video_id) {
-            $videosData[] = ['video_id' => $video_id, 'template_id' => $template->id];
+        foreach ($videos as $video) {
+            $videosData[] = ['title' => $video['title'], 'link' => $video['link'], 'template_id' => $template->id];
         }
         $template->videos()->createMany($videosData);
     }

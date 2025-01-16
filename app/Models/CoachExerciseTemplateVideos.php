@@ -9,12 +9,7 @@ class CoachExerciseTemplateVideos extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['template_id', 'video_id'];
-
-    public function video()
-    {
-        return $this->belongsTo(CoachVideo::class, 'video_id');
-    }
+    protected $fillable = ['template_id', 'link', 'title'];
 
     public function template()
     {
