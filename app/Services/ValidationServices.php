@@ -46,7 +46,7 @@ class ValidationServices
     {
         $request->validate([
             'name' => 'required|max:50',
-            'description' => 'required|max:500',
+            'description' => 'required|max:1000',
             'type' => 'required|in:0,1,2',
             'starting_date' => 'required_if:type,1|date|date_format:Y-m-d',
             'sync' => 'required_if:type,1|in:0,1',
@@ -59,7 +59,7 @@ class ValidationServices
         $request->validate([
             'program_id' => 'required|exists:programs,id',
             'name' => 'required|max:50',
-            'description' => 'required|max:500',
+            'description' => 'required|max:1000',
             'type' => 'required|in:0,1',
             'starting_date' => 'required_if:type,1|date|date_format:Y-m-d',
             'image' => 'nullable'
@@ -96,8 +96,8 @@ class ValidationServices
             'program_id' => 'required|exists:programs,id',
             'name' => 'required',
             'day' => 'required',
-            'description' => 'nullable|max:500',
-            'extra_description' => 'nullable|max:500',
+            'description' => 'nullable|max:1000',
+            'extra_description' => 'nullable|max:1000',
             'videos' => 'nullable'
         ]);
     }
@@ -151,8 +151,8 @@ class ValidationServices
         $request->validate([
             'exercise_id' => 'required|exists:program_exercises,id',
             'name' => 'required',
-            'description' => 'nullable|max:500',
-            'extra_description' => 'nullable|max:500',
+            'description' => 'nullable|max:1000',
+            'extra_description' => 'nullable|max:1000',
             'order' => 'required',
             'videos' => 'nullable',
         ]);
@@ -312,8 +312,8 @@ class ValidationServices
             'client_program_id' => 'required|exists:one_to_one_programs,id',
             'name' => 'required',
             'date' => 'required|date_format:Y-m-d',
-            'description' => 'nullable|max:500',
-            'extra_description' => 'nullable|max:500',
+            'description' => 'nullable|max:1000',
+            'extra_description' => 'nullable|max:1000',
         ]);
     }
 
@@ -367,8 +367,8 @@ class ValidationServices
         $request->validate([
             'client_exercise_id' => 'required|exists:one_to_one_program_exercises,id',
             'name' => 'required',
-            'description' => 'nullable|max:500',
-            'extra_description' => 'nullable|max:500',
+            'description' => 'nullable|max:1000',
+            'extra_description' => 'nullable|max:1000',
             'order' => 'required',
         ]);
     }
@@ -617,10 +617,10 @@ class ValidationServices
     {
         $request->validate([
             'title' => 'required|max:50',
-            'description' => 'nullable|max:500',
+            'description' => 'nullable|max:1000',
             'videos' => ['nullable', 'array'],
             'videos.*.title' => ['required', 'string', 'max:255'], // Validate title
-            'videos.*.link' => ['required', 'max:500'], // Validate link as a valid URL
+            'videos.*.link' => ['required', 'max:1000'], // Validate link as a valid URL
         ]);
     }
 
@@ -628,10 +628,10 @@ class ValidationServices
     {
         $request->validate([
             'title' => 'required|max:50',
-            'description' => 'nullable|max:500',
+            'description' => 'nullable|max:1000',
             'videos' => ['nullable', 'array'],
             'videos.*.title' => ['required', 'string', 'max:255'], // Validate title
-            'videos.*.link' => ['required', 'max:500'], // Validate link as a valid URL
+            'videos.*.link' => ['required', 'max:1000'], // Validate link as a valid URL
             'exercise_template_id' => ['required', 'exists:coach_exercise_templates,id', function ($attribute, $value, $fail) use ($request) {
                 $verify_client_id = $this->DB_ExerciseTemplates->verify_coach_id(coach_id: $request->user()->id, exercise_template_id: $value);
                 if (!$verify_client_id) {
@@ -689,7 +689,7 @@ class ValidationServices
     {
         $request->validate([
             'name' => ['required', 'max:50'],
-            'description' => 'required|max:500',
+            'description' => 'required|max:1000',
             'logo' => "nullable"
         ]);
     }
@@ -770,7 +770,7 @@ class ValidationServices
     {
         $request->validate([
             'name' => 'required|max:50',
-            'description' => 'required|max:500',
+            'description' => 'required|max:1000',
             'logo' => "nullable"
         ]);
     }
