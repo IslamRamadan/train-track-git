@@ -1,9 +1,9 @@
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <!-- Brand Logo -->
     <a href="#" class="brand-link">
-        <img src="https://i.ibb.co/54TTf0J/logo.png" alt="AdminLTE Logo"
-             class="brand-image m-0"
-             style="opacity: .8">
+        <img src="{{url('images/logo.png')}}" alt="AdminLTE Logo"
+             class="brand-image"
+             >
         <span class="brand-text font-weight-light">Train Track</span>
     </a>
 

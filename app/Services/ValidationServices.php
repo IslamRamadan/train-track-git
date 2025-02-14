@@ -788,4 +788,11 @@ class ValidationServices
         ]);
     }
 
+    public function exportUsersToExcel($request)
+    {
+        $request->validate([
+            'export' => 'required|array|in:0,1',
+        ]);
+    }
+
 }

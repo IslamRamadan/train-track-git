@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Dashboard\AuthController;
 use App\Http\Controllers\Dashboard\CoachController;
+use App\Http\Controllers\Dashboard\ExportUsersController;
 use App\Http\Controllers\Dashboard\GymController;
 use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
@@ -33,6 +34,7 @@ Route::prefix('{locale?}')->middleware(['localized', 'AdminAuth'])->group(functi
     Route::post('/coaches/block/{id}', [CoachController::class, "block"])->name('coaches.block');
     Route::post('/coaches/update/due/date/{id}', [CoachController::class, "update_due_date"])->name('coach.update.due.date');
     Route::post('/coaches/update/package/{id}', [CoachController::class, "update_package"])->name('coach.update.package');
+    Route::post('/users/excel/export', [ExportUsersController::class, "exportUsersToExcel"])->name('users.excel.export');
 });
 
 Route::prefix('{locale?}')->middleware('localized')->group(function () {
