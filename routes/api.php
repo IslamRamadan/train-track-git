@@ -88,6 +88,7 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     Route::post('coach/exercise/templates/edit', [ExerciseTemplateController::class, 'edit']);
     Route::post('coach/exercise/templates/list', [ExerciseTemplateController::class, 'list']);
     Route::post('coach/exercise/templates/delete', [ExerciseTemplateController::class, 'delete']);
+    Route::post('coach/clients/have/not/exercises/in/date', [ClientController::class, 'getClientsHaveNotExercisesInDate']);
 
     Route::post('clients/tag/update', [ClientTagController::class, 'update']);
 

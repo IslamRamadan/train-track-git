@@ -55,4 +55,16 @@ class DB_Users
             'due_date' => $due_date
         ]);
     }
+
+
+    public function get_clients_have_not_exercises_in_date($coachId, $date)
+    {
+        return User::whereHas('client_programs', function ($query) use ($coachId, $date) {
+            $query->where('coach_id', $coachId)
+                ->whereDoesntHave('exercises', function ($exerciseQuery) use ($date) {
+                    $exerciseQuery->whereDate('date', $date);
+                });
+        })->where('user_type', "1") // Ensure we are selecting only clients
+        ->get();
+    }
 }

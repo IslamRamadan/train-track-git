@@ -795,4 +795,11 @@ class ValidationServices
         ]);
     }
 
+    public function getClientsHaveNotExercisesInDate($request)
+    {
+        $request->validate([
+            'date' => 'required|date|date_format:Y-m-d',
+        ]);
+    }
+
 }

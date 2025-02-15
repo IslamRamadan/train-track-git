@@ -3,11 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Mail\InvitationMail;
 use App\Services\ClientServices;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 
 class ClientController extends Controller
 {
@@ -115,5 +113,15 @@ class ClientController extends Controller
     public function coach_archive_client(Request $request): JsonResponse
     {
         return $this->clientServices->coach_archive_client($request);
+    }
+
+    /**
+     *  get Clients Have Not Exercises In Date
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getClientsHaveNotExercisesInDate(Request $request): JsonResponse
+    {
+        return $this->clientServices->getClientsHaveNotExercisesInDate($request);
     }
 }

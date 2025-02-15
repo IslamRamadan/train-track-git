@@ -15,6 +15,7 @@ use App\Services\DatabaseServices\DB_Programs;
 use App\Services\DatabaseServices\DB_Users;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
@@ -387,6 +388,25 @@ class ClientServices
     public function delete()
     {
         return sendResponse(['message' => "Client deleted successfully"]);
+    }
+
+    public function getClientsHaveNotExercisesInDate(Request $request)
+    {
+        $this->validationServices->getClientsHaveNotExercisesInDate($request);
+        $coach_id = $request->user()->id;
+        $date = $request->date;
+        $clients = $this->DB_Users->get_clients_have_not_exercises_in_date($coach_id, $date);
+
+        $clients_arr = [];
+        foreach ($clients as $client) {
+            $single_client = [
+                "id" => $client->id,
+                "name" => $client->name,
+            ];
+            $clients_arr[] = $single_client;
+        }
+        return sendResponse($clients_arr);
+
     }
 
 }
