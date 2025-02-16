@@ -124,4 +124,15 @@ class ClientController extends Controller
     {
         return $this->clientServices->getClientsHaveNotExercisesInDate($request);
     }
+
+    /**
+     * Get Clients Assigned To Template Program
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getClientsAssignedToProgram(Request $request): JsonResponse
+    {
+        return $this->clientServices->getClientsAssignedToProgram($request);
+
+    }
 }

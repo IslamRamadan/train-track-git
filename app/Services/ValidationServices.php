@@ -802,4 +802,11 @@ class ValidationServices
         ]);
     }
 
+    public function getClientsAssignedToProgram($request)
+    {
+        $request->validate([
+            'program_id' => 'required|exists:programs,id',
+        ]);
+    }
+
 }

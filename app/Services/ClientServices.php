@@ -409,4 +409,27 @@ class ClientServices
 
     }
 
+    /**
+     * Get Clients Assigned To Template Program Logic
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getClientsAssignedToProgram(Request $request): JsonResponse
+    {
+        $this->validationServices->getClientsAssignedToProgram($request);
+        $coach_id = $request->user()->id;
+        $program_id = $request->program_id; // template program id
+        $clients = $this->DB_ProgramClients->get_clients_assigned_to_program($coach_id, $program_id);
+        $clients_arr = [];
+        foreach ($clients as $client) {
+            $single_client = [
+                "id" => $client->client_id,
+                "name" => $client->client->name,
+            ];
+            $clients_arr[] = $single_client;
+        }
+        return sendResponse($clients_arr);
+    }
+
 }
