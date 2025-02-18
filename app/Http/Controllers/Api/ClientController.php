@@ -21,6 +21,16 @@ class ClientController extends Controller
     }
 
     /**
+     * Get the clients that made(Comment and log and update status) in last 7 days
+     * @param Request $request
+     * @return mixed
+     */
+    public function list_active_clients(Request $request)
+    {
+        return $this->clientServices->list_active_clients($request);
+    }
+
+    /**
      * Assign program to client
      * @param Request $request
      * @return JsonResponse

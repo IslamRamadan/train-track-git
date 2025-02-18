@@ -58,6 +58,7 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     Route::post('program/exercise/delete', [ExerciseController::class, 'destroy']);//5
     Route::post('program/client/assign', [ClientController::class, 'assign_program_to_client']);
     Route::post('clients/list', [ClientController::class, 'index']);
+    Route::post('active/clients/list', [ClientController::class, 'list_active_clients']);
     Route::post('coach/client/assign', [ClientController::class, 'assign_client_to_coach']);
     Route::post('coach/client/invitation/delete', [ClientController::class, 'remove_client_invitation']);
     Route::post('coach/client/archive', [ClientController::class, 'coach_archive_client']);

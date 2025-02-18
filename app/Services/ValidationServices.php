@@ -166,6 +166,13 @@ class ValidationServices
         ]);
     }
 
+    public function list_active_clients($request)
+    {
+        $request->validate([
+            'search' => 'nullable',
+        ]);
+    }
+
     public function assign_program_to_client($request)
     {
         $request->validate([

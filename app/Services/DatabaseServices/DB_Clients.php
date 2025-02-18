@@ -35,6 +35,27 @@ class DB_Clients
             ->get();
     }
 
+    public function get_active_clients_between_dates(mixed $coach_id, mixed $search, $date_from, $date_to)
+    {
+        return CoachClient::query()
+            ->with('coach', 'client.client')
+            ->when(!empty($search), function ($q) use ($search) {
+                $q->whereHas('client', function ($query) use ($search) {
+                    $query->where('name', 'LIKE', '%' . $search . '%')
+                        ->orWhere('email', 'LIKE', '%' . $search . '%')
+                        ->orWhere('phone', 'LIKE', '%' . $search . '%')
+                        ->orWhereHas('client', function ($query2) use ($search) {
+                            $query2->where('tag', 'LIKE', '%' . $search . '%');
+                        });
+                });
+            })
+            ->whereHas('client', function ($q) use ($date_from, $date_to) {
+                $q->whereBetween('last_active', [$date_from, $date_to]);
+            })
+            ->where(['coach_id' => $coach_id])
+            ->get();
+    }
+
     public function create_client(mixed $name, mixed $email, mixed $phone, mixed $password)
     {
         return User::query()->create([

@@ -51,6 +51,23 @@ class ClientServices
     }
 
     /**
+     * Get the clients that made(Comment and log and update status) in last 7 days logic
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function list_active_clients(Request $request)
+    {
+        $this->validationServices->list_active_clients($request);
+        $coach_id = $request->user()->id;
+        $search = $request['search'];
+        $date_from = Carbon::now()->subWeek();
+        $date_to = Carbon::now();
+        $clients = $this->DB_Clients->get_active_clients_between_dates($coach_id, $search, $date_from, $date_to);
+        $clients_arr = $this->active_clients_info_arr($clients);
+        return sendResponse($clients_arr);
+    }
+    /**
      * @param $clients
      * @param $pending_clients
      * @param $status
@@ -88,6 +105,26 @@ class ClientServices
                 }
             }
         }
+
+        return $clients_arr;
+    }
+
+    /**
+     * @param $clients
+     * @return array that has id,name,email,phone,status
+     */
+    public function active_clients_info_arr($clients): array
+    {
+        $clients_arr = [];
+        foreach ($clients as $client) {
+            $single_client = [
+                "id" => $client->client->id,
+                "name" => $client->client->name,
+                "last_active" => $client->client->last_active
+            ];
+            $clients_arr[] = $single_client;
+        }
+
 
         return $clients_arr;
     }
@@ -431,5 +468,6 @@ class ClientServices
         }
         return sendResponse($clients_arr);
     }
+
 
 }
