@@ -333,6 +333,8 @@ class OneToOneExerciseServices
         $videos_paths = $request->videos_paths;
         $details = $request->details;
         $exercise_log = $this->DB_ExerciseLog->find_exercise_log(exercise_id: $client_exercise_id);
+        $current_time = Carbon::now()->toDateTimeString();
+
         DB::beginTransaction();
         if ($exercise_log) {
             $this->DB_ExerciseLog->update_exercise_log($exercise_log->id, $sets, $details);
@@ -346,6 +348,8 @@ class OneToOneExerciseServices
             }
         }
         $this->DB_OneToOneProgramExercises->update_exercise_status($client_exercise_id, "1");
+        $this->DB_Users->update_user_data($request->user(), ['last_active' => $current_time]);
+
         DB::commit();
 
         $find_exercise_details = $this->DB_OneToOneProgramExercises->find_exercise($client_exercise_id);
@@ -369,7 +373,13 @@ class OneToOneExerciseServices
         $log_id = $request->log_id;
         $sets = $request->sets;
         $details = $request->details;
+        $current_time = Carbon::now()->toDateTimeString();
+
+        DB::beginTransaction();
         $this->DB_ExerciseLog->update_exercise_log($log_id, $sets, $details);
+        $this->DB_Users->update_user_data($request->user(), ['last_active' => $current_time]);
+        DB::commit();
+
         return sendResponse(['message' => "Log updated successfully"]);
     }
 
@@ -381,8 +391,10 @@ class OneToOneExerciseServices
         $user_type = $request->user()->user_type;
         $user_name = $request->user()->name;
         $status = $request->status;
+        $current_time = Carbon::now()->toDateTimeString();
 
         $this->DB_OneToOneProgramExercises->update_exercise_status($client_exercise_id, $status);
+        $this->DB_Users->update_user_data($request->user(), ['last_active' => $current_time]);
 
         if ($user_type == "1" && ($status == "1" || $status == "2")) {
             $status_name = $status == "1" ? "Done" : "Missed";

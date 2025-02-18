@@ -67,4 +67,9 @@ class DB_Users
         })->where('user_type', "1") // Ensure we are selecting only clients
         ->get();
     }
+
+    public function update_user_data(User $user, array $data)
+    {
+        return $user->update($data);
+    }
 }
