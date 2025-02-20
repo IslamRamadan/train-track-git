@@ -466,6 +466,11 @@ class ValidationServices
             'name' => 'required',
             'email' => 'required|email|unique:users,email,' . $request->user()->id,
             'phone' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|unique:users,phone,' . $request->user()->id,
+            'weight'=>'nullable|numeric|min:20|max:500',
+            'height'=>'nullable|numeric|min:50|max:300',
+            'fitness_goal'=>'nullable',
+            'label'=>'nullable',
+            'notes'=>'nullable',
         ], [
             'email.unique' => 'This email already exists in the system',
             'phone.unique' => 'This phone already exists in the system',

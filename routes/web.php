@@ -23,7 +23,7 @@ Route::prefix('{locale?}')->middleware(['localized', 'AdminGuest'])->group(funct
     Route::get('/login', [AuthController::class, "login_form"])->name('login_view');
     Route::post('/login', [AuthController::class, "login"])->name('login');
     Route::get('/welcome', function () {
-        return view('welcome');
+        return view('mail.coach-welcome-mail',['coachName'=>"Islam"]);
     })->name("name");
 });
 Route::prefix('{locale?}')->middleware(['localized', 'AdminAuth'])->group(function () {

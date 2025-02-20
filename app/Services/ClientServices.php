@@ -296,10 +296,36 @@ class ClientServices
         $name = $request->name;
         $email = $request->email;
         $phone = $request->phone;
+        $weight = $request->weight;
+        $height = $request->height;
+        $fitness_goal = $request->fitness_goal;
+        $label = $request->label;
+        $notes = $request->notes;
 
         $this->DB_Users->update_user($client_id, $name
             , $email
             , $phone);
+        $client=$this->DB_Clients->get_client_info($client_id);
+        if ($client){
+            $this->DB_Clients->update_client_info($client,[
+                'weight' => $weight,
+                'height' => $height,
+                'fitness_goal' => $fitness_goal,
+                'label' => $label,
+                'notes' => $notes,
+            ]);
+        }
+        else{
+            $this->DB_Clients->create_client_data([
+                'user_id'=>$client_id,
+                'weight' => $weight,
+                'height' => $height,
+                'fitness_goal' => $fitness_goal,
+                'label' => $label,
+                'notes' => $notes,
+            ]);
+        }
+
 
         return sendResponse(['message' => "Client information updated successfully"]);
 

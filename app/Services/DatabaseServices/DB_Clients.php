@@ -137,7 +137,15 @@ class DB_Clients
             'tag' => $payment_link
         ]);
     }
-
+public function update_client_info(mixed $client_info, mixed $data)
+    {
+        $client_info->update($data);
+    }
+    public function create_client_data(mixed $data)
+    {
+        Client::query()
+            ->create($data);
+    }
     public function create_client_tag(mixed $client_id, mixed $payment_link)
     {
         Client::query()
