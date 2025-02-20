@@ -79,6 +79,7 @@
     <link rel="stylesheet" href="{{asset('email/all.min.css')}}">
     <link href="{{asset('email/bootstrap2.min.css')}}" rel="stylesheet" id="bootstrap-css">
     <script src="{{asset('email/bootstrap.min.js')}}"></script>
+    <script src="{{asset('email/fontawesome.min.css')}}"></script>
 </head>
 <body>
 
