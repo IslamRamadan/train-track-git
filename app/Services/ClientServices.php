@@ -85,7 +85,12 @@ class ClientServices
                 "payment_link" => $client->client->client->payment_link ?? "",
                 "tag" => $client->client->client->tag ?? "",
                 "due_date" => $client->client->due_date ?? "",
-                "status" => $client->status//0 for pending , 1 for active,2 for archived
+                "status" => $client->status,//0 for pending , 1 for active,2 for archived
+                "weight" => $client?->client?->client?->weight?? "",
+                "height" => $client?->client?->client?->height?? "",
+                "fitness_goal" => $client?->client?->client?->fitness_goal?? "",
+                "label" => $client?->client?->client?->label?? "",
+                "notes" => $client?->client?->client?->notes?? "",
             ];
             $clients_arr[] = $single_client;
         }
@@ -99,7 +104,12 @@ class ClientServices
                         "phone" => "",
                         "payment_link" => "",
                         "due_date" => "",
-                        "status" => "0"//0 for pending , 1 for active,2 for archived
+                        "status" => "0",//0 for pending , 1 for active,2 for archived
+                        "weight" => "",
+                        "height" => "",
+                        "fitness_goal" => "",
+                        "label" => "",
+                        "notes" => "",
                     ];
                     $clients_arr[] = $single_client;
                 }

@@ -787,7 +787,7 @@ class ValidationServices
         ]);
     }
 
-    public function update_client_tag($request)
+    public function update_client_info($request)
     {
         $request->validate([
             'client_id' => ['required', 'exists:users,id', function ($attribute, $value, $fail) use ($request) {
@@ -796,7 +796,12 @@ class ValidationServices
                     $fail('The client must be assigned to this coach');
                 }
             }],
-            'tag' => "nullable|max:50"
+            'tag' => "nullable|max:50",
+            'weight'=>'nullable|numeric|min:20|max:500',
+            'height'=>'nullable|numeric|min:50|max:300',
+            'fitness_goal'=>'nullable',
+            'label'=>'nullable',
+            'notes'=>'nullable',
         ]);
     }
 

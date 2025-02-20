@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome, {{ $coachName }}</title>
+    <title>Welcome, {{ $name }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -88,7 +88,7 @@
         <img src="{{ url('images/logo.png') }}" alt="App Logo" class="header-logo">
     </div>
 
-    <p>Dear Coach <strong>{{ $coachName }}</strong>,</p>
+    <p>Dear Coach <strong>{{ $name }}</strong>,</p>
 
     <p>
         Welcome to <strong>TrainTrack Coach Application!</strong><br>

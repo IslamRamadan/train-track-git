@@ -68,7 +68,7 @@ class DB_Users
         ->get();
     }
 
-    public function update_user_data(User $user, array $data)
+    public function update_user_data($user, array $data)
     {
         return $user->update($data);
     }

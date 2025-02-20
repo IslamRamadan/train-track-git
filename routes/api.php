@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClientController;
-use App\Http\Controllers\Api\ClientTagController;
+use App\Http\Controllers\Api\ClientInfoController;
 use App\Http\Controllers\Api\CoachController;
 use App\Http\Controllers\Api\CoachVideosController;
 use App\Http\Controllers\Api\CommentController;
@@ -96,7 +96,7 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     Route::post('coach/clients/have/not/exercises/in/date', [ClientController::class, 'getClientsHaveNotExercisesInDate']);
     Route::post('coach/clients/assigned/to/program', [ClientController::class, 'getClientsAssignedToProgram']);
 
-    Route::post('clients/tag/update', [ClientTagController::class, 'update']);
+    Route::post('clients/details/update', [ClientInfoController::class, 'update']);
 
     Route::post('packages/list', [CoachController::class, 'list_packages']);
     Route::post('coach/list/payments', [CoachController::class, 'list_payments']);
