@@ -28,7 +28,7 @@ class WelcomeMail extends Mailable
     {
         return new Envelope(
             from: new Address(env('MAIL_FROM_ADDRESS'), 'Train Track'),
-            subject: 'Train-Track Invitation',
+            subject: "Welcome $this->name To Train-Track",
         );
     }
 
