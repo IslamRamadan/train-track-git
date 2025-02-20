@@ -85,7 +85,7 @@
 <div class="email-container">
     <!-- Header Section -->
     <div class="text-center">
-        <img src="{{ url('images/logo.png') }}" alt="App Logo" class="header-logo">
+        <img src="{{ url('images/logos/logo.png') }}" alt="App Logo" class="header-logo">
     </div>
 
     <p>Dear Coach <strong>{{ $name }}</strong>,</p>
