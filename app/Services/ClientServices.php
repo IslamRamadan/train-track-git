@@ -426,6 +426,8 @@ class ClientServices
         }
         //delete coach client
         $client_info->coach_client_client()->delete();
+        //delete from clients table
+        $client_info->client->delete();
         //delete user
         $client_info->delete();
         DB::commit();
