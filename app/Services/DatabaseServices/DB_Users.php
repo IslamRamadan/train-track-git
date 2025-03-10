@@ -14,7 +14,7 @@ class DB_Users
 
     public function get_user_for_delete($id)
     {
-        return User::with('coach', 'coach_client_client', 'client_programs.exercises.log', 'program_clients', 'client_programs.comments',
+        return User::with('client','coach', 'coach_client_client', 'client_programs.exercises.log', 'program_clients', 'client_programs.comments',
             'client_programs.exercises.videos')->find($id);
     }
 
