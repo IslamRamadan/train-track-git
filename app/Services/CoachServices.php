@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\RequestInfoLog;
 use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_Coaches;
 use App\Services\DatabaseServices\DB_ExerciseLog;
@@ -160,8 +161,14 @@ class CoachServices
     public function create_payment_link($request)
     {
         $this->validationServices->create_payment_link($request);
-
-        $coach_id = $request->coach_id;
+        RequestInfoLog::query()->create([
+            "user_id" => $request->user()->id,
+            "ip" => $request->ip(),
+            "user_agent" => $request->header('User-Agent'),
+            "route" => $request->getPathInfo(),
+            "body" => $request->getContent(),
+        ]);
+        $coach_id = $request->user()->id;
         $upgrade = $request->upgrade;
         $user = $this->DB_Users->get_user_info($coach_id);
 
