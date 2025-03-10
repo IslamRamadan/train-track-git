@@ -36,12 +36,13 @@ Route::post('client/register', [AuthController::class, 'client_register']);
 Route::post('coach/register', [AuthController::class, 'coach_register']);
 Route::post('forget/password', [AuthController::class, 'forget_password']);
 Route::post('checkout/processed', [PaymentController::class, 'checkout_processed']);
-Route::post('coach/payment/link/create', [CoachController::class, 'create_payment_link']);
 Route::post('coach/get/package', [CoachController::class, 'get_package']);
 
 Route::middleware(['auth:api'])->group(function () {
     Route::post('coach/client/archive', [ClientController::class, 'coach_archive_client']);
     Route::post('clients/list', [ClientController::class, 'index']);
+    Route::post('coach/payment/link/create', [CoachController::class, 'create_payment_link']);
+
 });
 
 
