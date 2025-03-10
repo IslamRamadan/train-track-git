@@ -339,6 +339,7 @@ class ValidationServices
             'from_client_program_id' => 'required|exists:one_to_one_programs,id',
             'to_client_program_id' => 'required|exists:one_to_one_programs,id',
             'copied_dates' => 'required|array',
+            'copied_dates.*' => 'date_format:Y-m-d',
             'start_date' => 'required|date_format:Y-m-d',
         ]);
     }
