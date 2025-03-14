@@ -12,6 +12,7 @@ use App\Services\DatabaseServices\DB_Users;
 use App\Services\PaymentServices\PaymentServices;
 use App\Services\ValidationServices;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Yajra\DataTables\Facades\DataTables;
@@ -228,5 +229,24 @@ class CoachService
         $package = $request->package;
         $this->DB_Coaches->update_coach_package($coach_id, $package);
         return redirect()->back()->with(['msg' => "Updated successfully"]);
+    }
+
+    public function verifyCoachEmail($id)
+    {
+        $user_id = Crypt::decrypt($id);
+        $coach = $this->DB_Users->get_user_info($user_id);
+        if (!$coach) {
+            abort(404);
+        }
+        $name = $coach->name;
+        if (!$coach->email_verified_at) {
+            $this->DB_Users->update_user_data($coach, ['email_verified_at' => Carbon::now()]);
+            try {
+                Mail::to($coach->email)->send(new WelcomeMail(name: $name));
+            } catch (\Exception $exception) {
+            }
+        }
+
+        return view('coaches.coach-email-verified', compact('name'));
     }
 }

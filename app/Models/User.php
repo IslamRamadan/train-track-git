@@ -26,7 +26,8 @@ class User extends Authenticatable
         'phone',
         'user_type',
         'due_date',
-        'last_active'
+        'last_active',
+        'email_verified_at',
     ];
     protected $appends = ['active_clients'];
 
