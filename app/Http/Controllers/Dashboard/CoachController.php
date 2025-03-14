@@ -41,7 +41,7 @@ class CoachController extends Controller
     {
         return $this->coachService->update_coach_package($id, $request);
     }
-    public function verifyCoachEmail($lang,$id)
+    public function verifyCoachEmail($id)
     {
         return $this->coachService->verifyCoachEmail($id);
     }

@@ -72,6 +72,13 @@
             margin: 30px auto;
             border: 1px solid #ddd;
         }
+
+        .w-100 {
+            width: 100%;
+        }
+        .color-white{
+            color: white;
+        }
     </style>
     <!-- Bootstrap CSS -->
     <link href="{{asset('email/bootstrap.min.css')}}" rel="stylesheet">
@@ -97,8 +104,8 @@
     </p>
     <hr>
     <div class="text-center">
-        <a href="{{route('coach.verify.email',[app()->getLocale(),Crypt::encrypt($user_id)])}}"
-           class="btn btn-dark w-100">Verify You Email</a>
+        <a href="{{route('coach.verify.email',Crypt::encrypt($user_id))}}"
+           class="button apple-btn w-100 color-white">Verify You Email</a>
     </div>
     <hr>
     <p>Best regards,</p>
@@ -108,21 +115,21 @@
     <!-- Contact Section -->
     <h4 class="section-title">Stay Connected</h4>
     <p>Contact us on WhatsApp or follow our YouTube channel where you can find presentation for the app..</p>
-    <a href="https://wa.me/+201140066441" target="_blank" class="button whatsapp-btn">
+    <a href="https://wa.me/+201140066441" target="_blank" class="button whatsapp-btn color-white">
         <i class="fab fa-whatsapp"></i> WhatsApp
     </a>
-    <a href="https://www.youtube.com/@traintrackcoach?si=WziUydifGSq2pSmm" target="_blank" class="button youtube-btn">
-        <i class="fab fa-youtube"></i> YouTube
+    <a href="https://www.youtube.com/@traintrackcoach?si=WziUydifGSq2pSmm" target="_blank" class="button youtube-btn color-white">
+        <i class="fab fa-youtube "></i> YouTube
     </a>
     <hr class="divider">
     <!-- App Download Section -->
     <h4 class="section-title">Download Our App</h4>
     <p>Get the TrainTrack Coach App on your favorite platform.</p>
     <a href="https://play.google.com/store/apps/details?id=com.ar.train_track" target="_blank"
-       class="button google-btn">
+       class="button google-btn color-white">
         <i class="fab fa-google-play"></i> Google Play
     </a>
-    <a href="https://apps.apple.com/eg/app/train-track-app/id6478457740" target="_blank" class="button apple-btn">
+    <a href="https://apps.apple.com/eg/app/train-track-app/id6478457740" target="_blank" class="button apple-btn color-white">
         <i class="fab fa-apple"></i> App Store
     </a>
 

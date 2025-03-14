@@ -19,13 +19,13 @@ use Illuminate\Support\Facades\Route;
 */
 
 
+Route::get('/verify/coach/email/{id}', [CoachController::class, "verifyCoachEmail"])->name('coach.verify.email');
 Route::prefix('{locale?}')->middleware(['localized', 'AdminGuest'])->group(function () {
     Route::get('/login', [AuthController::class, "login_form"])->name('login_view');
     Route::post('/login', [AuthController::class, "login"])->name('login');
     Route::get('/welcome', function () {
         return view('mail.coach-verification-mail', ['name' => "Islam", 'user_id' => 711]);
     })->name("name");
-    Route::get('/verify/coach/email/{id}', [CoachController::class, "verifyCoachEmail"])->name('coach.verify.email');
 
 });
 Route::prefix('{locale?}')->middleware(['localized', 'AdminAuth'])->group(function () {
