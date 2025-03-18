@@ -64,9 +64,11 @@ class DB_Users
                 ->whereDoesntHave('exercises', function ($exerciseQuery) use ($date) {
                     $exerciseQuery->whereDate('date', $date);
                 });
-        })->whereHas('coach_client_client', function ($query) use ($coachId, $date) {
-            $query->where('status', "!=", "2");
-        })->where('user_type', "1") // Ensure we are selecting only clients
+        })
+//            ->whereHas('coach_client_client', function ($query) use ($coachId, $date) {
+//            $query->where('status', "!=", "2");
+//        })
+            ->where('user_type', "1") // Ensure we are selecting only clients
         ->get();
     }
 
