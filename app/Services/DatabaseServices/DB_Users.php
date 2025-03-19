@@ -57,17 +57,13 @@ class DB_Users
     }
 
 
-    public function get_clients_have_not_exercises_in_date($coachId, $date)
+    public function get_clients_have_not_exercises_in_date($coachId, $date, $clientHasExercisesInDate)
     {
-        return User::
-        whereHas('client_programs', function ($query) use ($coachId, $date) {
-            $query->where('coach_id', $coachId)
-                ->whereDoesntHave('exercises', function ($exerciseQuery) use ($date) {
-                    $exerciseQuery->whereDate('date', $date);
-                });
-        })
+        return User::query()
+            ->whereNotIn('id', $clientHasExercisesInDate)
             ->whereHas('coach_client_client', function ($query) use ($coachId, $date) {
-            $query->where('status', "!=", "2");
+                $query->where('coach_id', $coachId)
+                    ->where('status', "!=", "2");
         })
             ->where('user_type', "1") // Ensure we are selecting only clients
         ->get();

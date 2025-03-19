@@ -470,7 +470,8 @@ class ClientServices
         $this->validationServices->getClientsHaveNotExercisesInDate($request);
         $coach_id = $request->user()->id;
         $date = $request->date;
-        $clients = $this->DB_Users->get_clients_have_not_exercises_in_date($coach_id, $date);
+        $clientHasExercisesInDate = $this->DB_OneToOneProgram->getClientHasExercisesInDate($coach_id, $date);
+        $clients = $this->DB_Users->get_clients_have_not_exercises_in_date($coach_id, $date, $clientHasExercisesInDate);
 
         $clients_arr = [];
         foreach ($clients as $client) {
