@@ -395,6 +395,7 @@ class ClientServices
                     foreach ($program->exercises as $exercise) {
                         if ($exercise->log()->exists()) {
                             //delete exercises logs
+                            $exercise->log()->log_videos()->delete();
                             $exercise->log->delete();
                         }
                         if ($exercise->videos()->exists()) {
@@ -427,7 +428,9 @@ class ClientServices
         //delete coach client
         $client_info->coach_client_client()->delete();
         //delete from clients table
+        if ($client_info->client()->exists()) {
         $client_info->client->delete();
+        }
         //delete user
         $client_info->delete();
         DB::commit();
