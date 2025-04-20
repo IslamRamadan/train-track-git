@@ -44,4 +44,8 @@ class DB_Coaches
             'package_id' => $package_id
         ]);
     }
+    public function update_coach_data(mixed $coach_id, $data)
+    {
+        return Coach::query()->where('user_id', $coach_id)->update($data);
+    }
 }
