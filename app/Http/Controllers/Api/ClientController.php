@@ -3,11 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Mail\InvitationMail;
 use App\Services\ClientServices;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 
 class ClientController extends Controller
 {
@@ -20,6 +18,16 @@ class ClientController extends Controller
     public function index(Request $request)
     {
         return $this->clientServices->index($request);
+    }
+
+    /**
+     * Get the clients that made(Comment and log and update status) in last 7 days
+     * @param Request $request
+     * @return mixed
+     */
+    public function list_active_clients(Request $request)
+    {
+        return $this->clientServices->list_active_clients($request);
     }
 
     /**
@@ -115,5 +123,26 @@ class ClientController extends Controller
     public function coach_archive_client(Request $request): JsonResponse
     {
         return $this->clientServices->coach_archive_client($request);
+    }
+
+    /**
+     *  get Clients Have Not Exercises In Date
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getClientsHaveNotExercisesInDate(Request $request): JsonResponse
+    {
+        return $this->clientServices->getClientsHaveNotExercisesInDate($request);
+    }
+
+    /**
+     * Get Clients Assigned To Template Program
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getClientsAssignedToProgram(Request $request): JsonResponse
+    {
+        return $this->clientServices->getClientsAssignedToProgram($request);
+
     }
 }

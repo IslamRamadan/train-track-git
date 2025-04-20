@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Services\DatabaseServices\DB_Clients;
+use App\Services\DatabaseServices\DB_CoachExerciseTemplates;
 use App\Services\DatabaseServices\DB_CoachVideos;
 use App\Services\DatabaseServices\DB_ExerciseLog;
 use App\Services\DatabaseServices\DB_OneToOneProgram;
@@ -18,7 +19,8 @@ class ValidationServices
                                 protected DB_Programs                 $DB_Programs,
                                 protected DB_OneToOneProgram          $DB_OneToOneProgram,
                                 protected DB_CoachVideos              $DB_CoachVideos,
-                                protected DB_Users $DB_Users,
+                                protected DB_Users                    $DB_Users,
+                                protected DB_CoachExerciseTemplates $DB_ExerciseTemplates
     )
     {
     }
@@ -43,8 +45,8 @@ class ValidationServices
     public function add_program($request)
     {
         $request->validate([
-            'name' => 'required|max:30',
-            'description' => 'required|max:150',
+            'name' => 'required|max:50',
+            'description' => 'required|max:1000',
             'type' => 'required|in:0,1,2',
             'starting_date' => 'required_if:type,1|date|date_format:Y-m-d',
             'sync' => 'required_if:type,1|in:0,1',
@@ -56,8 +58,8 @@ class ValidationServices
     {
         $request->validate([
             'program_id' => 'required|exists:programs,id',
-            'name' => 'required|max:30',
-            'description' => 'required',
+            'name' => 'required|max:50',
+            'description' => 'required|max:1000',
             'type' => 'required|in:0,1',
             'starting_date' => 'required_if:type,1|date|date_format:Y-m-d',
             'image' => 'nullable'
@@ -94,8 +96,8 @@ class ValidationServices
             'program_id' => 'required|exists:programs,id',
             'name' => 'required',
             'day' => 'required',
-            'description' => 'nullable',
-            'extra_description' => 'nullable',
+            'description' => 'nullable|max:1000',
+            'extra_description' => 'nullable|max:1000',
             'videos' => 'nullable'
         ]);
     }
@@ -149,8 +151,8 @@ class ValidationServices
         $request->validate([
             'exercise_id' => 'required|exists:program_exercises,id',
             'name' => 'required',
-            'description' => 'nullable',
-            'extra_description' => 'nullable',
+            'description' => 'nullable|max:1000',
+            'extra_description' => 'nullable|max:1000',
             'order' => 'required',
             'videos' => 'nullable',
         ]);
@@ -161,6 +163,13 @@ class ValidationServices
         $request->validate([
             'search' => 'nullable',
             'status' => 'required|in:all,active,archived,pending',
+        ]);
+    }
+
+    public function list_active_clients($request)
+    {
+        $request->validate([
+            'search' => 'nullable',
         ]);
     }
 
@@ -310,8 +319,8 @@ class ValidationServices
             'client_program_id' => 'required|exists:one_to_one_programs,id',
             'name' => 'required',
             'date' => 'required|date_format:Y-m-d',
-            'description' => 'nullable',
-            'extra_description' => 'nullable',
+            'description' => 'nullable|max:1000',
+            'extra_description' => 'nullable|max:1000',
         ]);
     }
 
@@ -330,6 +339,7 @@ class ValidationServices
             'from_client_program_id' => 'required|exists:one_to_one_programs,id',
             'to_client_program_id' => 'required|exists:one_to_one_programs,id',
             'copied_dates' => 'required|array',
+            'copied_dates.*' => 'date_format:Y-m-d',
             'start_date' => 'required|date_format:Y-m-d',
         ]);
     }
@@ -365,8 +375,8 @@ class ValidationServices
         $request->validate([
             'client_exercise_id' => 'required|exists:one_to_one_program_exercises,id',
             'name' => 'required',
-            'description' => 'nullable',
-            'extra_description' => 'nullable',
+            'description' => 'nullable|max:1000',
+            'extra_description' => 'nullable|max:1000',
             'order' => 'required',
         ]);
     }
@@ -457,6 +467,11 @@ class ValidationServices
             'name' => 'required',
             'email' => 'required|email|unique:users,email,' . $request->user()->id,
             'phone' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|unique:users,phone,' . $request->user()->id,
+            'weight'=>'nullable|numeric|min:20|max:500',
+            'height'=>'nullable|numeric|min:50|max:300',
+            'fitness_goal'=>'nullable',
+            'label'=>'nullable',
+            'notes'=>'nullable',
         ], [
             'email.unique' => 'This email already exists in the system',
             'phone.unique' => 'This phone already exists in the system',
@@ -475,6 +490,7 @@ class ValidationServices
     {
         $request->validate([
             'client_program_id' => 'required|exists:one_to_one_programs,id',
+            'client_id' => 'nullable|exists:users,id'
         ]);
     }
 
@@ -579,16 +595,16 @@ class ValidationServices
     public function add_coach_video($request)
     {
         $request->validate([
-            'title' => 'required',
-            'link' => 'required'
+            'title' => 'required|max:50',
+            'link' => 'required|max:300'
         ]);
     }
 
     public function edit_coach_video($request)
     {
         $request->validate([
-            'title' => 'required',
-            'link' => 'required',
+            'title' => 'required|max:50',
+            'link' => 'required|max:300',
             'video_id' => ['required', 'exists:coach_videos,id', function ($attribute, $value, $fail) use ($request) {
                 $verify_client_id = $this->DB_CoachVideos->verify_coach_id(coach_id: $request->user()->id, video_id: $value);
                 if (!$verify_client_id) {
@@ -605,6 +621,46 @@ class ValidationServices
                 $verify_client_id = $this->DB_CoachVideos->verify_coach_id(coach_id: $request->user()->id, video_id: $value);
                 if (!$verify_client_id) {
                     $fail('The video must be assigned to this coach');
+                }
+            }]
+        ]);
+    }
+
+    public function add_exercise_template($request)
+    {
+        $request->validate([
+            'title' => 'required|max:50',
+            'description' => 'nullable|max:1000',
+            'videos' => ['nullable', 'array'],
+            'videos.*.title' => ['required', 'string', 'max:255'], // Validate title
+            'videos.*.link' => ['required', 'max:1000'], // Validate link as a valid URL
+        ]);
+    }
+
+    public function edit_exercise_template($request)
+    {
+        $request->validate([
+            'title' => 'required|max:50',
+            'description' => 'nullable|max:1000',
+            'videos' => ['nullable', 'array'],
+            'videos.*.title' => ['required', 'string', 'max:255'], // Validate title
+            'videos.*.link' => ['required', 'max:1000'], // Validate link as a valid URL
+            'exercise_template_id' => ['required', 'exists:coach_exercise_templates,id', function ($attribute, $value, $fail) use ($request) {
+                $verify_client_id = $this->DB_ExerciseTemplates->verify_coach_id(coach_id: $request->user()->id, exercise_template_id: $value);
+                if (!$verify_client_id) {
+                    $fail('The exercise template must be assigned to this coach');
+                }
+            }]
+        ]);
+    }
+
+    public function delete_exercise_template($request)
+    {
+        $request->validate([
+            'exercise_template_id' => ['required', 'exists:coach_exercise_templates,id', function ($attribute, $value, $fail) use ($request) {
+                $verify_client_id = $this->DB_ExerciseTemplates->verify_coach_id(coach_id: $request->user()->id, exercise_template_id: $value);
+                if (!$verify_client_id) {
+                    $fail('The exercise template must be assigned to this coach');
                 }
             }]
         ]);
@@ -645,8 +701,8 @@ class ValidationServices
     public function add_gym($request)
     {
         $request->validate([
-            'name' => ['required', 'max:30'],
-            'description' => 'required|max:200',
+            'name' => ['required', 'max:50'],
+            'description' => 'required|max:1000',
             'logo' => "nullable"
         ]);
     }
@@ -665,7 +721,7 @@ class ValidationServices
     public function list_gym_coaches($request)
     {
         $request->validate([
-            'search' => 'nullable|max:30',
+            'search' => 'nullable|max:50',
             'status' => 'nullable|in:1,2,3',
         ]);
     }
@@ -681,7 +737,7 @@ class ValidationServices
     public function list_leave_requests($request)
     {
         $request->validate([
-            'search' => 'nullable|max:30',
+            'search' => 'nullable|max:50',
             'status' => 'nullable|in:0,1,2',
         ]);
     }
@@ -719,16 +775,56 @@ class ValidationServices
     public function list_gyms($request)
     {
         $request->validate([
-            'search' => 'nullable|max:30',
+            'search' => 'nullable|max:50',
         ]);
     }
 
     public function edit_gym($request)
     {
         $request->validate([
-            'name' => 'required|max:30',
-            'description' => 'required|max:200',
+            'name' => 'required|max:50',
+            'description' => 'required|max:1000',
             'logo' => "nullable"
         ]);
     }
+
+    public function update_client_info($request)
+    {
+        $request->validate([
+            'client_id' => ['required', 'exists:users,id', function ($attribute, $value, $fail) use ($request) {
+                $verify_client_id = $this->DB_Clients->verify_client_id(coach_id: $request->user()->id, client_id: $value);
+                if (!$verify_client_id) {
+                    $fail('The client must be assigned to this coach');
+                }
+            }],
+            'tag' => "nullable|max:50",
+            'weight'=>'nullable|numeric|min:20|max:500',
+            'height'=>'nullable|numeric|min:50|max:300',
+            'fitness_goal'=>'nullable',
+            'label'=>'nullable',
+            'notes'=>'nullable',
+        ]);
+    }
+
+    public function exportUsersToExcel($request)
+    {
+        $request->validate([
+            'export' => 'required|array|in:0,1',
+        ]);
+    }
+
+    public function getClientsHaveNotExercisesInDate($request)
+    {
+        $request->validate([
+            'date' => 'required|date|date_format:Y-m-d',
+        ]);
+    }
+
+    public function getClientsAssignedToProgram($request)
+    {
+        $request->validate([
+            'program_id' => 'required|exists:programs,id',
+        ]);
+    }
+
 }

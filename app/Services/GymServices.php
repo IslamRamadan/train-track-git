@@ -4,11 +4,14 @@ namespace App\Services;
 
 use App\Mail\GymInvitationMail;
 use App\Mail\InvitationMail;
+use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_Coach_Gyms;
+use App\Services\DatabaseServices\DB_Exercises;
 use App\Services\DatabaseServices\DB_GymJoinRequest;
 use App\Services\DatabaseServices\DB_GymLeaveRequest;
 use App\Services\DatabaseServices\DB_GymPendingCoach;
 use App\Services\DatabaseServices\DB_Gyms;
+use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_Users;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -22,7 +25,12 @@ class GymServices
                                 protected ImageService         $imageService, protected DB_GymPendingCoach $DB_GymPendingCoach,
                                 protected DB_Users             $DB_Users, protected DB_GymJoinRequest $DB_GymJoinRequest,
                                 protected NotificationServices $notificationServices, protected DB_GymLeaveRequest $DB_GymLeaveRequest,
-                                protected ClientServices       $clientServices
+                                protected ClientServices           $clientServices,
+                                protected OneToOneExerciseServices $oneToOneExerciseServices,
+                                protected DB_Clients               $DB_Clients,
+                                protected OneToOneProgramServices  $oneToOneProgramServices,
+                                protected DB_OneToOneProgram       $DB_OneToOneProgram,
+                                protected DB_Exercises             $DB_Exercises
     )
     {
     }
@@ -495,5 +503,107 @@ class GymServices
             return sendError("Coach is not assigned to your gym", 403);
         }
         return $this->clientServices->index($request);
+    }
+
+    public function list_client_program_exercises_by_date($request)
+    {
+        $oto_program_id = $request['client_program_id'];
+        // Get the client ID from the request.
+        $client_id = $this->DB_OneToOneProgram->find_oto_program($oto_program_id)->client_id;
+
+        // Retrieve the admin privilege and gym ID from the logged-in user's data.
+        $admin_gym_privilege = $request->user()->gym_coach->privilege;
+        $admin_gym_id = $request->user()->gym_coach->gym_id;
+
+        $validationResult = $this->validateClientCoach($client_id, $admin_gym_privilege, $admin_gym_id);
+        if ($validationResult !== true) {
+            return $validationResult;
+        }
+        return $this->oneToOneExerciseServices->list_client_program_exercises_by_date($request);
+    }
+
+    /**
+     * list client programs
+     *
+     * @param $request
+     * @return JsonResponse|true
+     */
+    public function list_client_programs($request): JsonResponse|bool
+    {
+        // Get the client ID from the request.
+        $client_id = $request['client_id'];
+
+        // Retrieve the admin privilege and gym ID from the logged-in user's data.
+        $admin_gym_privilege = $request->user()->gym_coach->privilege;
+        $admin_gym_id = $request->user()->gym_coach->gym_id;
+
+        $validationResult = $this->validateClientCoach($client_id, $admin_gym_privilege, $admin_gym_id);
+
+        if ($validationResult !== true) {
+            return $validationResult;
+        }
+
+        return $this->oneToOneProgramServices->index($request);
+    }
+
+    /**
+     * Validate if the client coach belongs to the admins gym and
+     * if the admin has the privilege to access the coach's clients.
+     *
+     * @param int $client_id
+     * @param string $admin_gym_privilege
+     * @param int $admin_gym_id
+     * @return JsonResponse|true True if validation passes, or an error response if not.
+     */
+    public function validateClientCoach(int $client_id, string $admin_gym_privilege, int $admin_gym_id): bool|JsonResponse
+    {
+
+
+        // Find the coach ID associated with the client.
+        $coach_id = $this->DB_Clients->find_coach_id($client_id)->coach_id;
+
+        // Check if the coach is assigned to the admin gym.
+        $coach_gym = $this->DB_Coach_Gyms->gym_coach($admin_gym_id, $coach_id);
+
+        // If the coach is not assigned to the admin gym, deny access.
+        if (!$coach_gym) {
+            return sendError("Client coach is not assigned to your gym", 403);
+        }
+
+        // If the coach is the gym owner and the admin is not, deny access.
+        if ($coach_gym->privilege == "1" && $admin_gym_privilege != "1") {
+            return sendError("Client coach is the gym owner, You can't see his clients", 403);
+        }
+
+        return true;
+    }
+
+    /**
+     * list programs exercises
+     *
+     * @param $request
+     * @return bool|JsonResponse
+     */
+    public function list_programs_exercises($request)
+    {
+        $oto_program_id = $request['client_program_id'];
+        if ($oto_program_id) {
+            // Get the client id from the client_program_id
+            $client_id = $this->DB_OneToOneProgram->find_oto_program($oto_program_id)->client_id;
+        } else {
+            // Get the client ID from the request.
+            $client_id = $request['client_id'];
+        }
+
+        // Retrieve the admin privilege and gym ID from the logged-in user's data.
+        $admin_gym_privilege = $request->user()->gym_coach->privilege;
+        $admin_gym_id = $request->user()->gym_coach->gym_id;
+
+        $validationResult = $this->validateClientCoach($client_id, $admin_gym_privilege, $admin_gym_id);
+        if ($validationResult !== true) {
+            return $validationResult;
+        }
+
+        return $this->oneToOneExerciseServices->list_client_exercises($request);
     }
 }

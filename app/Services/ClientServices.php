@@ -15,6 +15,7 @@ use App\Services\DatabaseServices\DB_Programs;
 use App\Services\DatabaseServices\DB_Users;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
@@ -50,6 +51,23 @@ class ClientServices
     }
 
     /**
+     * Get the clients that made(Comment and log and update status) in last 7 days logic
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function list_active_clients(Request $request)
+    {
+        $this->validationServices->list_active_clients($request);
+        $coach_id = $request->user()->id;
+        $search = $request['search'];
+        $date_from = Carbon::now()->subWeek();
+        $date_to = Carbon::now();
+        $clients = $this->DB_Clients->get_active_clients_between_dates($coach_id, $search, $date_from, $date_to);
+        $clients_arr = $this->active_clients_info_arr($clients);
+        return sendResponse($clients_arr);
+    }
+    /**
      * @param $clients
      * @param $pending_clients
      * @param $status
@@ -65,8 +83,14 @@ class ClientServices
                 "email" => $client->client->email,
                 "phone" => $client->client->phone,
                 "payment_link" => $client->client->client->payment_link ?? "",
+                "tag" => $client->client->client->tag ?? "",
                 "due_date" => $client->client->due_date ?? "",
-                "status" => $client->status//0 for pending , 1 for active,2 for archived
+                "status" => $client->status,//0 for pending , 1 for active,2 for archived
+                "weight" => $client?->client?->client?->weight?? "",
+                "height" => $client?->client?->client?->height?? "",
+                "fitness_goal" => $client?->client?->client?->fitness_goal?? "",
+                "label" => $client?->client?->client?->label?? "",
+                "notes" => $client?->client?->client?->notes?? "",
             ];
             $clients_arr[] = $single_client;
         }
@@ -80,12 +104,37 @@ class ClientServices
                         "phone" => "",
                         "payment_link" => "",
                         "due_date" => "",
-                        "status" => "0"//0 for pending , 1 for active,2 for archived
+                        "status" => "0",//0 for pending , 1 for active,2 for archived
+                        "weight" => "",
+                        "height" => "",
+                        "fitness_goal" => "",
+                        "label" => "",
+                        "notes" => "",
                     ];
                     $clients_arr[] = $single_client;
                 }
             }
         }
+
+        return $clients_arr;
+    }
+
+    /**
+     * @param $clients
+     * @return array that has id,name,email,phone,status
+     */
+    public function active_clients_info_arr($clients): array
+    {
+        $clients_arr = [];
+        foreach ($clients as $client) {
+            $single_client = [
+                "id" => $client->client->id,
+                "name" => $client->client->name,
+                "last_active" => $client->client->last_active
+            ];
+            $clients_arr[] = $single_client;
+        }
+
 
         return $clients_arr;
     }
@@ -257,10 +306,36 @@ class ClientServices
         $name = $request->name;
         $email = $request->email;
         $phone = $request->phone;
+        $weight = $request->weight;
+        $height = $request->height;
+        $fitness_goal = $request->fitness_goal;
+        $label = $request->label;
+        $notes = $request->notes;
 
         $this->DB_Users->update_user($client_id, $name
             , $email
             , $phone);
+        $client=$this->DB_Clients->get_client_info($client_id);
+        if ($client){
+            $this->DB_Clients->update_client_info($client,[
+                'weight' => $weight,
+                'height' => $height,
+                'fitness_goal' => $fitness_goal,
+                'label' => $label,
+                'notes' => $notes,
+            ]);
+        }
+        else{
+            $this->DB_Clients->create_client_data([
+                'user_id'=>$client_id,
+                'weight' => $weight,
+                'height' => $height,
+                'fitness_goal' => $fitness_goal,
+                'label' => $label,
+                'notes' => $notes,
+            ]);
+        }
+
 
         return sendResponse(['message' => "Client information updated successfully"]);
 
@@ -320,6 +395,7 @@ class ClientServices
                     foreach ($program->exercises as $exercise) {
                         if ($exercise->log()->exists()) {
                             //delete exercises logs
+                            $exercise->log()->log_videos()->delete();
                             $exercise->log->delete();
                         }
                         if ($exercise->videos()->exists()) {
@@ -351,6 +427,10 @@ class ClientServices
         }
         //delete coach client
         $client_info->coach_client_client()->delete();
+        //delete from clients table
+        if ($client_info->client()->exists()) {
+        $client_info->client->delete();
+        }
         //delete user
         $client_info->delete();
         DB::commit();
@@ -387,5 +467,49 @@ class ClientServices
     {
         return sendResponse(['message' => "Client deleted successfully"]);
     }
+
+    public function getClientsHaveNotExercisesInDate(Request $request)
+    {
+        $this->validationServices->getClientsHaveNotExercisesInDate($request);
+        $coach_id = $request->user()->id;
+        $date = $request->date;
+        $clientHasExercisesInDate = $this->DB_OneToOneProgram->getClientHasExercisesInDate($coach_id, $date);
+        $clients = $this->DB_Users->get_clients_have_not_exercises_in_date($coach_id, $date, $clientHasExercisesInDate);
+
+        $clients_arr = [];
+        foreach ($clients as $client) {
+            $single_client = [
+                "id" => $client->id,
+                "name" => $client->name,
+            ];
+            $clients_arr[] = $single_client;
+        }
+        return sendResponse($clients_arr);
+
+    }
+
+    /**
+     * Get Clients Assigned To Template Program Logic
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getClientsAssignedToProgram(Request $request): JsonResponse
+    {
+        $this->validationServices->getClientsAssignedToProgram($request);
+        $coach_id = $request->user()->id;
+        $program_id = $request->program_id; // template program id
+        $clients = $this->DB_ProgramClients->get_clients_assigned_to_program($coach_id, $program_id);
+        $clients_arr = [];
+        foreach ($clients as $client) {
+            $single_client = [
+                "id" => $client->client_id,
+                "name" => $client->client->name,
+            ];
+            $clients_arr[] = $single_client;
+        }
+        return sendResponse($clients_arr);
+    }
+
 
 }

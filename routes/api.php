@@ -2,10 +2,12 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClientController;
+use App\Http\Controllers\Api\ClientInfoController;
 use App\Http\Controllers\Api\CoachController;
 use App\Http\Controllers\Api\CoachVideosController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\ExerciseController;
+use App\Http\Controllers\Api\ExerciseTemplateController;
 use App\Http\Controllers\Api\LogController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OneToOneExerciseController;
@@ -34,8 +36,15 @@ Route::post('client/register', [AuthController::class, 'client_register']);
 Route::post('coach/register', [AuthController::class, 'coach_register']);
 Route::post('forget/password', [AuthController::class, 'forget_password']);
 Route::post('checkout/processed', [PaymentController::class, 'checkout_processed']);
-Route::post('coach/payment/link/create', [CoachController::class, 'create_payment_link']);
 Route::post('coach/get/package', [CoachController::class, 'get_package']);
+
+Route::middleware(['auth:api'])->group(function () {
+    Route::post('coach/client/archive', [ClientController::class, 'coach_archive_client']);
+    Route::post('clients/list', [ClientController::class, 'index']);
+    Route::post('coach/payment/link/create', [CoachController::class, 'create_payment_link']);
+
+});
+
 
 Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     // Coach apis start
@@ -55,10 +64,9 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     Route::post('program/exercise/edit', [ExerciseController::class, 'update']);
     Route::post('program/exercise/delete', [ExerciseController::class, 'destroy']);//5
     Route::post('program/client/assign', [ClientController::class, 'assign_program_to_client']);
-    Route::post('clients/list', [ClientController::class, 'index']);
+    Route::post('active/clients/list', [ClientController::class, 'list_active_clients']);
     Route::post('coach/client/assign', [ClientController::class, 'assign_client_to_coach']);
     Route::post('coach/client/invitation/delete', [ClientController::class, 'remove_client_invitation']);
-    Route::post('coach/client/archive', [ClientController::class, 'coach_archive_client']);
     Route::post('client/programs/list', [OneToOneProgramController::class, 'index']);
     Route::post('client/programs/delete', [OneToOneProgramController::class, 'destroy']);//2
     Route::post('client/program/exercises/list', [OneToOneExerciseController::class, 'list_client_exercises']);
@@ -82,8 +90,19 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     Route::post('coach/videos/list', [CoachVideosController::class, 'list']);
     Route::post('coach/videos/delete', [CoachVideosController::class, 'delete']);
 
+    Route::post('coach/exercise/templates/add', [ExerciseTemplateController::class, 'add']);
+    Route::post('coach/exercise/templates/edit', [ExerciseTemplateController::class, 'edit']);
+    Route::post('coach/exercise/templates/list', [ExerciseTemplateController::class, 'list']);
+    Route::post('coach/exercise/templates/delete', [ExerciseTemplateController::class, 'delete']);
+    Route::post('coach/clients/have/not/exercises/in/date', [ClientController::class, 'getClientsHaveNotExercisesInDate']);
+    Route::post('coach/clients/assigned/to/program', [ClientController::class, 'getClientsAssignedToProgram']);
+
+    Route::post('clients/details/update', [ClientInfoController::class, 'update']);
+
     Route::post('packages/list', [CoachController::class, 'list_packages']);
     Route::post('coach/list/payments', [CoachController::class, 'list_payments']);
+
+    Route::post('coach/videos/import', [CoachVideosController::class, 'import']);
 
     // Coach apis end
 

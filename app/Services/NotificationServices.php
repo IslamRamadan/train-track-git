@@ -111,7 +111,6 @@ class NotificationServices
                 "notification" => [
                     "title" => $title,
                     "body" => $description,
-                    "sound" => "default",
                 ],
                 "android" => [
                     "priority" => "high" // HTTP v1 protocol

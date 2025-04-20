@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\RequestInfoLog;
 use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_Coaches;
 use App\Services\DatabaseServices\DB_ExerciseLog;
@@ -160,8 +161,14 @@ class CoachServices
     public function create_payment_link($request)
     {
         $this->validationServices->create_payment_link($request);
-
-        $coach_id = $request->coach_id;
+        RequestInfoLog::query()->create([
+            "user_id" => $request->user()->id,
+            "ip" => $request->ip(),
+            "user_agent" => $request->header('User-Agent'),
+            "route" => $request->getPathInfo(),
+            "body" => $request->getContent(),
+        ]);
+        $coach_id = $request->user()->id;
         $upgrade = $request->upgrade;
         $user = $this->DB_Users->get_user_info($coach_id);
 
@@ -195,8 +202,22 @@ class CoachServices
             $order_id = $payment->order;
             $payment_amount = $payment->amount_cents / 100;
             $this->DB_UserPayment->create_user_payment(coach_id: $user->id, order_id: $order_id, amount: $payment_amount, package_id: $package_id, upgrade: $upgrade);
+            RequestInfoLog::query()->create([
+                "user_id" => $request->user()->id,
+                "ip" => $request->ip(),
+                "user_agent" => $request->header('User-Agent'),
+                "route" => $request->getPathInfo(),
+                "body" => "Payment link created successfully with link-->".$payment_url,
+            ]);
             return sendResponse(["payment_url" => $payment_url]);
         } catch (\Exception $exception) {
+            RequestInfoLog::query()->create([
+                "user_id" => $request->user()->id,
+                "ip" => $request->ip(),
+                "user_agent" => $request->header('User-Agent'),
+                "route" => $request->getPathInfo(),
+                "body" => "Payment failed-->".$exception->getMessage(),
+            ]);
             return sendError("Payment failed,Please try again later.");
         }
 

@@ -31,4 +31,15 @@ class DB_ProgramClients
         return ProgramClient::query()->with('oto_program')->where(['program_id' => $program_id])->whereNotNull('oto_program_id')->get();
     }
 
+    public function get_clients_assigned_to_program($coach_id, mixed $program_id)
+    {
+        return ProgramClient::query()
+            ->with('client')
+            ->where(['program_id' => $program_id])
+            ->whereHas('program', function ($q) use ($coach_id) {
+                $q->where('coach_id', $coach_id);
+            })
+            ->get();
+    }
+
 }

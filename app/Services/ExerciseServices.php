@@ -62,8 +62,9 @@ class ExerciseServices
         $program_id = $request['program_id'];
         $week = $request['week'];
         $days_arr = $this->get_week_arr($week);
+        $program = $this->DB_Programs->find_program($program_id);
         $program_exercises = $this->DB_Exercises->get_program_exercises($program_id, $days_arr);
-        $program_exercises_arr = $this->list_program_exercises_arr($program_exercises);
+        $program_exercises_arr = $this->list_program_exercises_arr($program_exercises, $program->starting_date);
         return sendResponse($program_exercises_arr);
     }
 
@@ -72,8 +73,9 @@ class ExerciseServices
         $this->validationServices->list_program_exercises_by_day($request);
         $program_id = $request['program_id'];
         $day = $request['day'];
+        $program = $this->DB_Programs->find_program($program_id);
         $program_exercises = $this->DB_Exercises->get_program_exercises_by_day($program_id, $day);
-        $program_exercises_arr = $this->list_program_exercises_by_day_arr($program_exercises);
+        $program_exercises_arr = $this->list_program_exercises_by_day_arr($program_exercises, $program->starting_date);
         return sendResponse($program_exercises_arr);
     }
 
@@ -245,13 +247,13 @@ class ExerciseServices
         }
     }
 
-    private function list_program_exercises_arr(Collection|array $program_exercises)
+    private function list_program_exercises_arr(Collection|array $program_exercises, $starting_date)
     {
         $program_exercises_arr = [];
         if ($program_exercises) {
             foreach ($program_exercises as $day => $day_exercises) {
                 foreach ($day_exercises as $exercise) {
-                    $single_program_exercises_arr = $this->program_exercises_arr($exercise);
+                    $single_program_exercises_arr = $this->program_exercises_arr($exercise, $starting_date);
                     $program_exercises_arr[] = $single_program_exercises_arr;
                 }
             }
@@ -259,7 +261,7 @@ class ExerciseServices
         return $program_exercises_arr;
     }
 
-    private function program_exercises_arr(mixed $exercise)
+    private function program_exercises_arr(mixed $exercise, $starting_date)
     {
         $single_program_exercises_arr = [];
         $single_program_exercises_arr['id'] = $exercise->id;
@@ -268,6 +270,7 @@ class ExerciseServices
         $single_program_exercises_arr['description'] = $exercise->description;
         $single_program_exercises_arr['extra_description'] = $exercise->extra_description;
         $single_program_exercises_arr['day'] = $exercise->day;
+        $single_program_exercises_arr['date'] = $starting_date ? $this->getCorrespondingDate($exercise->day, $starting_date) : "";
         $single_program_exercises_arr['videos'] = [];
         if ($exercise->videos()->exists()) {
             foreach ($exercise->videos as $video) {
@@ -280,12 +283,12 @@ class ExerciseServices
         return $single_program_exercises_arr;
     }
 
-    private function list_program_exercises_by_day_arr(Collection|array $program_exercises)
+    private function list_program_exercises_by_day_arr(Collection|array $program_exercises, $starting_date)
     {
         $program_exercises_arr = [];
         if ($program_exercises) {
             foreach ($program_exercises as $exercise) {
-                $single_program_exercises_arr = $this->program_exercises_arr($exercise);
+                $single_program_exercises_arr = $this->program_exercises_arr($exercise, $starting_date);
                 $program_exercises_arr[] = $single_program_exercises_arr;
             }
         }
@@ -463,5 +466,20 @@ class ExerciseServices
                 $this->add_oto_exercises_videos($oto_exercise->id, $videos);
             }
         }
+    }
+
+    function getCorrespondingDate(int $dayNumber, string $date): string
+    {
+        // Parse the given date (YYYY-MM-DD)
+        $carbonDate = Carbon::createFromFormat('Y-m-d', $date);
+
+        // Calculate how many days to add
+        $daysToAdd = $dayNumber - 1;
+
+        // Add the calculated days
+        $carbonDate->addDays($daysToAdd);
+
+        // Return the modified date in YYYY-MM-DD format
+        return $carbonDate->format('Y-m-d');
     }
 }

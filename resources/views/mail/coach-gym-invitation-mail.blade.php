@@ -88,7 +88,7 @@
     <div class="row">
         <div class="col-md-12 mb-3 mt-3 text-center">
             <!-- Your logo goes here -->
-            <img src="https://i.ibb.co/54TTf0J/logo.png" alt="App Logo" style="max-width: 100%;">
+            <img src="{{url('images/logos/logo.png')}}" alt="App Logo" style="max-width: 100%;">
         </div>
         <div class="col-md-12">
             <p>Hey <strong>{{$email}}</strong>,</p>

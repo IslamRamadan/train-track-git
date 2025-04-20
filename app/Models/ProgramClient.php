@@ -16,6 +16,11 @@ class ProgramClient extends Model
         return $this->belongsTo(Program::class, 'program_id');
     }
 
+    public function client()
+    {
+        return $this->belongsTo(User::class, 'client_id');
+    }
+
     public function oto_program()
     {
         return $this->belongsTo(OneToOneProgram::class, 'oto_program_id');

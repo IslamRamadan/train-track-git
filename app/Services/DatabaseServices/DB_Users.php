@@ -14,7 +14,7 @@ class DB_Users
 
     public function get_user_for_delete($id)
     {
-        return User::with('coach', 'coach_client_client', 'client_programs.exercises.log', 'program_clients', 'client_programs.comments',
+        return User::with('client','coach', 'coach_client_client', 'client_programs.exercises.log', 'program_clients', 'client_programs.comments',
             'client_programs.exercises.videos')->find($id);
     }
 
@@ -54,5 +54,23 @@ class DB_Users
         return User::query()->where('id', $user_id)->update([
             'due_date' => $due_date
         ]);
+    }
+
+
+    public function get_clients_have_not_exercises_in_date($coachId, $date, $clientHasExercisesInDate)
+    {
+        return User::query()
+            ->whereNotIn('id', $clientHasExercisesInDate)
+            ->whereHas('coach_client_client', function ($query) use ($coachId, $date) {
+                $query->where('coach_id', $coachId)
+                    ->where('status', "!=", "2");
+        })
+            ->where('user_type', "1") // Ensure we are selecting only clients
+        ->get();
+    }
+
+    public function update_user_data($user, array $data)
+    {
+        return $user->update($data);
     }
 }

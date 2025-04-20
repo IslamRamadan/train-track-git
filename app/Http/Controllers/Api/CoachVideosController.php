@@ -33,5 +33,10 @@ class CoachVideosController extends Controller
         return $this->coachVideosServices->delete($request);
     }
 
+ public function import(Request $request)
+    {
+        return $this->coachVideosServices->import($request);
+    }
+
 
 }

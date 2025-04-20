@@ -11,12 +11,15 @@ class DB_Clients
 
     public function get_all_clients(mixed $coach_id, mixed $search, $status)
     {
-        return CoachClient::with('coach', 'client.client')->where(['coach_id' => $coach_id])
+        return CoachClient::with('coach', 'client.client')
             ->when(!empty($search), function ($q) use ($search) {
                 $q->whereHas('client', function ($query) use ($search) {
                     $query->where('name', 'LIKE', '%' . $search . '%')
                         ->orWhere('email', 'LIKE', '%' . $search . '%')
-                        ->orWhere('phone', 'LIKE', '%' . $search . '%');
+                        ->orWhere('phone', 'LIKE', '%' . $search . '%')
+                        ->orWhereHas('client', function ($query2) use ($search) {
+                            $query2->where('tag', 'LIKE', '%' . $search . '%');
+                        });
                 });
             })
             ->when($status == 'pending', function ($q) use ($search) {
@@ -28,6 +31,28 @@ class DB_Clients
             ->when($status == 'archived', function ($q) use ($search) {
                 $q->where('status', '2');
             })
+            ->where(['coach_id' => $coach_id])
+            ->get();
+    }
+
+    public function get_active_clients_between_dates(mixed $coach_id, mixed $search, $date_from, $date_to)
+    {
+        return CoachClient::query()
+            ->with('coach', 'client.client')
+            ->when(!empty($search), function ($q) use ($search) {
+                $q->whereHas('client', function ($query) use ($search) {
+                    $query->where('name', 'LIKE', '%' . $search . '%')
+                        ->orWhere('email', 'LIKE', '%' . $search . '%')
+                        ->orWhere('phone', 'LIKE', '%' . $search . '%')
+                        ->orWhereHas('client', function ($query2) use ($search) {
+                            $query2->where('tag', 'LIKE', '%' . $search . '%');
+                        });
+                });
+            })
+            ->whereHas('client', function ($q) use ($date_from, $date_to) {
+                $q->whereBetween('last_active', [$date_from, $date_to]);
+            })
+            ->where(['coach_id' => $coach_id])
             ->get();
     }
 
@@ -103,6 +128,30 @@ class DB_Clients
             ->create([
                 'user_id' => $client_id,
                 'payment_link' => $payment_link
+            ]);
+    }
+
+    public function update_client_tag(mixed $client_info, mixed $payment_link)
+    {
+        $client_info->update([
+            'tag' => $payment_link
+        ]);
+    }
+public function update_client_info(mixed $client_info, mixed $data)
+    {
+        $client_info->update($data);
+    }
+    public function create_client_data(mixed $data)
+    {
+        Client::query()
+            ->create($data);
+    }
+    public function create_client_tag(mixed $client_id, mixed $payment_link)
+    {
+        Client::query()
+            ->create([
+                'user_id' => $client_id,
+                'tag' => $payment_link
             ]);
     }
 

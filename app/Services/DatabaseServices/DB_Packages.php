@@ -18,6 +18,8 @@ class DB_Packages
 
     public function list_packages()
     {
-        return Package::query()->where('id', '!=', 4)->get();
+        return Package::query()
+            ->orderBy('amount')
+            ->get();
     }
 }

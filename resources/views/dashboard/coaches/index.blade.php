@@ -8,8 +8,49 @@
     <div class="row">
         <div class="col-12">
             <div class="card">
+
                 <!-- /.card-header -->
                 <div class="card-body table-responsive">
+                    <div class="mb-4">
+                        <form method="POST" action="{{ route('users.excel.export', app()->getLocale()) }}"
+                              class="p-3 bg-light rounded shadow-sm">
+                            @csrf
+                            <div class="row align-items-center">
+
+                                <!-- Checkbox 1 -->
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="export[]"
+                                               id="filterActiveClients" value="0">
+                                        <label class="form-check-label font-weight-bold" for="filterActiveClients">
+                                            Export coaches
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Checkbox 2 -->
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="export[]"
+                                               id="filterPrograms" value="1">
+                                        <label class="form-check-label font-weight-bold" for="filterPrograms">
+                                            Export clients
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <div class="col-md-3">
+                                    <button type="submit" class="btn btn-success btn-block">
+                                        <i class="fas fa-file-excel"></i> Export to Excel
+                                    </button>
+                                </div>
+
+                            </div>
+                        </form>
+                    </div>
+
+
                     <table class="table table-responsive table-bordered data-table table-scrollable">
                         <thead>
                         <tr>

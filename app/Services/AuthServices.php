@@ -3,7 +3,8 @@
 namespace App\Services;
 
 use App\Mail\ResetPasswordMail;
-use App\Mail\WelcomeMail;
+use App\Mail\VerifyMail;
+use App\Models\RequestInfoLog;
 use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_Coaches;
 use App\Services\DatabaseServices\DB_GymJoinRequest;
@@ -47,8 +48,13 @@ class AuthServices
             // successfully authenticated
             $user = $this->DB_Users->get_user_info(Auth::user()->id);
 
-            if ($user->user_type == "0" && $user->coach->status == "0") {
+            if ($user->user_type == "0") {
+                if ($user->coach->status == "0") {
                 return sendError("Blocked Coach");
+                }
+                if ($user->email_verified_at == null) {
+                    return sendError("Email is not verified");
+                }
             }
             $version = $this->DB_Settings->get_version();
             $this->check_user_notification_token(token: $notification_token, user_id: $user->id);
@@ -62,6 +68,13 @@ class AuthServices
     public function client_register($request)
     {
         $this->validationServices->client_register($request);
+        RequestInfoLog::query()->create([
+            "user_id" => null,
+            "ip" => $request->ip(),
+            "user_agent" => $request->header('User-Agent'),
+            "route" => $request->getPathInfo(),
+            "body" => $request->getContent(),
+        ]);
         $name = $request['name'];
         $email = $request['email'];
         $phone = $request['phone'];
@@ -105,7 +118,7 @@ class AuthServices
         }
         DB::commit();
         try {
-            Mail::to($email)->send(new WelcomeMail(name: $name));
+            Mail::to($email)->send(new VerifyMail(name: $name, user_id: $user->id));
         } catch (\Exception $exception) {
         }
         return sendResponse(['message' => "Coach Created Successfully"]);

@@ -14,7 +14,7 @@ class DB_CoachVideos
      * @param mixed $search
      * @return Collection
      */
-    public function get_coach_videos(mixed $coach_id, mixed $search): Collection
+    public function get_coach_videos(mixed $coach_id, mixed $search = null): Collection
     {
         return CoachVideo::query()->where('coach_id', $coach_id)
             ->when(!empty($search), function ($q) use ($search) {
@@ -53,9 +53,14 @@ class DB_CoachVideos
             ]);
     }
 
-    public function delete_coach_video($video_id)
+    public function find_coach_video($video_id)
     {
         return CoachVideo::query()
-            ->where('id', $video_id)->delete();
+            ->where('id', $video_id)->first();
+    }
+
+    public function delete_coach_video($video)
+    {
+        return $video->delete();
     }
 }
