@@ -14,7 +14,7 @@ class DB_CoachVideos
      * @param mixed $search
      * @return Collection
      */
-    public function get_coach_videos(mixed $coach_id, mixed $search): Collection
+    public function get_coach_videos(mixed $coach_id, mixed $search = null): Collection
     {
         return CoachVideo::query()->where('coach_id', $coach_id)
             ->when(!empty($search), function ($q) use ($search) {

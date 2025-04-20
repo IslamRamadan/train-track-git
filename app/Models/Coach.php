@@ -11,7 +11,7 @@ class Coach extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['gym', 'speciality', 'certificates', 'user_id', 'status', 'package_id'];
+    protected $fillable = ['gym', 'speciality', 'certificates', 'user_id', 'status', 'package_id', 'video_import'];
 
     public function user()
     {
