@@ -248,7 +248,7 @@ class ClientServices
         $this->validationServices->assign_client_to_coach($request);
 
         $coach_id = $request->user()->id;
-        $coach_email = $request->user()->email;
+        $coach_email = $request->user()->name;
         $email = $request['email'];
 
         list($coach_package, $upgrade) = $this->coachServices->get_coach_package($coach_id);

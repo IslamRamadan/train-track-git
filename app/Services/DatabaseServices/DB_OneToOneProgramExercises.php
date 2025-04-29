@@ -131,9 +131,18 @@ class DB_OneToOneProgramExercises
 
     public function get_workouts_done_today(string $today, mixed $coach_id)
     {
-        return OneToOneProgramExercise::query()->with('one_to_one_program')->where(['date' => $today])
+        return OneToOneProgramExercise::query()
+            ->with('one_to_one_program.client.coach_client_client')
+            ->where(['date' => $today])
             ->whereHas('one_to_one_program', function ($query) use ($coach_id) {
-                $query->where('coach_id', $coach_id);
+                $query->where('coach_id', $coach_id)
+                    ->whereHas('client', function ($q) {
+                        $q->whereHas('coach_client_client', function ($q) {
+                            $q->where('status', '!=', "2");
+                        });
+                    })
+
+                ;
             })->
             get()
             ->groupBy('one_to_one_program_id');

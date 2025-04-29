@@ -64,7 +64,11 @@ class DB_OneToOneProgram
     public function getClientHasExercisesInDate($coach_id, mixed $date)
     {
         return OneToOneProgram::query()
+            ->with('user_client', 'exercises')
             ->where('coach_id', $coach_id)
+            ->whereHas('user_client', function ($q) {
+                $q->where('status', '!=', "2");
+            })
             ->whereHas('exercises', function ($query) use ($coach_id, $date) {
                 $query->whereDate('date', $date);
             })
