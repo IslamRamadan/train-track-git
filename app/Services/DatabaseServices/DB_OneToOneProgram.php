@@ -66,8 +66,10 @@ class DB_OneToOneProgram
         return OneToOneProgram::query()
             ->with('user_client', 'exercises')
             ->where('coach_id', $coach_id)
-            ->whereHas('user_client', function ($q) {
-                $q->where('status', '!=', "2");
+            ->whereHas('client', function ($q) {
+                $q->whereHas('coach_client_client', function ($q) {
+                    $q->where('status', '!=', "2");
+                });
             })
             ->whereHas('exercises', function ($query) use ($coach_id, $date) {
                 $query->whereDate('date', $date);
