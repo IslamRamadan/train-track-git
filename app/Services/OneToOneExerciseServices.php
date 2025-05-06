@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\RequestInfoLog;
 use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_ExerciseLog;
 use App\Services\DatabaseServices\DB_ExerciseLogVideos;
@@ -185,6 +186,13 @@ class OneToOneExerciseServices
 
     public function add_client_exercise($request)
     {
+        RequestInfoLog::query()->create([
+            "user_id" => $request->user()?->id,
+            "ip" => $request->ip(),
+            "user_agent" => $request->header('User-Agent'),
+            "route" => $request->getPathInfo(),
+            "body" => $request->has('img') || $request->has('image') || $request->has('logo') ? null : $request->getContent(),
+        ]);
         $this->validationServices->add_client_program_exercise($request);
         $program_id = $request['client_program_id'];
         $name = $request['name'];
@@ -199,7 +207,13 @@ class OneToOneExerciseServices
         $exercise = $this->DB_OneToOneProgramExercises->add_oto_exercise($name, $description, $extra_description, $date, $exercise_arrangement, $program_id);
         $this->add_exercises_videos($exercise->id, $videos);
         DB::commit();
-
+        RequestInfoLog::query()->create([
+            "user_id" => $request->user()?->id,
+            "ip" => $request->ip(),
+            "user_agent" => $request->header('User-Agent'),
+            "route" => $request->getPathInfo(),
+            "body" => "Exercise Added successfully",
+        ]);
         return sendResponse(['exercise_id' => $exercise->id, 'message' => "Exercise added successfully"]);
     }
 

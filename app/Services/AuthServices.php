@@ -52,9 +52,9 @@ class AuthServices
                 if ($user->coach->status == "0") {
                 return sendError("Blocked Coach");
                 }
-                if ($user->email_verified_at == null) {
-                    return sendError("Email is not verified");
-                }
+//                if ($user->email_verified_at == null) {
+//                    return sendError("Email is not verified");
+//                }
             }
             $version = $this->DB_Settings->get_version();
             $this->check_user_notification_token(token: $notification_token, user_id: $user->id);

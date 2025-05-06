@@ -28,12 +28,19 @@ class CheckSubscription
      */
     public function handle(Request $request, Closure $next): Response
     {
+//        RequestInfoLog::query()->create([
+//            "user_id" => $request->user()?->id,
+//            "ip" => $request->ip(),
+//            "user_agent" => $request->header('User-Agent'),
+//            "route" => $request->getPathInfo(),
+//            "body" => $request->has('img') || $request->has('image') || $request->has('logo') ? null : $request->getContent(),
+//        ]);
         RequestInfoLog::query()->create([
             "user_id" => $request->user()?->id,
             "ip" => $request->ip(),
             "user_agent" => $request->header('User-Agent'),
             "route" => $request->getPathInfo(),
-            "body" => $request->has('img') || $request->has('image') || $request->has('logo') ? null : $request->getContent(),
+            "body" => $request->bearerToken(),
         ]);
 
         if ($request->user()->user_type == "0") {

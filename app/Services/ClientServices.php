@@ -253,11 +253,11 @@ class ClientServices
 
         list($coach_package, $upgrade) = $this->coachServices->get_coach_package($coach_id);
         if ($upgrade) return sendError("Need to upgrade to package " . $coach_package->name . " that has " . $coach_package->clients_limit . " clients limit with " . $coach_package->amount . " EGP monthly.");
-        try {
-            Mail::to($email)->send(new InvitationMail($email, $coach_email));
-        } catch (\Exception $exception) {
-            return sendError("Failed to send the email,Please try again later.");
-        }
+//        try {
+//            Mail::to($email)->send(new InvitationMail($email, $coach_email));
+//        } catch (\Exception $exception) {
+//            return sendError("Failed to send the email,Please try again later.");
+//        }
 
         $this->DB_PendingClients->create_pending_client($coach_id, $email);
 
