@@ -203,7 +203,7 @@ class ValidationServices
     public function assign_client_to_coach($request)
     {
         $request->validate([
-            'email' => 'required|email|unique:users,email|unique:pending_clients,email',
+            'email' => 'required|email|unique:users,email|unique:pending_clients,email|email:rfc,dns',
         ]);
     }
 
@@ -232,7 +232,7 @@ class ValidationServices
     {
         $request->validate([
             'name' => 'required',
-            'email' => 'required|email|unique:users,email',
+            'email' => 'required|email|unique:users,email|email:rfc,dns',
             'phone' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|unique:users,phone',
             'password' => 'required',
             'gym' => 'required',
@@ -266,7 +266,7 @@ class ValidationServices
     {
         $request->validate([
             'name' => 'required',
-            'email' => 'required|email|unique:users,email,' . $request->user()->id,
+            'email' => 'required|email|email|email:rfc,dns|unique:users,email,' . $request->user()->id,
             'phone' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|unique:users,phone,' . $request->user()->id,
             'gym' => 'required',
             'speciality' => 'required',
@@ -465,7 +465,7 @@ class ValidationServices
     {
         $request->validate([
             'name' => 'required',
-            'email' => 'required|email|unique:users,email,' . $request->user()->id,
+            'email' => 'required|email|email|email:rfc,dns|unique:users,email,' . $request->user()->id,
             'phone' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|unique:users,phone,' . $request->user()->id,
             'weight'=>'nullable|numeric|min:20|max:500',
             'height'=>'nullable|numeric|min:50|max:300',
