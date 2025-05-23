@@ -17,7 +17,7 @@ class OneToOneProgramController extends Controller
      */
     public function index(Request $request)
     {
-        return $this->oneProgramServices->index($request);
+        return $this->oneProgramServices->index($request, $request->user()->id);
     }
 
     public function destroy(Request $request)

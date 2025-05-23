@@ -46,10 +46,9 @@ class OneToOneProgramServices
         return $programs_arr;
     }
 
-    public function index($request)
+    public function index($request, $coach_id = null)
     {
         $this->validationServices->list_client_ono_programs($request);
-        $coach_id = $request->user()->id;
         $search = $request['search'];
         $client_id = $request['client_id'];
         $client_info = $this->DB_Users->get_user_info($client_id);

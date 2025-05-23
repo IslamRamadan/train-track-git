@@ -24,7 +24,10 @@ class DB_OneToOneProgram
 
     public function get_client_oto_programs(mixed $coach_id, mixed $client_id, mixed $search)
     {
-        return OneToOneProgram::query()->where(['coach_id' => $coach_id, 'client_id' => $client_id])
+        return OneToOneProgram::query()->where(['client_id' => $client_id])
+            ->when($coach_id != null, function ($q) use ($coach_id) {
+                $q->where('coach_id', $coach_id);
+            })
             ->when(!empty($search), function ($q) use ($search) {
                 $q->where('name', 'LIKE', '%' . $search . '%');
             })
