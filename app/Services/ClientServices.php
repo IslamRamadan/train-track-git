@@ -154,13 +154,15 @@ class ClientServices
         $start_day = $request['start_day'];//
         $end_day = $request['end_day'];
         $notify_client = $request['notify_client'];
-        $clientAssignedBefore = $this->DB_ProgramClients->programAssignedToClientBefore($program_id, $clients_id);
-        if ($clientAssignedBefore) {
-            return sendError("Program already assigned to this client");
-        }
         $find_program_type = $this->DB_Programs->find_program(program_id: $program_id);
-        if (($start_date == null || $start_day == null) && $find_program_type->type == "0") {
+        if ($find_program_type->type == "0") {
+            $clientAssignedBefore = $this->DB_ProgramClients->programAssignedToClientBefore($program_id, $clients_id);
+            if ($clientAssignedBefore) {
+                return sendError("This template program already assigned to this client");
+            }
+            if (($start_date == null || $start_day == null)) {
             return sendError("Start date and Start day is required when program type is normal");
+        }
         }
 
         if ($find_program_type->type == "1") {
