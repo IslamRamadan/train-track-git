@@ -42,4 +42,9 @@ class DB_ProgramClients
             ->get();
     }
 
+    public function programAssignedToClientBefore(mixed $program_id, mixed $client_id)
+    {
+        return ProgramClient::query()->where(['program_id' => $program_id, 'client_id' => $client_id])->exists();
+    }
+
 }

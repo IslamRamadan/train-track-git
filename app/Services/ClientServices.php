@@ -140,7 +140,7 @@ class ClientServices
     }
 
     /**
-     * Assign program to client
+     * Assign a program to a client
      * @param $request
      * @return JsonResponse
      */
@@ -154,7 +154,10 @@ class ClientServices
         $start_day = $request['start_day'];//
         $end_day = $request['end_day'];
         $notify_client = $request['notify_client'];
-
+        $clientAssignedBefore = $this->DB_ProgramClients->programAssignedToClientBefore($program_id, $clients_id);
+        if ($clientAssignedBefore) {
+            return sendError("Program already assigned to this client");
+        }
         $find_program_type = $this->DB_Programs->find_program(program_id: $program_id);
         if (($start_date == null || $start_day == null) && $find_program_type->type == "0") {
             return sendError("Start date and Start day is required when program type is normal");
