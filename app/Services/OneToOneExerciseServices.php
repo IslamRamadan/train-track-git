@@ -620,8 +620,8 @@ class OneToOneExerciseServices
     {
         $coach_id = $this->DB_Clients->find_coach_id(client_id: $user_id)->coach_id;
         $payload = [
-            'user_id' => strval($coach_id),
-            'user_type' => "Coach",
+            'user_id' => strval($user_id),
+            'user_type' => "Client",
             'oto_program_id' => strval($oto_program_id),
             'date' => $date,
         ];
