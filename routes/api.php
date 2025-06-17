@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OneToOneExerciseController;
 use App\Http\Controllers\Api\OneToOneProgramController;
 use App\Http\Controllers\Api\ProgramController;
+use App\Http\Controllers\Api\VVExerciseController;
 use App\Http\Controllers\PaymentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -42,6 +43,8 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('coach/client/archive', [ClientController::class, 'coach_archive_client']);
     Route::post('clients/list', [ClientController::class, 'index']);
     Route::post('coach/payment/link/create', [CoachController::class, 'create_payment_link']);
+    Route::post('coach/client/invitation/delete', [ClientController::class, 'remove_client_invitation']);
+    Route::post('client/delete', [ClientController::class, 'delete_client']);
 
 });
 
@@ -66,7 +69,6 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     Route::post('program/client/assign', [ClientController::class, 'assign_program_to_client']);
     Route::post('active/clients/list', [ClientController::class, 'list_active_clients']);
     Route::post('coach/client/assign', [ClientController::class, 'assign_client_to_coach']);
-    Route::post('coach/client/invitation/delete', [ClientController::class, 'remove_client_invitation']);
     Route::post('client/programs/list', [OneToOneProgramController::class, 'index']);
     Route::post('client/programs/delete', [OneToOneProgramController::class, 'destroy']);//2
     Route::post('client/program/exercises/list', [OneToOneExerciseController::class, 'list_client_exercises']);
@@ -103,7 +105,11 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     Route::post('coach/list/payments', [CoachController::class, 'list_payments']);
 
     Route::post('coach/videos/import', [CoachVideosController::class, 'import']);
+    // coping programs exercises from&to template and oto programs start
+    Route::post('vv/program/exercise/copy', [VVExerciseController::class, 'copy']);
+    Route::post('vv/program/exercise/days/copy', [VVExerciseController::class, 'copy_days']);
 
+    // coping programs exercises from&to template and oto programs end
     // Coach apis end
 
     // Client apis start
@@ -117,7 +123,6 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     Route::post('client/program/logs/list', [LogController::class, 'client_programs_logs_list']);
     Route::post('client/dashboard', [ClientController::class, 'client_dashboard']);
     Route::post('client/archive/account', [ClientController::class, 'archive_account']);
-    Route::post('client/delete', [ClientController::class, 'delete_client']);
     Route::post('client/delete/account', [ClientController::class, 'delete']);
     Route::post('change/password', [AuthController::class, 'change_password']);
     // Client apis end

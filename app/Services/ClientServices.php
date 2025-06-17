@@ -400,7 +400,7 @@ class ClientServices
                     foreach ($program->exercises as $exercise) {
                         if ($exercise->log()->exists()) {
                             //delete exercises logs
-                            $exercise->log()->log_videos()->delete();
+                            $exercise->log->log_videos()->delete();
                             $exercise->log->delete();
                         }
                         if ($exercise->videos()->exists()) {

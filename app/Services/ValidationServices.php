@@ -111,6 +111,17 @@ class ValidationServices
         ]);
     }
 
+    public function copy_vv_program_exercise($request)
+    {
+        $request->validate([
+            'from_type' => 'required',
+            'to_type' => 'required',
+            'exercise_id' => 'required',
+            'to_program_id' => 'required',
+            'to_day' => 'nullable',
+            'to_date' => 'nullable',
+        ]);
+    }
     public function copy_program_exercise_days($request)
     {
         $request->validate([
@@ -121,6 +132,21 @@ class ValidationServices
         ]);
     }
 
+    public function copy_vv_program_exercise_days($request)
+    {
+        $request->validate([
+            'from_type' => 'required',
+            'to_type' => 'required',
+            'from_program_id' => 'required',
+            'to_program_id' => 'required',
+            'copied_days' => 'nullable|array',
+            'copied_days.*' => 'nullable|numeric',
+            'start_day' => 'nullable|numeric',
+            'copied_dates' => 'nullable|array',
+            'copied_dates.*' => 'date_format:Y-m-d',
+            'start_date' => 'nullable|date_format:Y-m-d',
+        ]);
+    }
     public function cut_program_exercise_days($request)
     {
         $request->validate([
