@@ -247,6 +247,8 @@ class ValidationServices
             'email' => 'required|email|unique:users,email|exists:pending_clients,email',
             'phone' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|unique:users,phone',
             'password' => 'required',
+            'country_id' => 'nullable|exists:countries,id',
+            'gender_id' => 'nullable|exists:genders,id',
 
         ], [
             'email.unique' => 'This email already exists in the system',
@@ -264,6 +266,8 @@ class ValidationServices
             'gym' => 'required',
             'speciality' => 'required',
             'certificates' => 'required',
+            'country_id' => 'nullable|exists:countries,id',
+            'gender_id' => 'nullable|exists:genders,id',
 
         ], [
             'email.unique' => 'This email already exists in the system',
@@ -282,6 +286,8 @@ class ValidationServices
             'certificates' => 'required',
             'pay_now' => 'required|in:0,1',
             'package_id' => 'required|exists:packages,id',
+            'country_id' => 'nullable|exists:countries,id',
+            'gender_id' => 'nullable|exists:genders,id',
 
         ], [
             'email.unique' => 'This email already exists in the system',
@@ -829,6 +835,8 @@ class ValidationServices
             'fitness_goal'=>'nullable',
             'label'=>'nullable',
             'notes'=>'nullable',
+            'country_id' => 'nullable|exists:countries,id',
+            'gender_id' => 'nullable|exists:genders,id',
         ]);
     }
 

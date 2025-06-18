@@ -82,6 +82,10 @@ class ClientServices
                 "name" => $client->client->name,
                 "email" => $client->client->email,
                 "phone" => $client->client->phone,
+                "country_id" => $client->client->country_id??"" ,
+                "country_name" => $client->client?->country?->name ?? "",
+                "gender_id" => $client->client->gender_id??"" ,
+                "gender_name" => $client->client?->gender?->name ?? "",
                 "payment_link" => $client->client->client->payment_link ?? "",
                 "tag" => $client->client->client->tag ?? "",
                 "due_date" => $client->client->due_date ?? "",
@@ -316,10 +320,10 @@ class ClientServices
         $fitness_goal = $request->fitness_goal;
         $label = $request->label;
         $notes = $request->notes;
+        $country_id = $request->country_id;
+        $gender_id = $request->gender_id;
 
-        $this->DB_Users->update_user($client_id, $name
-            , $email
-            , $phone);
+        $this->DB_Users->update_user($client_id, $name, $email, $phone, $country_id, $gender_id);
         $client=$this->DB_Clients->get_client_info($client_id);
         if ($client){
             $this->DB_Clients->update_client_info($client,[

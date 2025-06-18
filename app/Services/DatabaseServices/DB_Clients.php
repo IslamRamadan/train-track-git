@@ -56,13 +56,15 @@ class DB_Clients
             ->get();
     }
 
-    public function create_client(mixed $name, mixed $email, mixed $phone, mixed $password)
+    public function create_client(mixed $name, mixed $email, mixed $phone, mixed $password, $country_id, $gender_id)
     {
         return User::query()->create([
             'name' => $name,
             'email' => $email,
             'phone' => $phone,
             'password' => $password,
+            'country_id' => $country_id,
+            'gender_id' => $gender_id,
             'user_type' => "1",
         ]);
     }

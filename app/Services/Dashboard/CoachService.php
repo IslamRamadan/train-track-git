@@ -185,11 +185,13 @@ class CoachService
         $gym = $request->gym;
         $speciality = $request->speciality;
         $certificates = $request->certificates;
+        $country_id = $request->country_id;
+        $gender_id = $request->gender_id;
         $pay_now = $request->pay_now;
         $package_id = $request->package_id;
         $due_date = Carbon::today()->addMonth()->toDateString();
         DB::beginTransaction();
-        $user = $this->DB_Users->create_user($name, $email, $phone, $password, $due_date);
+        $user = $this->DB_Users->create_user($name, $email, $phone, $password, $due_date, $country_id, $gender_id);
         $this->DB_Coaches->create_coach($gym, $speciality, $certificates, $user->id, $package_id);
         DB::commit();
 

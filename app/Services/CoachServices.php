@@ -76,6 +76,10 @@ class CoachServices
             'coach_package_id' => $coach_info->coach->package->id,
             'coach_package_name' => $coach_info->coach->package->name,
             'coach_package_amount' => $coach_info->coach->package->amount,
+            'coach_country_id' => $coach_info->country_id ?? "",
+            'coach_country_name' => $coach_info->country ? $coach_info->country->name : "",
+            'coach_gender_id' => $coach_info->gender_id ?? "",
+            'coach_gender_name' => $coach_info->gender ? $coach_info->gender->name : "",
             'coach_package_clients_limit' => $coach_info->coach->package->clients_limit,
             'total_clients' => $number_of_clients,
             'active_clients' => $number_of_active_clients,
@@ -118,10 +122,10 @@ class CoachServices
         $gym = $request->gym;
         $speciality = $request->speciality;
         $certificates = $request->certificates;
+        $country_id = $request->country_id;
+        $gender_id = $request->gender_id;
 
-        $this->DB_Users->update_user($coach_id, $name
-            , $email
-            , $phone);
+        $this->DB_Users->update_user($coach_id, $name, $email, $phone, $country_id, $gender_id);
         $this->DB_Coaches->update_coach($coach_id, $gym, $speciality, $certificates);
 
         return sendResponse(['message' => "Coach information updated successfully"]);
