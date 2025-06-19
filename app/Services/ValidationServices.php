@@ -861,4 +861,11 @@ class ValidationServices
         ]);
     }
 
+    public function searchValidation($request)
+    {
+        $request->validate([
+            'search' => 'nullable|max:50',
+        ]);
+    }
+
 }

@@ -6,8 +6,10 @@ use App\Http\Controllers\Api\ClientInfoController;
 use App\Http\Controllers\Api\CoachController;
 use App\Http\Controllers\Api\CoachVideosController;
 use App\Http\Controllers\Api\CommentController;
+use App\Http\Controllers\Api\CountryController;
 use App\Http\Controllers\Api\ExerciseController;
 use App\Http\Controllers\Api\ExerciseTemplateController;
+use App\Http\Controllers\Api\GenderController;
 use App\Http\Controllers\Api\LogController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OneToOneExerciseController;
@@ -38,6 +40,8 @@ Route::post('coach/register', [AuthController::class, 'coach_register']);
 Route::post('forget/password', [AuthController::class, 'forget_password']);
 Route::post('checkout/processed', [PaymentController::class, 'checkout_processed']);
 Route::post('coach/get/package', [CoachController::class, 'get_package']);
+Route::post('countries/list', [CountryController::class, 'list']);
+Route::post('genders/list', [GenderController::class, 'list']);
 
 Route::middleware(['auth:api'])->group(function () {
     Route::post('coach/client/archive', [ClientController::class, 'coach_archive_client']);
