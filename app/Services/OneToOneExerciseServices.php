@@ -206,6 +206,8 @@ class OneToOneExerciseServices
         DB::beginTransaction();
         $exercise = $this->DB_OneToOneProgramExercises->add_oto_exercise($name, $description, $extra_description, $date, $exercise_arrangement, $program_id);
         $this->add_exercises_videos($exercise->id, $videos);
+        $exercise_arr = $this->program_exercises_arr($exercise);
+
         DB::commit();
         RequestInfoLog::query()->create([
             "user_id" => $request->user()?->id,
@@ -214,7 +216,7 @@ class OneToOneExerciseServices
             "route" => $request->getPathInfo(),
             "body" => "Exercise Added successfully",
         ]);
-        return sendResponse(['exercise_id' => $exercise->id, 'message' => "Exercise added successfully"]);
+        return sendResponse(['exercise_id' => $exercise->id, 'message' => "Exercise added successfully", 'exercise' => $exercise_arr]);
     }
 
     public function copy_client_exercise($request)
@@ -230,9 +232,10 @@ class OneToOneExerciseServices
         if ($exercise->videos()->exists()) {
             $this->add_exercises_videos($copied_exercise->id, $exercise->videos);
         }
+        $exercise_arr = $this->program_exercises_arr($copied_exercise);
         DB::commit();
 
-        return sendResponse(['exercise_id' => $copied_exercise->id, 'message' => "Exercise copied successfully"]);
+        return sendResponse(['exercise_id' => $copied_exercise->id, 'message' => "Exercise copied successfully", 'exercise' => $exercise_arr]);
     }
 
     function copy_client_exercise_days($request)
@@ -242,8 +245,8 @@ class OneToOneExerciseServices
         $to_client_program_id = $request['to_client_program_id'];
         $copied_dates = $request['copied_dates'];
         $start_date = $request['start_date'];
-        $this->copy_dates_logic($start_date, $copied_dates, $from_client_program_id, $to_client_program_id);
-        return sendResponse(['message' => "Exercise days copied successfully"]);
+        $exercises_arr = $this->copy_dates_logic($start_date, $copied_dates, $from_client_program_id, $to_client_program_id);
+        return sendResponse(['message' => "Exercise days copied successfully", 'exercises' => $exercises_arr]);
     }
 
     function cut_client_exercise_days($request)
@@ -253,9 +256,9 @@ class OneToOneExerciseServices
         $to_client_program_id = $request['to_client_program_id'];
         $cut_dates = $request['cut_dates'];
         $start_date = $request['start_date'];
-        $this->copy_dates_logic($start_date, $cut_dates, $from_client_program_id, $to_client_program_id, "cut");
+        $exercises_arr = $this->copy_dates_logic($start_date, $cut_dates, $from_client_program_id, $to_client_program_id, "cut");
 
-        return sendResponse(['message' => "Exercise dates cut successfully"]);
+        return sendResponse(['message' => "Exercise dates cut successfully", 'exercises' => $exercises_arr]);
 
     }
 
@@ -576,13 +579,14 @@ class OneToOneExerciseServices
      * @param mixed $from_client_program_id
      * @param mixed $to_client_program_id
      * @param string $operation_type
-     * @return void
+     * @return array
      */
     private function copy_dates_logic($start_date, mixed $copied_dates, mixed $from_client_program_id
-        , mixed                       $to_client_program_id, string $operation_type = "copy"): void
+        , mixed $to_client_program_id, string $operation_type = "copy"): array
     {
         $date = $start_date;
         $copied_exercises_arr=[];
+        $exercise_arr = [];
         $copied_days_arr = $this->make_copied_days_arr($copied_dates);//define which day that will be copied and which day will not
         foreach ($copied_days_arr as $copied_date) {
             if ($copied_date['copy']) {
@@ -605,6 +609,7 @@ class OneToOneExerciseServices
                             }
                             $this->DB_OneToOneProgramExercises->delete_single_exercises($exercise->id);
                         }
+                        $exercise_arr[] = $this->program_exercises_arr($copied_exercise);
                     }
                 }
                 if ($operation_type == "cut") {
@@ -614,6 +619,7 @@ class OneToOneExerciseServices
 
             $date = Carbon::parse($date)->addDay()->toDateString();
         }
+        return $exercise_arr;
     }
 
     private function send_notification_to_coach($user_id, $title, $message, $oto_program_id, $date)

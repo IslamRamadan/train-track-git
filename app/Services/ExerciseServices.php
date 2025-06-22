@@ -134,7 +134,7 @@ class ExerciseServices
         $copied_days_arr = $this->make_copied_days_arr($copied_days);//define which day that will be copied and which day will not
         $day = $request['start_day'];
         $exercise_arr = $this->copy_days_logic(days_arr: $copied_days_arr, from_program_id: $from_program_id, to_program_id: $to_program_id, start_day: $day);
-        return sendResponse(['message' => "Exercise days copied successfully", 'exercices' => $exercise_arr]);
+        return sendResponse(['message' => "Exercise days copied successfully", 'exercises' => $exercise_arr]);
     }
 
 
@@ -151,7 +151,7 @@ class ExerciseServices
         $exercise_arr =$this->copy_days_logic(days_arr: $cut_days_arr, from_program_id: $from_program_id, to_program_id: $to_program_id,
             start_day: $start_day, operation_type: "cut");
 
-        return sendResponse(['message' => "Exercise days cut successfully", 'exercices' => $exercise_arr]);
+        return sendResponse(['message' => "Exercise days cut successfully", 'exercises' => $exercise_arr]);
     }
 
     function delete_days($request)
