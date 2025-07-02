@@ -3,6 +3,7 @@
 namespace App\Services\DatabaseServices;
 
 use App\Models\OneToOneProgramExercise;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class DB_OneToOneProgramExercises
@@ -163,6 +164,7 @@ class DB_OneToOneProgramExercises
     {
         return OneToOneProgramExercise::where('id', $client_exercise_id)->update([
             'is_done' => $status,
+            'done_date' => Carbon::now()->toDateTimeString(),
         ]);
     }
 
@@ -224,7 +226,7 @@ class DB_OneToOneProgramExercises
                 $query->whereHas('log', function ($q2) use ($date) {
                     $q2->whereDate('created_at', $date); // logs on this date
                 })
-                    ->orWhereDate('updated_at', $date); // or exercise updated on this date
+                    ->orWhereDate('done_date', $date); // or exercise updated on this date
             })
             ->get()
             ->groupBy('one_to_one_program_id')
