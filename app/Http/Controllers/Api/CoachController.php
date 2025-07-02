@@ -28,6 +28,10 @@ class CoachController extends Controller
     {
         return $this->coachServices->coach_dashboard($request);
     }
+    public function list_client_activity_in_date(Request $request)
+    {
+        return $this->coachServices->list_client_activity_in_date($request);
+    }
 
     public function clients_activities(Request $request)
     {

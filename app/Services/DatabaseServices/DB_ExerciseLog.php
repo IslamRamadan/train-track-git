@@ -52,13 +52,18 @@ class DB_ExerciseLog
         return $exercise->log()->delete();
     }
 
-    public function list_coach_clients_logs_today(mixed $coach_id, $today)
+    public function list_coach_clients_logs_today(mixed $coach_id)
     {
-        return ExerciseLog::query()->with('log_videos')->whereDate('created_at', Carbon::today())->whereHas('exercise', function ($query) use ($coach_id) {
+        return ExerciseLog::query()
+            ->with(['log_videos', 'exercise.one_to_one_program.client'])
+            ->whereDate('created_at', Carbon::today())
+            ->whereHas('exercise', function ($query) use ($coach_id) {
             $query->whereHas('one_to_one_program', function ($userQuery) use ($coach_id) {
                 $userQuery->where('coach_id', $coach_id);
             });
-        })->orderBy('created_at', 'DESC')->with('exercise.one_to_one_program.client')->get();
+            })
+            ->orderBy('created_at', 'DESC')
+            ->get();
     }
 
     public function find_exercise_log($exercise_id)
