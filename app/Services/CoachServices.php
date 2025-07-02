@@ -224,6 +224,7 @@ class CoachServices
                         'arrangement' => $exercise->arrangement,
                         'exercise_name' => $exercise->name,
                         'exercise_description' => $exercise->description,
+                        'is_done' => $exercise->is_done,
                         'log_id' => $log->id ?? "",
                         'log_sets' => $log->sets ?? "",
                         'log_details' => $log->details ?? "",
