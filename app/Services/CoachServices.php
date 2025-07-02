@@ -2,15 +2,14 @@
 
 namespace App\Services;
 
-use App\Models\OneToOneProgram;
-use App\Models\OneToOneProgramExercise;
-use App\Models\OtoExerciseComment;
 use App\Models\RequestInfoLog;
 use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_Coaches;
 use App\Services\DatabaseServices\DB_ExerciseLog;
 use App\Services\DatabaseServices\DB_Notifications;
+use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
+use App\Services\DatabaseServices\DB_OtoExerciseComments;
 use App\Services\DatabaseServices\DB_Packages;
 use App\Services\DatabaseServices\DB_PendingClients;
 use App\Services\DatabaseServices\DB_UserPayment;
@@ -19,7 +18,7 @@ use App\Services\PaymentServices\PaymentServices;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
 
 class CoachServices
 {
@@ -35,6 +34,8 @@ class CoachServices
                                 protected PaymentServices             $paymentServices,
                                 protected DB_PendingClients           $DB_PendingClients,
                                 protected NotificationServices        $notificationServices,
+                                protected DB_OtoExerciseComments $DB_OtoExerciseComments,
+                                protected DB_OneToOneProgram     $DB_OneToOneProgram
     )
     {
     }
@@ -104,43 +105,57 @@ class CoachServices
     }
 
     /**
-     * Get client today logs
+     * List client activities (exercises + comments) for a given coach and date.
      *
-     * @param $request
+     * This method collects all relevant exercise logs and comments on a specified date,
+     * groups them by program and client, and returns a structured response.
+     *
+     * @param Request $request Must contain `date`, and authenticated `coach`
      * @return JsonResponse
      */
     public function list_client_activity_in_date($request)
     {
+        // ✅ Step 1: Validate the request input (e.g., date must be in format Y-m-d)
         $this->validationServices->list_client_activity_in_date($request);
+
         $date = $request->date;
-        $coachId = $request->user()->id; // or passed from the route/controller
+        $coachId = $request->user()->id;
 
-        $exercises = OneToOneProgramExercise::query()
-            ->whereHas('one_to_one_program', function ($q1) use ($coachId, $date) {
-                $q1->whereDate('coach_id', $coachId);
-            })
-            ->orWhereHas('log', function ($q2) use ($date) {
-                $q2->whereDate('created_at', $date);
-            })
-            ->orWhereDate('updated_at', $date)
-            ->get()
-            ->groupBy('one_to_one_program_id')
-            ->mapWithKeys(function ($group, $programId) {
-                return [$programId => $group->pluck('date')->unique()->values()->toArray()];
-            });
+        // 📌 Step 2: Fetch exercises related to the coach and that have logs/updates on the given date
+        $exercises = $this->DB_OneToOneProgramExercises->getExercisesWithUpdatesInDate($coachId, $date);
 
-        $comments = OtoExerciseComment::query()
-            ->whereDate('created_at', $date)
-            ->whereHas('program', function ($q1) use ($coachId) {
-                $q1->where('coach_id', $coachId);
-            })
-            ->get()
-            ->groupBy('oto_program_id')
-            ->mapWithKeys(function ($group, $programId) {
-                return [$programId => $group->pluck('date')->unique()->values()->toArray()];
-            });
+        // 📌 Step 3: Fetch comments made on the same date by the coach
+        $comments = $this->DB_OtoExerciseComments->getProgramsWithDatesThatHasCommentsInDate($coachId, $date);
+
+        // 🔄 Step 4: Merge both exercises and comments into a single collection of [programId => [dates]]
+        $programsCollection = $this->mergeProgramActivityDates($exercises, $comments);
 
 
+        // 📦 Step 5: Fetch programs with client and exercises data for the collected dates
+        $programs = $this->DB_OneToOneProgram->getProgramsWithClientAndExercisesForCollectedDated($programsCollection);
+
+        // 🧮 Step 6: Group exercises by date within each program
+        $this->groupExercisesByDateWithinEachProgram($programs);
+
+        // 📝 Step 7: Fetch all comments again for the same program/date pairs
+        $programsComments = $this->DB_OtoExerciseComments->getCommentsForProgramDatePairs($programsCollection);
+
+        // 🎯 Step 8: Structure the final response grouped by client
+        $response = $this->buildClientProgramActivityStructure($programs, $programsComments);
+
+        // 🚀 Step 9: Return structured response
+        return sendResponse($response);
+    }
+
+    /**
+     * Merge exercise and comment dates by program into one collection.
+     *
+     * @param \Illuminate\Support\Collection $exercises [program_id => [dates]]
+     * @param \Illuminate\Support\Collection $comments [program_id => [dates]]
+     * @return \Illuminate\Support\Collection  [program_id => [merged unique dates]]
+     */
+    private function mergeProgramActivityDates(\Illuminate\Support\Collection $exercises, \Illuminate\Support\Collection $comments): \Illuminate\Support\Collection
+    {
         $programsCollection = collect();
 
         foreach ($exercises as $programId => $dates) {
@@ -149,7 +164,6 @@ class CoachServices
 
         foreach ($comments as $programId => $dates) {
             if ($programsCollection->has($programId)) {
-                // Merge and keep unique dates
                 $programsCollection[$programId] = collect($programsCollection[$programId])
                     ->merge($dates)
                     ->unique()
@@ -159,58 +173,34 @@ class CoachServices
                 $programsCollection[$programId] = $dates;
             }
         }
-        $programs = OneToOneProgram::whereIn('id', $programsCollection->keys())
-            ->with([
-                'client',
-                'exercises' => function ($q) use ($date, $programsCollection) {
-                    $q->where(function ($subQuery) use ($programsCollection) {
-                        foreach ($programsCollection as $programId => $dates) {
-                            $subQuery->orWhere(function ($inner) use ($programId, $dates) {
-                                $inner->where('one_to_one_program_id', $programId)
-                                    ->whereIn('date', $dates);
-                            });
-                        }
-                    })->with('log');
-                }
-            ])
-            ->get();
-        $groupedPrograms = $programs->map(function ($program) {
-            $groupedExercises = $program->exercises->groupBy('date');
-            $program->grouped_exercises = $groupedExercises;
-            unset($program->exercises); // Optional: remove original if not needed
-            return $program;
-        });
-        $programsComments = OtoExerciseComment::where(function ($query) use ($programsCollection) {
-            foreach ($programsCollection as $programId => $dates) {
-                $query->orWhere(function ($subQuery) use ($programId, $dates) {
-                    $subQuery->where('oto_program_id', $programId)
-                        ->whereIn('date', $dates);
-                });
-            }
-        })->get();
-        // Group by "program_id_date"
-        $programsComments = $programsComments->groupBy(function ($comment) {
-            return $comment->oto_program_id . '_' . $comment->date;
-        });
 
-        $final = [];
+        return $programsCollection;
+    }
+
+    /**
+     * Build a structured array of client programs with exercises and comments grouped by date.
+     *
+     * @param \Illuminate\Support\Collection $programs Programs with grouped_exercises
+     * @param \Illuminate\Support\Collection $programsComments Grouped comments (keyed by "programId_date")
+     * @return array
+     */
+    private function buildClientProgramActivityStructure($programs, $programsComments)
+    {
+        $result = [];
 
         foreach ($programs as $program) {
             $client = $program->client;
-            $clientKey = $client->id . '_' . $client->name;
 
-            // Find existing client in $final (to allow grouping all their programs)
-            $clientIndex = collect($final)->search(function ($entry) use ($client) {
-                return $entry['client_id'] === $client->id;
-            });
+            // Unique key to check if this client already exists in result
+            $clientIndex = collect($result)->search(fn($entry) => $entry['client_id'] === $client->id);
 
             if ($clientIndex === false) {
-                $final[] = [
+                $result[] = [
                     'client_id' => $client->id,
                     'client_name' => $client->name,
                     'programs' => []
                 ];
-                $clientIndex = array_key_last($final);
+                $clientIndex = array_key_last($result);
             }
 
             $programData = [
@@ -234,11 +224,11 @@ class CoachServices
                         'arrangement' => $exercise->arrangement,
                         'exercise_name' => $exercise->name,
                         'exercise_description' => $exercise->description,
-                        'log_id' => $log->id ?? null,
-                        'log_sets' => $log->sets ?? null,
-                        'log_details' => $log->details ?? null,
-                        'log_date' => $log?->created_at?->format('Y-m-d'),
-                        'log_time' => $log?->created_at?->format('H:i:s'),
+                        'log_id' => $log->id ?? "",
+                        'log_sets' => $log->sets ?? "",
+                        'log_details' => $log->details ?? "",
+                        'log_date' => $log?->created_at?->format('Y-m-d') ?? "",
+                        'log_time' => $log?->created_at?->format('H:i:s') ?? "",
                     ];
                 }
 
@@ -260,12 +250,12 @@ class CoachServices
                 $programData['dates'][] = $dateData;
             }
 
-            $final[$clientIndex]['programs'][] = $programData;
+            $result[$clientIndex]['programs'][] = $programData;
         }
 
-        return sendResponse($final);
-
+        return $result;
     }
+
     public function get_clients_activities($request)
     {
         $this->validationServices->get_clients_activities($request);
@@ -568,5 +558,19 @@ class CoachServices
         }, $coach_payments);
 
         return sendResponse($payments_arr);
+    }
+
+    /**
+     * Group exercises by date within each program
+     * @param mixed $programs
+     * @return void
+     */
+    private function groupExercisesByDateWithinEachProgram(mixed $programs): void
+    {
+        $programs->map(function ($program) {
+            $program->grouped_exercises = $program->exercises->groupBy('date');
+            unset($program->exercises);
+            return $program;
+        });
     }
 }

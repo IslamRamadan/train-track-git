@@ -80,4 +80,28 @@ class DB_OneToOneProgram
             ->pluck('client_id');
     }
 
+    /**
+     * Fetch programs with client and exercises data for the collected dates
+     * @param $programs
+     * @return mixed
+     */
+    public function getProgramsWithClientAndExercisesForCollectedDated($programs)
+    {
+        return OneToOneProgram::whereIn('id', $programs->keys())
+            ->with([
+                'client',
+                'exercises' => function ($q) use ($programs) {
+                    $q->where(function ($subQuery) use ($programs) {
+                        foreach ($programs as $programId => $dates) {
+                            $subQuery->orWhere(function ($inner) use ($programId, $dates) {
+                                $inner->where('one_to_one_program_id', $programId)
+                                    ->whereIn('date', $dates);
+                            });
+                        }
+                    })->with('log');
+                }
+            ])
+            ->get();
+    }
+
 }
