@@ -444,6 +444,7 @@ class CoachServices
                 $single_log_arr['programs']['exercises']['exercise_name'] = $log->exercise->name;
                 $single_log_arr['programs']['exercises']['arrangement'] = $log->exercise->arrangement;
                 $single_log_arr['programs']['exercises']['exercise_description'] = $log->exercise->description;
+                $single_log_arr['programs']['exercises']['is_done'] = $log->exercise->is_done;
                 $single_log_arr['programs']['exercises']['log_id'] = $log->id;
                 $single_log_arr['programs']['exercises']['log_sets'] = $log->sets;
                 $single_log_arr['programs']['exercises']['log_details'] = $log->details;
