@@ -46,6 +46,7 @@ Route::post('genders/list', [GenderController::class, 'list']);
 Route::middleware(['auth:api'])->group(function () {
     Route::post('coach/client/archive', [ClientController::class, 'coach_archive_client']);
     Route::post('clients/list', [ClientController::class, 'index']);
+    Route::post('client/details/list', [ClientController::class, 'client_details']);
     Route::post('coach/payment/link/create', [CoachController::class, 'create_payment_link']);
     Route::post('coach/client/invitation/delete', [ClientController::class, 'remove_client_invitation']);
     Route::post('client/delete', [ClientController::class, 'delete_client']);

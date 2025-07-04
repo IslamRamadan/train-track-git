@@ -192,6 +192,13 @@ class ValidationServices
         ]);
     }
 
+    public function client_details($request)
+    {
+        $request->validate([
+            'client_id' => 'required|exists:users,id',
+        ]);
+    }
+
     public function list_active_clients($request)
     {
         $request->validate([

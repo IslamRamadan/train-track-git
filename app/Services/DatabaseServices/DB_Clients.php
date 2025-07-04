@@ -35,6 +35,13 @@ class DB_Clients
             ->get();
     }
 
+    public function list_client_details(mixed $coach_id, $client_id)
+    {
+        return CoachClient::with('coach', 'client.client')
+            ->where(['coach_id' => $coach_id, 'client_id' => $client_id])
+            ->first();
+    }
+
     public function get_active_clients_between_dates(mixed $coach_id, mixed $search, $date_from, $date_to)
     {
         return CoachClient::query()

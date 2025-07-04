@@ -20,6 +20,11 @@ class ClientController extends Controller
         return $this->clientServices->index($request);
     }
 
+    public function client_details(Request $request)
+    {
+        return $this->clientServices->client_details($request);
+    }
+
     /**
      * Get the clients that made(Comment and log and update status) in last 7 days
      * @param Request $request

@@ -50,6 +50,17 @@ class ClientServices
         return sendResponse($clients_arr);
     }
 
+    public function client_details($request)
+    {
+        $this->validationServices->client_details($request);
+        $coach_id = $request['coach_id'] ?: $request->user()->id;
+        $client_id = $request['client_id'];
+
+        $clientDetails = $this->DB_Clients->list_client_details($coach_id, $client_id);
+        $single_client = $clientDetails ? $this->clientInfoArr($clientDetails) : [];
+        return sendResponse($single_client);
+    }
+
     /**
      * Get the clients that made(Comment and log and update status) in last 7 days logic
      *
@@ -77,25 +88,7 @@ class ClientServices
     {
         $clients_arr = [];
         foreach ($clients as $client) {
-            $single_client = [
-                "id" => $client->client->id,
-                "name" => $client->client->name,
-                "email" => $client->client->email,
-                "phone" => $client->client->phone,
-                "country_id" => $client->client->country_id??"" ,
-                "country_name" => $client->client?->country?->name ?? "",
-                "gender_id" => $client->client->gender_id??"" ,
-                "gender_name" => $client->client?->gender?->name ?? "",
-                "payment_link" => $client->client->client->payment_link ?? "",
-                "tag" => $client->client->client->tag ?? "",
-                "due_date" => $client->client->due_date ?? "",
-                "status" => $client->status,//0 for pending , 1 for active,2 for archived
-                "weight" => $client?->client?->client?->weight?? "",
-                "height" => $client?->client?->client?->height?? "",
-                "fitness_goal" => $client?->client?->client?->fitness_goal?? "",
-                "label" => $client?->client?->client?->label?? "",
-                "notes" => $client?->client?->client?->notes?? "",
-            ];
+            $single_client = $this->clientInfoArr($client);
             $clients_arr[] = $single_client;
         }
         if ($status == "all" || $status == "pending") {
@@ -518,6 +511,33 @@ class ClientServices
             $clients_arr[] = $single_client;
         }
         return sendResponse($clients_arr);
+    }
+
+    /**
+     * @param mixed $client
+     * @return array
+     */
+    private function clientInfoArr(mixed $client): array
+    {
+        return [
+            "id" => $client->client->id,
+            "name" => $client->client->name,
+            "email" => $client->client->email,
+            "phone" => $client->client->phone,
+            "country_id" => $client->client->country_id ?? "",
+            "country_name" => $client->client?->country?->name ?? "",
+            "gender_id" => $client->client->gender_id ?? "",
+            "gender_name" => $client->client?->gender?->name ?? "",
+            "payment_link" => $client->client->client->payment_link ?? "",
+            "tag" => $client->client->client->tag ?? "",
+            "due_date" => $client->client->due_date ?? "",
+            "status" => $client->status,//0 for pending , 1 for active,2 for archived
+            "weight" => $client?->client?->client?->weight ?? "",
+            "height" => $client?->client?->client?->height ?? "",
+            "fitness_goal" => $client?->client?->client?->fitness_goal ?? "",
+            "label" => $client?->client?->client?->label ?? "",
+            "notes" => $client?->client?->client?->notes ?? "",
+        ];
     }
 
 
