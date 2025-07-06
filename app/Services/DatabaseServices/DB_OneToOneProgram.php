@@ -24,7 +24,10 @@ class DB_OneToOneProgram
 
     public function get_client_oto_programs(mixed $coach_id, mixed $client_id, mixed $search)
     {
-        return OneToOneProgram::query()->where(['coach_id' => $coach_id, 'client_id' => $client_id])
+        return OneToOneProgram::query()->where(['client_id' => $client_id])
+            ->when($coach_id != null, function ($q) use ($coach_id) {
+                $q->where('coach_id', $coach_id);
+            })
             ->when(!empty($search), function ($q) use ($search) {
                 $q->where('name', 'LIKE', '%' . $search . '%');
             })
@@ -64,11 +67,41 @@ class DB_OneToOneProgram
     public function getClientHasExercisesInDate($coach_id, mixed $date)
     {
         return OneToOneProgram::query()
+            ->with('client.coach_client_client', 'exercises')
             ->where('coach_id', $coach_id)
+            ->whereHas('client', function ($q) {
+                $q->whereHas('coach_client_client', function ($q) {
+                    $q->where('status', '!=', "2");
+                });
+            })
             ->whereHas('exercises', function ($query) use ($coach_id, $date) {
                 $query->whereDate('date', $date);
             })
             ->pluck('client_id');
+    }
+
+    /**
+     * Fetch programs with client and exercises data for the collected dates
+     * @param $programs
+     * @return mixed
+     */
+    public function getProgramsWithClientAndExercisesForCollectedDated($programs)
+    {
+        return OneToOneProgram::whereIn('id', $programs->keys())
+            ->with([
+                'client',
+                'exercises' => function ($q) use ($programs) {
+                    $q->where(function ($subQuery) use ($programs) {
+                        foreach ($programs as $programId => $dates) {
+                            $subQuery->orWhere(function ($inner) use ($programId, $dates) {
+                                $inner->where('one_to_one_program_id', $programId)
+                                    ->whereIn('date', $dates);
+                            });
+                        }
+                    })->with('log');
+                }
+            ])
+            ->get();
     }
 
 }

@@ -18,7 +18,7 @@ class DB_Users
             'client_programs.exercises.videos')->find($id);
     }
 
-    public function create_user(mixed $name, mixed $email, mixed $phone, mixed $password, $due_date, $user_type = "0")
+    public function create_user(mixed $name, mixed $email, mixed $phone, mixed $password, $due_date, $country_id, $gender_id, $user_type = "0")
     {
         return User::query()->create([
             'name' => $name,
@@ -27,15 +27,19 @@ class DB_Users
             'password' => $password,
             'user_type' => $user_type,
             'due_date' => $due_date,
+            'country_id' => $country_id,
+            'gender_id' => $gender_id,
         ]);
     }
 
-    public function update_user(mixed $client_id, $name, $email, $phone)
+    public function update_user(mixed $client_id, $name, $email, $phone, $country_id, $gender_id)
     {
         return User::query()->where('id', $client_id)->update([
             'name' => $name,
             'email' => $email,
             'phone' => $phone,
+            'country_id' => $country_id,
+            'gender_id' => $gender_id,
         ]);
     }
 

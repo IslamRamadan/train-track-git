@@ -28,6 +28,8 @@ class User extends Authenticatable
         'due_date',
         'last_active',
         'email_verified_at',
+        'country_id',
+        'gender_id',
     ];
     protected $appends = ['active_clients'];
 
@@ -105,6 +107,16 @@ class User extends Authenticatable
     public function program_clients()
     {
         return $this->hasMany(ProgramClient::class, 'client_id');
+    }
+
+    public function country()
+    {
+        return $this->belongsTo(Country::class, 'country_id');
+    }
+
+    public function gender()
+    {
+        return $this->belongsTo(Gender::class, 'gender_id');
     }
 
     protected function userTypeText(): Attribute

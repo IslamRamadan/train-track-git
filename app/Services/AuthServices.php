@@ -79,11 +79,13 @@ class AuthServices
         $email = $request['email'];
         $phone = $request['phone'];
         $password = $request['password'];
+        $country_id = $request['country_id'];
+        $gender_id = $request['gender_id'];
         $pending_client = $this->DB_PendingClients->get_pending_client_by_email($email);
         $coach_id = $pending_client->coach_id;
         $coach_info = $this->DB_Users->get_user_info($coach_id);
         DB::beginTransaction();
-        $client = $this->DB_Clients->create_client($name, $email, $phone, $password);
+        $client = $this->DB_Clients->create_client($name, $email, $phone, $password, $country_id, $gender_id);
 //        delete email from pending clients
         $this->DB_PendingClients->delete_pending_client($email);
 //        create coach_clients record
@@ -108,9 +110,12 @@ class AuthServices
         $gym = $request['gym'];
         $speciality = $request['speciality'];
         $certificates = $request['certificates'];
+        $country_id = $request['country_id'];
+        $gender_id = $request['gender_id'];
+
         $due_date = Carbon::today()->addMonth()->toDateString();
         DB::beginTransaction();
-        $user = $this->DB_Users->create_user($name, $email, $phone, $password, $due_date);
+        $user = $this->DB_Users->create_user($name, $email, $phone, $password, $due_date, $country_id, $gender_id);
         $this->DB_Coaches->create_coach($gym, $speciality, $certificates, $user->id);
         $email_is_invited_to_gym = $this->DB_GymJoinRequest->find_email_is_invited_to_gym($email);
         if ($email_is_invited_to_gym) {

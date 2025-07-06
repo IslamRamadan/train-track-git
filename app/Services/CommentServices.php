@@ -27,7 +27,7 @@ class CommentServices
         $oto_program_id = $request->client_program_id;
         $comment = $request->comment;
         $sender = $request->user()->user_type;
-        $receiver_type = $request->user()->user_type == "0" ? "Client" : "Coach";
+        $receiver_type = $request->user()->user_type == "0" ? "Coach" : "Client";
         $user_name = $request->user()->name;
         $current_time = Carbon::now()->toDateTimeString();
 
@@ -40,7 +40,7 @@ class CommentServices
         DB::commit();
 
         $payload = [
-            'user_id' => strval($user_id),
+            'user_id' => strval($request->user()->id),
             'user_type' => $receiver_type,
             'oto_program_id' => strval($oto_program_id),
             'date' => $date,

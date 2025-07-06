@@ -96,9 +96,9 @@ class ExerciseServices
         if ($program->sync == "1") {
             $this->sync_on_add_exercise($program->starting_date, $day, $program_id, $name, $description, $extra_description, $exercise->id, $videos);
         }
+        $exercise_arr = $this->program_exercises_arr($exercise, $program->starting_date);
         DB::commit();
-
-        return sendResponse(['exercise_id' => $exercise->id, 'message' => "Exercise added successfully"]);
+        return sendResponse(['exercise_id' => $exercise->id, 'message' => "Exercise added successfully", 'exercise' => $exercise_arr]);
     }
 
     public function copy($request)
@@ -118,9 +118,10 @@ class ExerciseServices
             $this->sync_on_add_exercise($copied_exercise->program->starting_date, $day, $to_program_id, $exercise->name,
                 $exercise->description, $exercise->extra_description, $copied_exercise->id, $exercise->videos);
         }
+        $exercise_arr = $this->program_exercises_arr($copied_exercise, $copied_exercise->program->starting_date);
         DB::commit();
 
-        return sendResponse(['exercise_id' => $copied_exercise->id, 'message' => "Exercise copied successfully"]);
+        return sendResponse(['exercise_id' => $copied_exercise->id, 'message' => "Exercise copied successfully", 'exercise' => $exercise_arr]);
     }
 
     function copy_days($request)
@@ -132,8 +133,8 @@ class ExerciseServices
 
         $copied_days_arr = $this->make_copied_days_arr($copied_days);//define which day that will be copied and which day will not
         $day = $request['start_day'];
-        $this->copy_days_logic(days_arr: $copied_days_arr, from_program_id: $from_program_id, to_program_id: $to_program_id, start_day: $day);
-        return sendResponse(['message' => "Exercise days copied successfully"]);
+        $exercise_arr = $this->copy_days_logic(days_arr: $copied_days_arr, from_program_id: $from_program_id, to_program_id: $to_program_id, start_day: $day);
+        return sendResponse(['message' => "Exercise days copied successfully", 'exercises' => $exercise_arr]);
     }
 
 
@@ -147,10 +148,10 @@ class ExerciseServices
 
         $cut_days_arr = $this->make_copied_days_arr($cut_days);//define which day that will be cut and which day will not
 
-        $this->copy_days_logic(days_arr: $cut_days_arr, from_program_id: $from_program_id, to_program_id: $to_program_id,
+        $exercise_arr =$this->copy_days_logic(days_arr: $cut_days_arr, from_program_id: $from_program_id, to_program_id: $to_program_id,
             start_day: $start_day, operation_type: "cut");
 
-        return sendResponse(['message' => "Exercise days cut successfully"]);
+        return sendResponse(['message' => "Exercise days cut successfully", 'exercises' => $exercise_arr]);
     }
 
     function delete_days($request)
@@ -335,11 +336,12 @@ class ExerciseServices
      * @param mixed $to_program_id
      * @param int $start_day
      * @param string $operation_type
-     * @return void
+     * @return array
      */
-    private function copy_days_logic($days_arr, mixed $from_program_id, mixed $to_program_id, int $start_day, string $operation_type = "copy"): void
+    private function copy_days_logic($days_arr, mixed $from_program_id, mixed $to_program_id, int $start_day, string $operation_type = "copy"): array
     {
         $copied_exercises_arr = [];
+        $exercise_arr = [];
         foreach ($days_arr as $single_day) {
             Log::info("single day " . $single_day['day'] . " start");
 
@@ -370,12 +372,14 @@ class ExerciseServices
                             $this->DB_ProgramExerciseVideos->delete_exercise_videos($exercise);
                             $this->DB_Exercises->delete_single_exercises($exercise->id);
                         }
+                        $exercise_arr[] = $this->program_exercises_arr($copied_exercise, $copied_exercise->program->starting_date);
                     }
                     DB::commit();
                 }
             }
             $start_day++;
         }
+        return $exercise_arr;
     }
 
     private function get_date_after_n_days($starting_date, $number_of_days_after_starting)

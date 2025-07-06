@@ -50,6 +50,17 @@ class ClientServices
         return sendResponse($clients_arr);
     }
 
+    public function client_details($request)
+    {
+        $this->validationServices->client_details($request);
+        $coach_id = $request['coach_id'] ?: $request->user()->id;
+        $client_id = $request['client_id'];
+
+        $clientDetails = $this->DB_Clients->list_client_details($coach_id, $client_id);
+        $single_client = $clientDetails ? $this->clientInfoArr($clientDetails) : [];
+        return sendResponse($single_client);
+    }
+
     /**
      * Get the clients that made(Comment and log and update status) in last 7 days logic
      *
@@ -77,21 +88,7 @@ class ClientServices
     {
         $clients_arr = [];
         foreach ($clients as $client) {
-            $single_client = [
-                "id" => $client->client->id,
-                "name" => $client->client->name,
-                "email" => $client->client->email,
-                "phone" => $client->client->phone,
-                "payment_link" => $client->client->client->payment_link ?? "",
-                "tag" => $client->client->client->tag ?? "",
-                "due_date" => $client->client->due_date ?? "",
-                "status" => $client->status,//0 for pending , 1 for active,2 for archived
-                "weight" => $client?->client?->client?->weight?? "",
-                "height" => $client?->client?->client?->height?? "",
-                "fitness_goal" => $client?->client?->client?->fitness_goal?? "",
-                "label" => $client?->client?->client?->label?? "",
-                "notes" => $client?->client?->client?->notes?? "",
-            ];
+            $single_client = $this->clientInfoArr($client);
             $clients_arr[] = $single_client;
         }
         if ($status == "all" || $status == "pending") {
@@ -140,7 +137,7 @@ class ClientServices
     }
 
     /**
-     * Assign program to client
+     * Assign a program to a client
      * @param $request
      * @return JsonResponse
      */
@@ -154,10 +151,15 @@ class ClientServices
         $start_day = $request['start_day'];//
         $end_day = $request['end_day'];
         $notify_client = $request['notify_client'];
-
         $find_program_type = $this->DB_Programs->find_program(program_id: $program_id);
-        if (($start_date == null || $start_day == null) && $find_program_type->type == "0") {
+        if ($find_program_type->type == "0") {
+            $clientAssignedBefore = $this->DB_ProgramClients->programAssignedToClientBefore($program_id, $clients_id);
+            if ($clientAssignedBefore) {
+                return sendError("This template program already assigned to this client");
+            }
+            if (($start_date == null || $start_day == null)) {
             return sendError("Start date and Start day is required when program type is normal");
+        }
         }
 
         if ($find_program_type->type == "1") {
@@ -248,7 +250,7 @@ class ClientServices
         $this->validationServices->assign_client_to_coach($request);
 
         $coach_id = $request->user()->id;
-        $coach_email = $request->user()->email;
+        $coach_email = $request->user()->name;
         $email = $request['email'];
 
         list($coach_package, $upgrade) = $this->coachServices->get_coach_package($coach_id);
@@ -311,10 +313,10 @@ class ClientServices
         $fitness_goal = $request->fitness_goal;
         $label = $request->label;
         $notes = $request->notes;
+        $country_id = $request->country_id;
+        $gender_id = $request->gender_id;
 
-        $this->DB_Users->update_user($client_id, $name
-            , $email
-            , $phone);
+        $this->DB_Users->update_user($client_id, $name, $email, $phone, $country_id, $gender_id);
         $client=$this->DB_Clients->get_client_info($client_id);
         if ($client){
             $this->DB_Clients->update_client_info($client,[
@@ -395,7 +397,7 @@ class ClientServices
                     foreach ($program->exercises as $exercise) {
                         if ($exercise->log()->exists()) {
                             //delete exercises logs
-                            $exercise->log()->log_videos()->delete();
+                            $exercise->log->log_videos()->delete();
                             $exercise->log->delete();
                         }
                         if ($exercise->videos()->exists()) {
@@ -509,6 +511,33 @@ class ClientServices
             $clients_arr[] = $single_client;
         }
         return sendResponse($clients_arr);
+    }
+
+    /**
+     * @param mixed $client
+     * @return array
+     */
+    private function clientInfoArr(mixed $client): array
+    {
+        return [
+            "id" => $client->client->id,
+            "name" => $client->client->name,
+            "email" => $client->client->email,
+            "phone" => $client->client->phone,
+            "country_id" => $client->client->country_id ?? "",
+            "country_name" => $client->client?->country?->name ?? "",
+            "gender_id" => $client->client->gender_id ?? "",
+            "gender_name" => $client->client?->gender?->name ?? "",
+            "payment_link" => $client->client->client->payment_link ?? "",
+            "tag" => $client->client->client->tag ?? "",
+            "due_date" => $client->client->due_date ?? "",
+            "status" => $client->status,//0 for pending , 1 for active,2 for archived
+            "weight" => $client?->client?->client?->weight ?? "",
+            "height" => $client?->client?->client?->height ?? "",
+            "fitness_goal" => $client?->client?->client?->fitness_goal ?? "",
+            "label" => $client?->client?->client?->label ?? "",
+            "notes" => $client?->client?->client?->notes ?? "",
+        ];
     }
 
 

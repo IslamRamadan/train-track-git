@@ -35,6 +35,13 @@ class DB_Clients
             ->get();
     }
 
+    public function list_client_details(mixed $coach_id, $client_id)
+    {
+        return CoachClient::with('coach', 'client.client')
+            ->where(['coach_id' => $coach_id, 'client_id' => $client_id])
+            ->first();
+    }
+
     public function get_active_clients_between_dates(mixed $coach_id, mixed $search, $date_from, $date_to)
     {
         return CoachClient::query()
@@ -56,13 +63,15 @@ class DB_Clients
             ->get();
     }
 
-    public function create_client(mixed $name, mixed $email, mixed $phone, mixed $password)
+    public function create_client(mixed $name, mixed $email, mixed $phone, mixed $password, $country_id, $gender_id)
     {
         return User::query()->create([
             'name' => $name,
             'email' => $email,
             'phone' => $phone,
             'password' => $password,
+            'country_id' => $country_id,
+            'gender_id' => $gender_id,
             'user_type' => "1",
         ]);
     }

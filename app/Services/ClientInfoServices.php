@@ -28,8 +28,10 @@ class ClientInfoServices
         $fitness_goal = $request->fitness_goal;
         $label = $request->label;
         $notes = $request->notes;
+        $country_id = $request->country_id;
+        $gender_id = $request->gender_id;
         $user_info = $this->DB_Users->get_user_info($client_id);
-        $this->DB_Users->update_user_data($user_info, ['name' => $name]);
+        $this->DB_Users->update_user_data($user_info, ['name' => $name, 'country_id' => $country_id, 'gender_id' => $gender_id]);
         $client_info = $this->DB_Clients->get_client_info($client_id);
         if ($client_info) {
             $this->DB_Clients->update_client_info($client_info, [

@@ -3,6 +3,7 @@
 namespace App\Services\DatabaseServices;
 
 use App\Models\OtoExerciseComment;
+use Illuminate\Support\Collection;
 
 class DB_OtoExerciseComments
 {
@@ -51,5 +52,47 @@ class DB_OtoExerciseComments
                 $query->where('client_id', $client_id);
             })
             ->get();
+    }
+
+    /**
+     * Fetch comments made on the same date by the coach
+     * @param $coachId
+     * @param $date
+     * @return Collection
+     */
+    public function getProgramsWithDatesThatHasCommentsInDate($coachId, $date): Collection
+    {
+        return OtoExerciseComment::query()
+            ->whereDate('created_at', $date)
+            ->whereHas('program', function ($q1) use ($coachId) {
+                $q1->where('coach_id', $coachId);
+            })
+            ->get()
+            ->groupBy('oto_program_id')
+            ->mapWithKeys(function ($group, $programId) {
+                // Extract unique comment dates per program
+                return [$programId => $group->pluck('date')->unique()->values()->toArray()];
+            });
+    }
+
+    /**
+     * Fetch all comments again for the same program/date pairs
+     * @param $programs
+     * @return mixed
+     */
+    public function getCommentsForProgramDatePairs($programs)
+    {
+        return OtoExerciseComment::where(function ($query) use ($programs) {
+            foreach ($programs as $programId => $dates) {
+                $query->orWhere(function ($subQuery) use ($programId, $dates) {
+                    $subQuery->where('oto_program_id', $programId)
+                        ->whereIn('date', $dates);
+                });
+            }
+        })->get()
+            ->groupBy(function ($comment) {
+                // Key: programId_date
+                return $comment->oto_program_id . '_' . $comment->date;
+            });
     }
 }

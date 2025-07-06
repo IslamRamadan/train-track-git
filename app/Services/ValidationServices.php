@@ -111,6 +111,17 @@ class ValidationServices
         ]);
     }
 
+    public function copy_vv_program_exercise($request)
+    {
+        $request->validate([
+            'from_type' => 'required',
+            'to_type' => 'required',
+            'exercise_id' => 'required',
+            'to_program_id' => 'required',
+            'to_day' => 'nullable',
+            'to_date' => 'nullable',
+        ]);
+    }
     public function copy_program_exercise_days($request)
     {
         $request->validate([
@@ -121,6 +132,21 @@ class ValidationServices
         ]);
     }
 
+    public function copy_vv_program_exercise_days($request)
+    {
+        $request->validate([
+            'from_type' => 'required',
+            'to_type' => 'required',
+            'from_program_id' => 'required',
+            'to_program_id' => 'required',
+            'copied_days' => 'nullable|array',
+            'copied_days.*' => 'nullable|numeric',
+            'start_day' => 'nullable|numeric',
+            'copied_dates' => 'nullable|array',
+            'copied_dates.*' => 'date_format:Y-m-d',
+            'start_date' => 'nullable|date_format:Y-m-d',
+        ]);
+    }
     public function cut_program_exercise_days($request)
     {
         $request->validate([
@@ -166,6 +192,13 @@ class ValidationServices
         ]);
     }
 
+    public function client_details($request)
+    {
+        $request->validate([
+            'client_id' => 'required|exists:users,id',
+        ]);
+    }
+
     public function list_active_clients($request)
     {
         $request->validate([
@@ -203,7 +236,7 @@ class ValidationServices
     public function assign_client_to_coach($request)
     {
         $request->validate([
-            'email' => 'required|email|unique:users,email|unique:pending_clients,email',
+            'email' => 'required|email|unique:users,email|unique:pending_clients,email|email:rfc,dns',
         ]);
     }
 
@@ -221,6 +254,8 @@ class ValidationServices
             'email' => 'required|email|unique:users,email|exists:pending_clients,email',
             'phone' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|unique:users,phone',
             'password' => 'required',
+            'country_id' => 'nullable|exists:countries,id',
+            'gender_id' => 'nullable|exists:genders,id',
 
         ], [
             'email.unique' => 'This email already exists in the system',
@@ -232,12 +267,14 @@ class ValidationServices
     {
         $request->validate([
             'name' => 'required',
-            'email' => 'required|email|unique:users,email',
+            'email' => 'required|email|unique:users,email|email:rfc,dns',
             'phone' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|unique:users,phone',
             'password' => 'required',
             'gym' => 'required',
             'speciality' => 'required',
             'certificates' => 'required',
+            'country_id' => 'nullable|exists:countries,id',
+            'gender_id' => 'nullable|exists:genders,id',
 
         ], [
             'email.unique' => 'This email already exists in the system',
@@ -256,6 +293,8 @@ class ValidationServices
             'certificates' => 'required',
             'pay_now' => 'required|in:0,1',
             'package_id' => 'required|exists:packages,id',
+            'country_id' => 'nullable|exists:countries,id',
+            'gender_id' => 'nullable|exists:genders,id',
 
         ], [
             'email.unique' => 'This email already exists in the system',
@@ -266,7 +305,7 @@ class ValidationServices
     {
         $request->validate([
             'name' => 'required',
-            'email' => 'required|email|unique:users,email,' . $request->user()->id,
+            'email' => 'required|email|email|email:rfc,dns|unique:users,email,' . $request->user()->id,
             'phone' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|unique:users,phone,' . $request->user()->id,
             'gym' => 'required',
             'speciality' => 'required',
@@ -465,7 +504,7 @@ class ValidationServices
     {
         $request->validate([
             'name' => 'required',
-            'email' => 'required|email|unique:users,email,' . $request->user()->id,
+            'email' => 'required|email|email|email:rfc,dns|unique:users,email,' . $request->user()->id,
             'phone' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|unique:users,phone,' . $request->user()->id,
             'weight'=>'nullable|numeric|min:20|max:500',
             'height'=>'nullable|numeric|min:50|max:300',
@@ -803,6 +842,8 @@ class ValidationServices
             'fitness_goal'=>'nullable',
             'label'=>'nullable',
             'notes'=>'nullable',
+            'country_id' => 'nullable|exists:countries,id',
+            'gender_id' => 'nullable|exists:genders,id',
         ]);
     }
 
@@ -824,6 +865,20 @@ class ValidationServices
     {
         $request->validate([
             'program_id' => 'required|exists:programs,id',
+        ]);
+    }
+
+    public function searchValidation($request)
+    {
+        $request->validate([
+            'search' => 'nullable|max:50',
+        ]);
+    }
+
+    public function list_client_activity_in_date($request)
+    {
+        $request->validate([
+            'date' => 'required|date_format:Y-m-d',
         ]);
     }
 

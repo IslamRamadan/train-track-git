@@ -7,7 +7,9 @@ use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_Coaches;
 use App\Services\DatabaseServices\DB_ExerciseLog;
 use App\Services\DatabaseServices\DB_Notifications;
+use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
+use App\Services\DatabaseServices\DB_OtoExerciseComments;
 use App\Services\DatabaseServices\DB_Packages;
 use App\Services\DatabaseServices\DB_PendingClients;
 use App\Services\DatabaseServices\DB_UserPayment;
@@ -16,6 +18,7 @@ use App\Services\PaymentServices\PaymentServices;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class CoachServices
 {
@@ -31,6 +34,8 @@ class CoachServices
                                 protected PaymentServices             $paymentServices,
                                 protected DB_PendingClients           $DB_PendingClients,
                                 protected NotificationServices        $notificationServices,
+                                protected DB_OtoExerciseComments $DB_OtoExerciseComments,
+                                protected DB_OneToOneProgram     $DB_OneToOneProgram
     )
     {
     }
@@ -45,8 +50,6 @@ class CoachServices
      */
     public function coach_dashboard($request)
     {
-//        $notification = $this->notificationServices->send("eIdRM75qS3GFAJN8aZbf9q:APA91bFTcWr3BhPV3HgjO7253CyGD5p7_rmGP010XPFPLRkXbAPG2ZSyT6Zf0cHWcE2jLwiAame3QtJ-ZrjufjP8EaxCkUWZ0wp73LS4jVRYZ0M56vuLAJhEE_9fIHs_9d5kErc9gvPG", "Hi", "Hi");
-//        dd($notification);
         $coach_id = $request->user()->id;
 //        number of clients
         $number_of_clients = $this->DB_Clients->get_coach_clients_count($coach_id);
@@ -76,6 +79,10 @@ class CoachServices
             'coach_package_id' => $coach_info->coach->package->id,
             'coach_package_name' => $coach_info->coach->package->name,
             'coach_package_amount' => $coach_info->coach->package->amount,
+            'coach_country_id' => $coach_info->country_id ?? "",
+            'coach_country_name' => $coach_info->country ? $coach_info->country->name : "",
+            'coach_gender_id' => $coach_info->gender_id ?? "",
+            'coach_gender_name' => $coach_info->gender ? $coach_info->gender->name : "",
             'coach_package_clients_limit' => $coach_info->coach->package->clients_limit,
             'total_clients' => $number_of_clients,
             'active_clients' => $number_of_active_clients,
@@ -95,6 +102,159 @@ class CoachServices
                 'in_trial' => $coach_info->coach->in_trial,
             ]
         ]);
+    }
+
+    /**
+     * List client activities (exercises + comments) for a given coach and date.
+     *
+     * This method collects all relevant exercise logs and comments on a specified date,
+     * groups them by program and client, and returns a structured response.
+     *
+     * @param Request $request Must contain `date`, and authenticated `coach`
+     * @return JsonResponse
+     */
+    public function list_client_activity_in_date($request)
+    {
+        // ✅ Step 1: Validate the request input (e.g., date must be in format Y-m-d)
+        $this->validationServices->list_client_activity_in_date($request);
+
+        $date = $request->date;
+        $coachId = $request->user()->id;
+
+        // 📌 Step 2: Fetch exercises related to the coach and that have logs/updates on the given date
+        $exercises = $this->DB_OneToOneProgramExercises->getExercisesWithUpdatesInDate($coachId, $date);
+
+        // 📌 Step 3: Fetch comments made on the same date by the coach
+        $comments = $this->DB_OtoExerciseComments->getProgramsWithDatesThatHasCommentsInDate($coachId, $date);
+
+        // 🔄 Step 4: Merge both exercises and comments into a single collection of [programId => [dates]]
+        $programsCollection = $this->mergeProgramActivityDates($exercises, $comments);
+
+
+        // 📦 Step 5: Fetch programs with client and exercises data for the collected dates
+        $programs = $this->DB_OneToOneProgram->getProgramsWithClientAndExercisesForCollectedDated($programsCollection);
+
+        // 🧮 Step 6: Group exercises by date within each program
+        $this->groupExercisesByDateWithinEachProgram($programs);
+
+        // 📝 Step 7: Fetch all comments again for the same program/date pairs
+        $programsComments = $this->DB_OtoExerciseComments->getCommentsForProgramDatePairs($programsCollection);
+
+        // 🎯 Step 8: Structure the final response grouped by client
+        $response = $this->buildClientProgramActivityStructure($programs, $programsComments);
+
+        // 🚀 Step 9: Return structured response
+        return sendResponse($response);
+    }
+
+    /**
+     * Merge exercise and comment dates by program into one collection.
+     *
+     * @param \Illuminate\Support\Collection $exercises [program_id => [dates]]
+     * @param \Illuminate\Support\Collection $comments [program_id => [dates]]
+     * @return \Illuminate\Support\Collection  [program_id => [merged unique dates]]
+     */
+    private function mergeProgramActivityDates(\Illuminate\Support\Collection $exercises, \Illuminate\Support\Collection $comments): \Illuminate\Support\Collection
+    {
+        $programsCollection = collect();
+
+        foreach ($exercises as $programId => $dates) {
+            $programsCollection[$programId] = $dates;
+        }
+
+        foreach ($comments as $programId => $dates) {
+            if ($programsCollection->has($programId)) {
+                $programsCollection[$programId] = collect($programsCollection[$programId])
+                    ->merge($dates)
+                    ->unique()
+                    ->values()
+                    ->toArray();
+            } else {
+                $programsCollection[$programId] = $dates;
+            }
+        }
+
+        return $programsCollection;
+    }
+
+    /**
+     * Build a structured array of client programs with exercises and comments grouped by date.
+     *
+     * @param \Illuminate\Support\Collection $programs Programs with grouped_exercises
+     * @param \Illuminate\Support\Collection $programsComments Grouped comments (keyed by "programId_date")
+     * @return array
+     */
+    private function buildClientProgramActivityStructure($programs, $programsComments)
+    {
+        $result = [];
+
+        foreach ($programs as $program) {
+            $client = $program->client;
+
+            // Unique key to check if this client already exists in result
+            $clientIndex = collect($result)->search(fn($entry) => $entry['client_id'] === $client->id);
+
+            if ($clientIndex === false) {
+                $result[] = [
+                    'client_id' => $client->id,
+                    'client_name' => $client->name,
+                    'programs' => []
+                ];
+                $clientIndex = array_key_last($result);
+            }
+
+            $programData = [
+                'program_id' => $program->id,
+                'program_name' => $program->name,
+                'dates' => []
+            ];
+
+            foreach ($program->grouped_exercises as $date => $exercises) {
+                $dateData = [
+                    'date' => $date,
+                    'exercises' => [],
+                    'comments' => []
+                ];
+
+                foreach ($exercises as $exercise) {
+                    $log = $exercise->log;
+
+                    $dateData['exercises'][] = [
+                        'exercise_id' => $exercise->id,
+                        'arrangement' => $exercise->arrangement,
+                        'exercise_name' => $exercise->name,
+                        'exercise_description' => $exercise->description,
+                        'is_done' => $exercise->is_done,
+                        'log_id' => $log->id ?? "",
+                        'log_sets' => $log->sets ?? "",
+                        'log_details' => $log->details ?? "",
+                        'log_date' => $log?->created_at?->format('Y-m-d') ?? "",
+                        'log_time' => $log?->created_at?->format('H:i:s') ?? "",
+                    ];
+                }
+
+                $commentKey = $program->id . '_' . $date;
+                $commentsForDate = $programsComments[$commentKey] ?? [];
+
+                foreach ($commentsForDate as $comment) {
+                    $dateData['comments'][] = [
+                        'comment_id' => $comment['id'],
+                        'comment_content' => $comment['comment'],
+                        'sender' => $comment['sender'] == 1 ? 'Coach' : 'Client',
+                        'coach_id' => $program->coach_id,
+                        'coach_name' => optional($program->coach)->name ?? 'Unknown',
+                        'client_id' => $client->id,
+                        'client_name' => $client->name,
+                    ];
+                }
+
+                $programData['dates'][] = $dateData;
+            }
+
+            $result[$clientIndex]['programs'][] = $programData;
+        }
+
+        return $result;
     }
 
     public function get_clients_activities($request)
@@ -118,10 +278,10 @@ class CoachServices
         $gym = $request->gym;
         $speciality = $request->speciality;
         $certificates = $request->certificates;
+        $country_id = $request->country_id;
+        $gender_id = $request->gender_id;
 
-        $this->DB_Users->update_user($coach_id, $name
-            , $email
-            , $phone);
+        $this->DB_Users->update_user($coach_id, $name, $email, $phone, $country_id, $gender_id);
         $this->DB_Coaches->update_coach($coach_id, $gym, $speciality, $certificates);
 
         return sendResponse(['message' => "Coach information updated successfully"]);
@@ -271,6 +431,39 @@ class CoachServices
         return $logs_arr;
     }
 
+    public function list_logs_arr_updated(Collection|array $logs)
+    {
+        $logs_arr = [];
+        if ($logs) {
+            foreach ($logs as $log) {
+                $single_log_arr = [];
+                $single_log_arr['client_id'] = $log->exercise->one_to_one_program->client_id;
+                $single_log_arr['client_name'] = $log->exercise->one_to_one_program->client->name;
+                $single_log_arr['programs']['program_id'] = $log->exercise->one_to_one_program->id;
+                $single_log_arr['programs']['program_name'] = $log->exercise->one_to_one_program->name;
+                $single_log_arr['programs']['exercises']['exercise_id'] = $log->exercise->id;
+                $single_log_arr['programs']['exercises']['exercise_name'] = $log->exercise->name;
+                $single_log_arr['programs']['exercises']['arrangement'] = $log->exercise->arrangement;
+                $single_log_arr['programs']['exercises']['exercise_description'] = $log->exercise->description;
+                $single_log_arr['programs']['exercises']['is_done'] = $log->exercise->is_done;
+                $single_log_arr['programs']['exercises']['log_id'] = $log->id;
+                $single_log_arr['programs']['exercises']['log_sets'] = $log->sets;
+                $single_log_arr['programs']['exercises']['log_details'] = $log->details;
+                $single_log_arr['programs']['exercises']['log_date'] = $log->created_at->format("Y-m-d");
+                $single_log_arr['programs']['exercises']['log_time'] = $log->created_at->format("H:i:s");
+//                $single_log_arr['videos'] = [];
+//
+//                if ($log->log_videos()->exists()) {
+//                    foreach ($log->log_videos as $log_video) {
+//                        $single_log_arr['videos'][] = $log_video->path;
+//                    }
+//                }
+                $logs_arr[] = $single_log_arr;
+            }
+        }
+        return $logs_arr;
+    }
+
     /**
      * @param string $today
      * @param mixed $coach_id
@@ -367,5 +560,19 @@ class CoachServices
         }, $coach_payments);
 
         return sendResponse($payments_arr);
+    }
+
+    /**
+     * Group exercises by date within each program
+     * @param mixed $programs
+     * @return void
+     */
+    private function groupExercisesByDateWithinEachProgram(mixed $programs): void
+    {
+        $programs->map(function ($program) {
+            $program->grouped_exercises = $program->exercises->groupBy('date');
+            unset($program->exercises);
+            return $program;
+        });
     }
 }

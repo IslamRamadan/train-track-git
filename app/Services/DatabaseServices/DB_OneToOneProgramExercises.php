@@ -3,6 +3,8 @@
 namespace App\Services\DatabaseServices;
 
 use App\Models\OneToOneProgramExercise;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 class DB_OneToOneProgramExercises
 {
@@ -131,9 +133,18 @@ class DB_OneToOneProgramExercises
 
     public function get_workouts_done_today(string $today, mixed $coach_id)
     {
-        return OneToOneProgramExercise::query()->with('one_to_one_program')->where(['date' => $today])
+        return OneToOneProgramExercise::query()
+            ->with('one_to_one_program.client.coach_client_client')
+            ->where(['date' => $today])
             ->whereHas('one_to_one_program', function ($query) use ($coach_id) {
-                $query->where('coach_id', $coach_id);
+                $query->where('coach_id', $coach_id)
+                    ->whereHas('client', function ($q) {
+                        $q->whereHas('coach_client_client', function ($q) {
+                            $q->where('status', '!=', "2");
+                        });
+                    })
+
+                ;
             })->
             get()
             ->groupBy('one_to_one_program_id');
@@ -153,6 +164,7 @@ class DB_OneToOneProgramExercises
     {
         return OneToOneProgramExercise::where('id', $client_exercise_id)->update([
             'is_done' => $status,
+            'done_date' => Carbon::now()->toDateTimeString(),
         ]);
     }
 
@@ -198,4 +210,29 @@ class DB_OneToOneProgramExercises
             ]);
     }
 
+    /**
+     * Fetch exercises related to the coach and that have logs/updates on the given date
+     * @param $coachId
+     * @param $date
+     * @return Collection
+     */
+    public function getExercisesWithUpdatesInDate($coachId, $date): Collection
+    {
+        return OneToOneProgramExercise::query()
+            ->whereHas('one_to_one_program', function ($q1) use ($coachId) {
+                $q1->where('coach_id', $coachId); // Ensure only coach's programs are included
+            })
+            ->where(function ($query) use ($date) {
+                $query->whereHas('log', function ($q2) use ($date) {
+                    $q2->whereDate('created_at', $date); // logs on this date
+                })
+                    ->orWhereDate('done_date', $date); // or exercise updated on this date
+            })
+            ->get()
+            ->groupBy('one_to_one_program_id')
+            ->mapWithKeys(function ($group, $programId) {
+                // Extract unique dates from exercises in this program
+                return [$programId => $group->pluck('date')->unique()->values()->toArray()];
+            });
+    }
 }
