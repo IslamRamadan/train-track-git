@@ -30,7 +30,7 @@
     <link rel="stylesheet" href="{{asset('front/style.css')}}">
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
-
+    @yield('css')
 
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">

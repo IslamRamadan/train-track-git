@@ -45,4 +45,9 @@ class CoachController extends Controller
     {
         return $this->coachService->verifyCoachEmail($id);
     }
+    public function verify($lang, $id, Request $request)
+    {
+        return $this->coachService->verify($id, $request);
+
+    }
 }
