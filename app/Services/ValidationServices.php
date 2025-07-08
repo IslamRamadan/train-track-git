@@ -10,6 +10,7 @@ use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_Programs;
 use App\Services\DatabaseServices\DB_Users;
+use Illuminate\Http\Request;
 
 class ValidationServices
 {
@@ -879,6 +880,17 @@ class ValidationServices
     {
         $request->validate([
             'date' => 'required|date_format:Y-m-d',
+        ]);
+    }
+
+    public function update_coach_info(Request $request,$id)
+    {
+        $request->validate([
+            'email' => 'required|email|email|email:rfc,dns|unique:users,email,' . $id,
+            'phone' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|unique:users,phone,' . $id,
+        ], [
+            'email.unique' => 'This email already exists in the system',
+            'phone.unique' => 'This phone already exists in the system',
         ]);
     }
 

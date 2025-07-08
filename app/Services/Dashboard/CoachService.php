@@ -280,6 +280,11 @@ class CoachService
 
     public function update_info($id, Request $request)
     {
+        $this->validationServices->update_coach_info($request, $id);
+        $emailArray = explode("@", $request->email);
+        if ($request->email && !checkdnsrr($emailArray[1])) {
+            return redirect()->back()->with('error', "email domain not valid");
+        }
         $coach = $this->DB_Users->get_user_info($id);
         if (!$coach) {
             abort(404);
