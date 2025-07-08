@@ -60,4 +60,6 @@ return [
     'Verify' => 'Verify',
     'Verification' => 'Verification',
     'UnVerified' => 'Unverified',
+    'UpdateCoachInfo' => 'Update Coach Information',
+    'Edit' => 'Edit',
 ];

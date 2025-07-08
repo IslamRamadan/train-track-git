@@ -50,4 +50,9 @@ class CoachController extends Controller
         return $this->coachService->verify($id, $request);
 
     }
+    public function update_info($lang, $id, Request $request)
+    {
+        return $this->coachService->update_info($id, $request);
+
+    }
 }

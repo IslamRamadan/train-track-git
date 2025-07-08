@@ -8,7 +8,7 @@
             display: none !important;
         }
     </style>
-    @endsection
+@endsection
 @section('content')
     @include('dashboard.layouts.message')
     <div id="currentRouteName" data-route-name="{{ Route::currentRouteName() }}"></div>
@@ -71,7 +71,7 @@
                             <th>{{__('translate.Package')}}</th>
                             <th>{{__('translate.CreationDate')}}</th>
                             <th>{{__('translate.DueDate')}}</th>
-                            <th >{{__('translate.Action')}}</th>
+                            <th>{{__('translate.Action')}}</th>
                         </tr>
                         </thead>
                         <tbody id="tbody">
@@ -91,6 +91,8 @@
     @include('dashboard.partials.coaches.updatePackage',['packages'=>$packages])
     <!-- Verify Email Modal -->
     @include('dashboard.partials.coaches.verifyEmail')
+    <!-- Update Coach Info Modal -->
+    @include('dashboard.partials.coaches.updateCoachInfo')
 
 @endsection
 @section('script')
@@ -123,14 +125,21 @@
                 url = url.replace(':id', $(this).attr('data-id'));
                 $('#verifyEmailForm').attr('action', url);
             });
+            tbody.on('click', '.updateCoachInfo', function () {
+                let url = '{{ route("coach.update.info", [app()->getLocale(),":id"]) }}';
+                url = url.replace(':id', $(this).attr('data-id'));
+                $('#updateCoachInfoForm').attr('action', url);
+                $('#coachPhone').val($(this).attr('data-phone'));
+                $('#coachEmail').val($(this).attr('data-email'));
+            });
         });
 
     </script>
     <script type="text/javascript">
         $(document).ready(function () {
 
-        $(function () {
-            url = "{{ route('coaches.index',app()->getLocale()) }}"
+            $(function () {
+                url = "{{ route('coaches.index',app()->getLocale()) }}"
 
             var table = $('.data-table').DataTable({
                 processing: true,

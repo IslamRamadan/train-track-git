@@ -38,6 +38,7 @@ Route::prefix('{locale?}')->middleware(['localized', 'AdminAuth'])->group(functi
     Route::post('/coaches/update/due/date/{id}', [CoachController::class, "update_due_date"])->name('coach.update.due.date');
     Route::post('/coaches/update/package/{id}', [CoachController::class, "update_package"])->name('coach.update.package');
     Route::post('/users/excel/export', [ExportUsersController::class, "exportUsersToExcel"])->name('users.excel.export');
+    Route::post('/coaches/update/info/{id}', [CoachController::class, "update_info"])->name('coach.update.info');
 });
 
 Route::prefix('{locale?}')->middleware('localized')->group(function () {

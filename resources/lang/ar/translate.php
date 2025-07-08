@@ -60,4 +60,8 @@ return [
     'Verify' => 'توثيق',
     'Verification' => 'التوثيق',
     'UnVerified' => 'غير موثق',
+    'UpdateCoachInfo' => 'تعديل معلومات المدرب',
+    'Edit' => 'تعديل',
+
+
 ];
