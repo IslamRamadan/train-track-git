@@ -2,6 +2,7 @@
 
 namespace App\Services\Dashboard;
 
+use App\Mail\VerifyMail;
 use App\Mail\WelcomeMail;
 use App\Models\User;
 use App\Services\DatabaseServices\DB_Coaches;
@@ -296,7 +297,7 @@ class CoachService
         $updateArr = $newEmail != $oldEmail ? ['phone' => $phone, 'email' => $newEmail, 'email_verified_at' => null] : ['phone' => $phone, 'email' => $newEmail];
         if ($newEmail != $oldEmail || !$coach->updated_at) {
             try {
-//                Mail::to($newEmail)->send(new VerifyMail(name: $coach->name, user_id: $coach->id));
+                Mail::to($newEmail)->send(new VerifyMail(name: $coach->name, user_id: $coach->id));
                 $returnMsg .= " and sent a verification mail to his new email";
 
             } catch (\Exception $exception) {
