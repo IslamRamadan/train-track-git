@@ -94,5 +94,9 @@ class DB_Exercises
     {
         return ProgramExercise::query()->where('id', $id)->delete();
     }
+    public function verify_exercise_id(mixed $id)
+    {
+        return ProgramExercise::query()->where('id', $id)->exists();
+    }
 
 }

@@ -76,4 +76,12 @@ class DB_Programs
     {
         return Program::query()->where('coach_id', $coach_id)->count();
     }
+    public function verify_program_id($program_id)
+    {
+        return Program::query()
+            ->where([
+                'id' => $program_id,
+            ])
+            ->exists();
+    }
 }

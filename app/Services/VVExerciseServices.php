@@ -65,8 +65,8 @@ class VVExerciseServices
                     $this->sync_on_add_exercise($copied_exercise->program->starting_date, $day, $to_program_id, $exercise->name,
                         $exercise->description, $exercise->extra_description, $copied_exercise->id, $exercise->videos);
                 }
-                $exercise_arr = $this->program_exercises_arr($copied_exercise, $copied_exercise->program->starting_date);
             }
+                $exercise_arr = $this->program_exercises_arr($copied_exercise, $copied_exercise->program->starting_date);
         }
         if ($to_type == "oto") {
             $copied_exercise = $this->DB_OneToOneProgramExercises->add_oto_exercise($exercise->name, $exercise->description, $exercise->extra_description, $date, $exercise_arrangement, $to_program_id);

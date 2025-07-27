@@ -235,4 +235,9 @@ class DB_OneToOneProgramExercises
                 return [$programId => $group->pluck('date')->unique()->values()->toArray()];
             });
     }
+
+    public function verify_exercise_id(mixed $id)
+    {
+        return OneToOneProgramExercise::query()->where('id', $id)->exists();
+    }
 }
