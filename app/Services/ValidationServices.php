@@ -52,9 +52,9 @@ class ValidationServices
         $request->validate([
             'name' => 'required|max:50',
             'description' => 'required|max:1000',
-            'type' => 'required|in:0,1,2',
+            'type' => 'required|in:0,1,2,3',
             'starting_date' => 'required_if:type,1|date|date_format:Y-m-d',
-            'sync' => 'required_if:type,1|in:0,1',
+            'sync' => 'required_if:type,1|required_if:type,3|in:0,1',
             'image' => 'nullable'
         ]);
     }
@@ -65,7 +65,7 @@ class ValidationServices
             'program_id' => 'required|exists:programs,id',
             'name' => 'required|max:50',
             'description' => 'required|max:1000',
-            'type' => 'required|in:0,1',
+            'type' => 'required|in:0,1,2,3',
             'starting_date' => 'required_if:type,1|date|date_format:Y-m-d',
             'image' => 'nullable'
         ]);
