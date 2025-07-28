@@ -28,7 +28,7 @@ class DB_ProgramClients
 
     public function get_program_related_oto_programs(mixed $program_id)
     {
-        return ProgramClient::query()->with('oto_program')->where(['program_id' => $program_id])->whereNotNull('oto_program_id')->get();
+        return ProgramClient::query()->with('oto_program.starting_date')->where(['program_id' => $program_id])->whereNotNull('oto_program_id')->get();
     }
 
     public function get_clients_assigned_to_program($coach_id, mixed $program_id)
