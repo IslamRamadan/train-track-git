@@ -54,7 +54,7 @@ class ProgramServices
                 "description" => $program->description,
                 "type" => $program->type_text,
                 "starting_date" => $program->type == "1" ? $program->starting_date : "",
-                "sync" => $program->type == "1" ? $program->sync : "",
+                "sync" => $program->type == "1" || $program->type == "3" ? $program->sync : "",
                 "exercise_days" => $program->exercise_days,
                 "clients_number" => $program->clients_number,
                 "image" => $program->image_path
