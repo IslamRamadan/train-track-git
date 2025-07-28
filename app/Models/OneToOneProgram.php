@@ -10,11 +10,18 @@ class OneToOneProgram extends Model
     use HasFactory;
 
     protected $fillable = ['name', 'description', 'coach_id', 'client_id'];
-    protected $appends = ['exercises_number'];
+    protected $appends = ['exercises_number','first_exercise_date'];
 
     public function getExercisesNumberAttribute()
     {
         return OneToOneProgramExercise::where('one_to_one_program_id', $this->id)->count();
+    }
+
+    public function getFirstExerciseDateAttribute()
+    {
+        return OneToOneProgramExercise::query()
+            ->where('one_to_one_program_id', $this->id)
+            ->orderBy('date')->first()->date ?? "";
     }
 
     public function exercises()
@@ -43,4 +50,8 @@ class OneToOneProgram extends Model
         return $this->hasOne(ProgramClient::class, 'oto_program_id');
     }
 
+    public function starting_date()
+    {
+        return $this->hasOne(OneToOneProgramStartingDate::class, 'one_to_one_program_id');
+    }
 }
