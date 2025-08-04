@@ -2,6 +2,13 @@
 @section('title')
     {{__('translate.Coaches')}}
 @endsection
+@section('css')
+    <style>
+        .dropdown-toggle::after {
+            display: none !important;
+        }
+    </style>
+@endsection
 @section('content')
     @include('dashboard.layouts.message')
     <div id="currentRouteName" data-route-name="{{ Route::currentRouteName() }}"></div>
@@ -58,12 +65,13 @@
                             <th>{{__('translate.Name')}}</th>
                             <th>{{__('translate.Email')}}</th>
                             <th>{{__('translate.Phone')}}</th>
+                            <th>{{__('translate.Verified')}}</th>
                             <th>{{__('translate.ActiveClients')}}</th>
                             <th>{{__('translate.ProgramsNumber')}}</th>
                             <th>{{__('translate.Package')}}</th>
                             <th>{{__('translate.CreationDate')}}</th>
                             <th>{{__('translate.DueDate')}}</th>
-                            <th style="width: 900%">{{__('translate.Action')}}</th>
+                            <th>{{__('translate.Action')}}</th>
                         </tr>
                         </thead>
                         <tbody id="tbody">
@@ -81,6 +89,10 @@
     @include('dashboard.partials.coaches.updateDueDate')
     <!-- Update Package Modal -->
     @include('dashboard.partials.coaches.updatePackage',['packages'=>$packages])
+    <!-- Verify Email Modal -->
+    @include('dashboard.partials.coaches.verifyEmail')
+    <!-- Update Coach Info Modal -->
+    @include('dashboard.partials.coaches.updateCoachInfo')
 
 @endsection
 @section('script')
@@ -108,12 +120,26 @@
                 $('#updatePackageForm').attr('action', url);
                 $('#packages_select').val($(this).attr('data-package'));
             });
+            tbody.on('click', '.verifyEmail', function () {
+                var url = '{{ route("coaches.verify", [app()->getLocale(),":id"]) }}';
+                url = url.replace(':id', $(this).attr('data-id'));
+                $('#verifyEmailForm').attr('action', url);
+            });
+            tbody.on('click', '.updateCoachInfo', function () {
+                let url = '{{ route("coach.update.info", [app()->getLocale(),":id"]) }}';
+                url = url.replace(':id', $(this).attr('data-id'));
+                $('#updateCoachInfoForm').attr('action', url);
+                $('#coachPhone').val($(this).attr('data-phone'));
+                $('#coachEmail').val($(this).attr('data-email'));
+            });
         });
 
     </script>
     <script type="text/javascript">
-        $(function () {
-            url = "{{ route('coaches.index',app()->getLocale()) }}"
+        $(document).ready(function () {
+
+            $(function () {
+                url = "{{ route('coaches.index',app()->getLocale()) }}"
 
             var table = $('.data-table').DataTable({
                 processing: true,
@@ -126,15 +152,21 @@
                     {data: 'name', name: 'name'},
                     {data: 'email', name: 'email'},
                     {data: 'phone', name: 'phone'},
+                    {data: 'is_verified', name: 'is_verified'},
                     {data: 'active_clients', name: 'active_clients'},
                     {data: 'programs_number', name: 'programs_number'},
                     {data: 'package_name', name: 'package_name'},
                     {data: 'creation_date', name: 'creation_date'},
                     {data: 'due_date_tab', name: 'due_date_tab'},
                     {data: 'action', name: 'action', orderable: false, searchable: false, class: "action-buttons"},
-                ]
+                ],
+                drawCallback: function () {
+                    // Re-init dropdowns for Bootstrap 4
+                    $('.dropdown-toggle').dropdown();
+                }
             });
 
+        });
         });
 
     </script>

@@ -9,6 +9,7 @@ use App\Services\DatabaseServices\DB_Exercises;
 use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_OneToOneProgramExerciseVideos;
+use App\Services\DatabaseServices\DB_OneToOneProgramStartingDate;
 use App\Services\DatabaseServices\DB_PendingClients;
 use App\Services\DatabaseServices\DB_ProgramClients;
 use App\Services\DatabaseServices\DB_Programs;
@@ -33,6 +34,7 @@ class ClientServices
                                 protected DB_PendingClients                $DB_PendingClients,
                                 protected DB_OneToOneProgramExerciseVideos $DB_OneToOneProgramExerciseVideos,
                                 protected CoachServices                    $coachServices,
+                                protected DB_OneToOneProgramStartingDate $DB_OneToOneProgramStartingDate
     )
     {
     }
@@ -151,19 +153,20 @@ class ClientServices
         $start_day = $request['start_day'];//
         $end_day = $request['end_day'];
         $notify_client = $request['notify_client'];
-        $find_program_type = $this->DB_Programs->find_program(program_id: $program_id);
-        if ($find_program_type->type == "0") {
-            $clientAssignedBefore = $this->DB_ProgramClients->programAssignedToClientBefore($program_id, $clients_id);
-            if ($clientAssignedBefore) {
-                return sendError("This template program already assigned to this client");
-            }
-            if (($start_date == null || $start_day == null)) {
-            return sendError("Start date and Start day is required when program type is normal");
-        }
+        $parent_program = $this->DB_Programs->find_program(program_id: $program_id);
+        $clientAssignedBefore = $this->DB_ProgramClients->programAssignedToClientBefore($program_id, $clients_id);
+        if ($clientAssignedBefore) {
+            return sendError("This program already assigned to this client");
         }
 
-        if ($find_program_type->type == "1") {
-            $start_date = $find_program_type->starting_date;//
+        if ($parent_program->type == "0" || $parent_program->type == "3") {
+            if (($start_date == null || $start_day == null)) {
+                return sendError("Start date and Start day is required when program type is template or standard", 401);
+            }
+        }
+
+        if ($parent_program->type == "1") {
+            $start_date = $parent_program->starting_date;//
             if (count($this->DB_Exercises->get_program_exercises_days($program_id)) > 0) {
                 if ($start_day == null) {
                     $start_day = 1;
@@ -192,11 +195,13 @@ class ClientServices
                 $success_clients[] = $client_info->name;
 
                 //if there is no conflict then create the program with exercises
-                //8-get the parent program
-                $parent_program = $this->DB_Programs->find_program($program_id);
+//                //8-get the parent program
+//                $parent_program = $this->DB_Programs->find_program($program_id);
 
                 //9-create the custom program assigned to user
                 $one_to_program = $this->DB_OneToOneProgram->create_one_to_program($parent_program->name, $parent_program->description, $client_id, $coach_id);
+                //-if program type is standard then add starting_date
+                if ($parent_program->type == "3") $this->DB_OneToOneProgramStartingDate->create_starting_date($one_to_program->id, $start_date);
                 //10-create row with client_id and program_id in program_clients table
                 $this->DB_ProgramClients->create_program_client($program_id, $client_id, $one_to_program->id);
                 //11-create the custom program exercises assigned to custom program

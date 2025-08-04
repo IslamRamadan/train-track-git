@@ -34,9 +34,11 @@ Route::prefix('{locale?}')->middleware(['localized', 'AdminAuth'])->group(functi
     Route::get('/payments', [PaymentController::class, "index"])->name('payments.index');
     Route::post('/coaches/update/order/status/{id}', [PaymentController::class, "update_order_status"])->name('coach.update.order.status');
     Route::post('/coaches/block/{id}', [CoachController::class, "block"])->name('coaches.block');
+    Route::post('/coaches/verify/{id}', [CoachController::class, "verify"])->name('coaches.verify');
     Route::post('/coaches/update/due/date/{id}', [CoachController::class, "update_due_date"])->name('coach.update.due.date');
     Route::post('/coaches/update/package/{id}', [CoachController::class, "update_package"])->name('coach.update.package');
     Route::post('/users/excel/export', [ExportUsersController::class, "exportUsersToExcel"])->name('users.excel.export');
+    Route::post('/coaches/update/info/{id}', [CoachController::class, "update_info"])->name('coach.update.info');
 });
 
 Route::prefix('{locale?}')->middleware('localized')->group(function () {

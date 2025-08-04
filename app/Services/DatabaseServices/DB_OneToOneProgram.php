@@ -103,5 +103,12 @@ class DB_OneToOneProgram
             ])
             ->get();
     }
-
+    public function verify_program_id($program_id)
+    {
+        return OneToOneProgram::query()
+            ->where([
+                'id' => $program_id,
+            ])
+            ->exists();
+    }
 }

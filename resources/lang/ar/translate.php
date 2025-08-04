@@ -56,5 +56,12 @@ return [
     "UpdateOrderStatus" => "تعديل حالة الطلب",
     "Cancelled" => "تم الالغاء",
     "Status" => "الحالة",
+    'Verified' => 'موثق',
+    'Verify' => 'توثيق',
+    'Verification' => 'التوثيق',
+    'UnVerified' => 'غير موثق',
+    'UpdateCoachInfo' => 'تعديل معلومات المدرب',
+    'Edit' => 'تعديل',
+
 
 ];

@@ -65,8 +65,8 @@ class VVExerciseServices
                     $this->sync_on_add_exercise($copied_exercise->program->starting_date, $day, $to_program_id, $exercise->name,
                         $exercise->description, $exercise->extra_description, $copied_exercise->id, $exercise->videos);
                 }
-                $exercise_arr = $this->program_exercises_arr($copied_exercise, $copied_exercise->program->starting_date);
             }
+                $exercise_arr = $this->program_exercises_arr($copied_exercise, $copied_exercise->program->starting_date);
         }
         if ($to_type == "oto") {
             $copied_exercise = $this->DB_OneToOneProgramExercises->add_oto_exercise($exercise->name, $exercise->description, $exercise->extra_description, $date, $exercise_arrangement, $to_program_id);
@@ -87,16 +87,14 @@ class VVExerciseServices
         $to_type = $request['to_type'];
         $from_program_id = $request['from_program_id'];
         $to_program_id = $request['to_program_id'];
-        $copied_days = $request['copied_days'];
-        $start_day = $request['start_day'];
-        $copied_dates = $request['copied_dates'];
-        $copied_dates = $request['copied_dates'];
-        $start_date = $request['start_date'];
+        $copied_days = $request['copied_days'];//from--->template
+        $start_day = $request['start_day'];//from--->template
+        $copied_dates = $request['copied_dates'];//from--->oto
+        $start_date = $request['start_date'];//from--->template
         if ($from_type == "template") {
             $copied_days_arr = $this->make_copied_days_arr($copied_days);//define which day that will be copied and which day will not
-        }
-        if ($from_type == "oto") {
-            $copied_days_arr = $this->make_copied_days_arr($copied_dates);//define which day that will be copied and which day will not
+        } else {//oto
+            $copied_days_arr = $this->make_copied_dates_arr($copied_dates);//define which day that will be copied and which day will not
         }
 
 
@@ -104,20 +102,16 @@ class VVExerciseServices
         $exercise_arr = [];
         DB::beginTransaction();
         foreach ($copied_days_arr as $single_day) {
-            Log::info("single day " . $single_day['day'] . " start");
-
             if ($single_day['copy']) {
                 if ($from_type == "template") {
                     $day_exercises = $this->DB_Exercises->get_program_exercises_by_day(program_id: $from_program_id,
                         day: $single_day['day'], copied_exercises_arr: $copied_exercises_arr);
-                }
-                if ($from_type == "oto") {
+                } else {//oto
                     $day_exercises = $this->DB_OneToOneProgramExercises->get_program_exercises_by_date(program_id: $from_program_id, date: $single_day['day'], copied_exercises_arr: $copied_exercises_arr);
                 }
 
                 if ($day_exercises) {
                     foreach ($day_exercises as $exercise) {
-                        Log::info("exercise $exercise->id start");
                         if ($to_type == "template") {
                             $exercise_arrangement = $this->DB_Exercises->get_exercise_arrangement($to_program_id, $start_day);
                             $copied_exercise = $this->DB_Exercises->add_exercise($exercise->name, $exercise->description,
@@ -131,8 +125,7 @@ class VVExerciseServices
                                     $exercise->description, $exercise->extra_description, $copied_exercise->id, $exercise->videos);
                             }
                             $exercise_arr[] = $this->program_exercises_arr($copied_exercise, $copied_exercise->program->starting_date);
-                        }
-                        if ($to_type == "oto") {
+                        } else {//oto
                             $exercise_arrangement = $this->DB_OneToOneProgramExercises->get_exercise_arrangement($to_program_id, $start_date);
                             $copied_exercise = $this->DB_OneToOneProgramExercises->add_oto_exercise($exercise->name,
                                 $exercise->description, $exercise->extra_description, $start_date, $exercise_arrangement, $to_program_id);
@@ -140,12 +133,12 @@ class VVExerciseServices
                             if ($exercise->videos()->exists()) {
                                 $this->add_oto_exercises_videos($copied_exercise->id, $exercise->videos);
                             }
-
+                            $exercise_arr[] = $this->client_program_exercises_arr($copied_exercise);
                         }
                     }
                 }
             }
-            $from_type == "template" ? $start_day++ : $start_date = Carbon::parse($start_date)->addDay()->toDateString();
+            $to_type == "template" ? $start_day++ : $start_date = Carbon::parse($start_date)->addDay()->toDateString();
         }
         DB::commit();
 
@@ -189,6 +182,26 @@ class VVExerciseServices
         return $result;
     }
 
+    private function make_copied_dates_arr(mixed $copied_days)
+    {
+        $result = [];
+        // Get the first item using its index (0 for the first element)
+        $first_item = $copied_days[0];
+
+        // Get the last item using its index (array length - 1)
+        $last_item = $copied_days[count($copied_days) - 1];
+        for ($i = $first_item; $i <= $last_item;) {
+            $single_day['day'] = $i;
+            if (in_array($i, $copied_days)) {
+                $single_day['copy'] = true;
+            } else {
+                $single_day['copy'] = false;
+            }
+            $result[] = $single_day;
+            $i = Carbon::parse($i)->addDay()->toDateString();
+        }
+        return $result;
+    }
     /**
      * @param $days_arr
      * @param mixed $from_program_id
@@ -264,14 +277,6 @@ class VVExerciseServices
      */
     public function sync_on_add_exercise(string $program_starting_date, mixed $day, mixed $program_id, mixed $name, mixed $description, mixed $extra_description, $exercise_id, mixed $videos): void
     {
-//        dd($program_starting_date
-//            , $day
-//            , $program_id
-//            , $name
-//            , $description
-//            , $extra_description
-//            , $exercise_id
-//            , $videos);
         $sync_date = $this->get_date_after_n_days(starting_date: $program_starting_date, number_of_days_after_starting: $day - 1);
         // get the programs related to this template program
         $related_programs = $this->DB_ProgramClients->get_program_related_oto_programs($program_id);
@@ -333,7 +338,7 @@ class VVExerciseServices
         $single_program_exercises_arr['description'] = $exercise->description;
         $single_program_exercises_arr['extra_description'] = $exercise->extra_description;
         $single_program_exercises_arr['date'] = $exercise->date;
-        $single_program_exercises_arr['is_done'] = $exercise->is_done;
+        $single_program_exercises_arr['is_done'] = $exercise->is_done ? $exercise->is_done : 0;
         $single_program_exercises_arr['videos'] = [];
         $single_program_exercises_arr['logs'] = [];
         if ($exercise->videos()->exists()) {

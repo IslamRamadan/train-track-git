@@ -6,10 +6,14 @@ use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_CoachExerciseTemplates;
 use App\Services\DatabaseServices\DB_CoachVideos;
 use App\Services\DatabaseServices\DB_ExerciseLog;
+use App\Services\DatabaseServices\DB_Exercises;
 use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_Programs;
 use App\Services\DatabaseServices\DB_Users;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class ValidationServices
 {
@@ -20,7 +24,8 @@ class ValidationServices
                                 protected DB_OneToOneProgram          $DB_OneToOneProgram,
                                 protected DB_CoachVideos              $DB_CoachVideos,
                                 protected DB_Users                    $DB_Users,
-                                protected DB_CoachExerciseTemplates $DB_ExerciseTemplates
+                                protected DB_CoachExerciseTemplates $DB_ExerciseTemplates,
+                                protected DB_Exercises              $DB_Exercises,
     )
     {
     }
@@ -47,9 +52,9 @@ class ValidationServices
         $request->validate([
             'name' => 'required|max:50',
             'description' => 'required|max:1000',
-            'type' => 'required|in:0,1,2',
+            'type' => 'required|in:0,1,2,3',
             'starting_date' => 'required_if:type,1|date|date_format:Y-m-d',
-            'sync' => 'required_if:type,1|in:0,1',
+            'sync' => 'required_if:type,1|required_if:type,3|in:0,1',
             'image' => 'nullable'
         ]);
     }
@@ -60,7 +65,7 @@ class ValidationServices
             'program_id' => 'required|exists:programs,id',
             'name' => 'required|max:50',
             'description' => 'required|max:1000',
-            'type' => 'required|in:0,1',
+            'type' => 'required|in:0,1,2,3',
             'starting_date' => 'required_if:type,1|date|date_format:Y-m-d',
             'image' => 'nullable'
         ]);
@@ -113,14 +118,43 @@ class ValidationServices
 
     public function copy_vv_program_exercise($request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'from_type' => 'required',
             'to_type' => 'required',
             'exercise_id' => 'required',
             'to_program_id' => 'required',
-            'to_day' => 'nullable',
-            'to_date' => 'nullable',
+            'to_day' => [
+                Rule::requiredIf($request->input('to_type') === 'template'),
+                'numeric'
+            ],
+            'to_date' => [
+                Rule::requiredIf($request->input('to_type') === 'oto'),
+                'date_format:Y-m-d'
+            ],
         ]);
+        $validator->after(function ($validator) use ($request) {
+            if ($request->input('from_type') === 'template' &&
+                !$this->DB_Exercises->verify_exercise_id($request->exercise_id)) {
+                $validator->errors()->add('exercise_id', 'The selected exercise_id does not exist in exercises.');
+            }
+
+            if ($request->input('from_type') === 'oto' &&
+                !$this->DB_OneToOneProgramExercises->verify_exercise_id($request->exercise_id)) {
+                $validator->errors()->add('exercise_id', 'The selected exercise_id does not exist in exercises.');
+            }
+
+            if ($request->input('to_type') === 'template' &&
+                !$this->DB_Programs->verify_program_id($request->to_program_id)) {
+                $validator->errors()->add('to_program_id', 'The selected to_program_id does not exist in template_programs.');
+            }
+
+            if ($request->input('to_type') === 'oto' &&
+                !$this->DB_OneToOneProgram->verify_program_id($request->to_program_id)) {
+                $validator->errors()->add('to_program_id', 'The selected to_program_id does not exist in oto_programs.');
+            }
+        });
+        $validator->validate();
+
     }
     public function copy_program_exercise_days($request)
     {
@@ -134,18 +168,33 @@ class ValidationServices
 
     public function copy_vv_program_exercise_days($request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'from_type' => 'required',
             'to_type' => 'required',
             'from_program_id' => 'required',
             'to_program_id' => 'required',
-            'copied_days' => 'nullable|array',
+            'copied_days' => [
+                Rule::requiredIf($request->input('from_type') === 'template'),
+                'array'
+            ],
             'copied_days.*' => 'nullable|numeric',
-            'start_day' => 'nullable|numeric',
-            'copied_dates' => 'nullable|array',
+            'start_day' => [
+                Rule::requiredIf($request->input('from_program_id') === 'template'),
+                'numeric'
+            ],
+            'copied_dates' => [
+                Rule::requiredIf($request->input('from_type') === 'oto'),
+                'array'
+            ],
             'copied_dates.*' => 'date_format:Y-m-d',
-            'start_date' => 'nullable|date_format:Y-m-d',
+            'start_date' => [
+                Rule::requiredIf($request->input('to_type') === 'oto'),
+                'date_format:Y-m-d'
+            ],
         ]);
+        $this->validateProgramExist($validator, $request);
+
+        $validator->validate();
     }
     public function cut_program_exercise_days($request)
     {
@@ -880,6 +929,48 @@ class ValidationServices
         $request->validate([
             'date' => 'required|date_format:Y-m-d',
         ]);
+    }
+
+    public function update_coach_info(Request $request,$id)
+    {
+        $request->validate([
+            'email' => 'required|email|email|email:rfc,dns|unique:users,email,' . $id,
+            'phone' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|unique:users,phone,' . $id,
+        ], [
+            'email.unique' => 'This email already exists in the system',
+            'phone.unique' => 'This phone already exists in the system',
+        ]);
+    }
+
+    /**
+     * @param \Illuminate\Validation\Validator $validator
+     * @param $request
+     * @return void
+     */
+    private function validateProgramExist(\Illuminate\Validation\Validator $validator, $request): void
+    {
+// Additional validation for checking program existence
+        $validator->after(function ($validator) use ($request) {
+            if ($request->input('from_type') === 'template' &&
+                !$this->DB_Programs->verify_program_id($request->from_program_id)) {
+                $validator->errors()->add('from_program_id', 'The selected from_program_id does not exist in template_programs.');
+            }
+
+            if ($request->input('from_type') === 'oto' &&
+                !$this->DB_OneToOneProgram->verify_program_id($request->from_program_id)) {
+                $validator->errors()->add('from_program_id', 'The selected from_program_id does not exist in oto_programs.');
+            }
+
+            if ($request->input('to_type') === 'template' &&
+                !$this->DB_Programs->verify_program_id($request->to_program_id)) {
+                $validator->errors()->add('to_program_id', 'The selected to_program_id does not exist in template_programs.');
+            }
+
+            if ($request->input('to_type') === 'oto' &&
+                !$this->DB_OneToOneProgram->verify_program_id($request->to_program_id)) {
+                $validator->errors()->add('to_program_id', 'The selected to_program_id does not exist in oto_programs.');
+            }
+        });
     }
 
 }

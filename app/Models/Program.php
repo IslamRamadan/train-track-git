@@ -45,6 +45,7 @@ class Program extends Model
                 "0" => "Normal",
                 "1" => "Ongoing",
                 "2" => "Nutrition",
+                "3" => "Standard",
                 default => null,
             },
         );

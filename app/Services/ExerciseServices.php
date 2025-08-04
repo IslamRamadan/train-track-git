@@ -93,12 +93,12 @@ class ExerciseServices
         $exercise = $this->DB_Exercises->add_exercise($name, $description, $extra_description, $day, $exercise_arrangement, $program_id);
         $this->add_exercises_videos($exercise->id, $videos);
         $program = $this->DB_Programs->find_program($program_id);
-        if ($program->sync == "1") {
-            $this->sync_on_add_exercise($program->starting_date, $day, $program_id, $name, $description, $extra_description, $exercise->id, $videos);
+        if ($program->sync == "1" && ($program->type == "1"||$program->type == "3")) {
+            $this->sync_on_add_exercise($program->starting_date, $day, $program_id, $name, $description, $extra_description, $exercise->id, $videos, $program->type);
         }
         $exercise_arr = $this->program_exercises_arr($exercise, $program->starting_date);
         DB::commit();
-        return sendResponse(['exercise_id' => $exercise->id, 'message' => "Exercise added successfully", 'exercise' => $exercise_arr]);
+        return sendResponse(['exercise_id' => $exercise->id, 'message' => "Exercise added successfully"]);
     }
 
     public function copy($request)
@@ -114,14 +114,14 @@ class ExerciseServices
         if ($exercise->videos()->exists()) {
             $this->add_exercises_videos($copied_exercise->id, $exercise->videos);
         }
-        if ($copied_exercise->program->sync == "1") {
+        if ($copied_exercise->program->sync == "1"&& ($copied_exercise->program->type == "1"||$copied_exercise->program->type == "3")) {
             $this->sync_on_add_exercise($copied_exercise->program->starting_date, $day, $to_program_id, $exercise->name,
-                $exercise->description, $exercise->extra_description, $copied_exercise->id, $exercise->videos);
+                $exercise->description, $exercise->extra_description, $copied_exercise->id, $exercise->videos, $copied_exercise->program->type);
         }
         $exercise_arr = $this->program_exercises_arr($copied_exercise, $copied_exercise->program->starting_date);
         DB::commit();
 
-        return sendResponse(['exercise_id' => $copied_exercise->id, 'message' => "Exercise copied successfully", 'exercise' => $exercise_arr]);
+        return sendResponse(['exercise_id' => $copied_exercise->id, 'message' => "Exercise copied successfully"]);
     }
 
     function copy_days($request)
@@ -134,7 +134,7 @@ class ExerciseServices
         $copied_days_arr = $this->make_copied_days_arr($copied_days);//define which day that will be copied and which day will not
         $day = $request['start_day'];
         $exercise_arr = $this->copy_days_logic(days_arr: $copied_days_arr, from_program_id: $from_program_id, to_program_id: $to_program_id, start_day: $day);
-        return sendResponse(['message' => "Exercise days copied successfully", 'exercises' => $exercise_arr]);
+        return sendResponse(['message' => "Exercise days copied successfully"]);
     }
 
 
@@ -151,7 +151,7 @@ class ExerciseServices
         $exercise_arr =$this->copy_days_logic(days_arr: $cut_days_arr, from_program_id: $from_program_id, to_program_id: $to_program_id,
             start_day: $start_day, operation_type: "cut");
 
-        return sendResponse(['message' => "Exercise days cut successfully", 'exercises' => $exercise_arr]);
+        return sendResponse(['message' => "Exercise days cut successfully"]);
     }
 
     function delete_days($request)
@@ -166,7 +166,7 @@ class ExerciseServices
             if ($program_exercises) {
                 foreach ($program_exercises as $exercise) {
 
-                    if ($exercise->program->sync == "1") {
+                    if ($exercise->program->sync == "1"&& ($exercise->program->type == "1"||$exercise->program->type == "3")) {
                         $this->sync_on_delete_exercise($exercise->id);
                     } else {
                         //remove the relation between the oto_exercise and template exercise
@@ -202,7 +202,7 @@ class ExerciseServices
 //        rearrange the exercises
         $other_exercises = $this->DB_Exercises->get_other_exercises($exercise->program_id, $exercise->day, $exercise_id);
         $this->rearrange_program_exercises($other_exercises, $order);
-        if ($exercise->program->sync == "1") {
+        if ($exercise->program->sync == "1"&& ($exercise->program->type == "1"||$exercise->program->type == "3")) {
             $this->sync_on_edit_exercise($exercise_id, $name, $description, $extra_description, $order, $videos);
         }
         return sendResponse(['message' => "Exercise updated successfully"]);
@@ -216,7 +216,7 @@ class ExerciseServices
         $exercise_id = $request['exercise_id'];
 
         $exercise = $this->DB_Exercises->find_exercise($exercise_id);
-        if ($exercise->program->sync == "1") {
+        if ($exercise->program->sync == "1"&& ($exercise->program->type == "1"||$exercise->program->type == "3")) {
             $this->sync_on_delete_exercise($exercise_id);
         } else {
             //remove the relation between the oto_exercise and template exercise
@@ -361,12 +361,12 @@ class ExerciseServices
                         if ($exercise->videos()->exists()) {
                             $this->add_exercises_videos($copied_exercise->id, $exercise->videos);
                         }
-                        if ($copied_exercise->program->sync == "1") {
+                        if ($copied_exercise->program->sync == "1"&& ($copied_exercise->program->type == "1"||$copied_exercise->program->type == "3")) {
                             if ($operation_type == "cut") {
                                 $this->sync_on_delete_exercise($exercise->id);
                             }
                             $this->sync_on_add_exercise($copied_exercise->program->starting_date, $start_day, $to_program_id, $exercise->name,
-                                $exercise->description, $exercise->extra_description, $copied_exercise->id, $exercise->videos);
+                                $exercise->description, $exercise->extra_description, $copied_exercise->id, $exercise->videos, $copied_exercise->program->type);
                         }
                         if ($operation_type == "cut") {
                             $this->DB_ProgramExerciseVideos->delete_exercise_videos($exercise);
@@ -445,24 +445,23 @@ class ExerciseServices
      * @param mixed $extra_description
      * @param $exercise_id
      * @param mixed $videos
+     * @param mixed $type
      * @return void
      */
-    public function sync_on_add_exercise(string $program_starting_date, mixed $day, mixed $program_id, mixed $name, mixed $description, mixed $extra_description, $exercise_id, mixed $videos): void
+    public function sync_on_add_exercise(string|null $program_starting_date, mixed $day, mixed $program_id, mixed $name,
+                                         mixed  $description, mixed $extra_description, $exercise_id, mixed $videos, mixed $type): void
     {
-//        dd($program_starting_date
-//            , $day
-//            , $program_id
-//            , $name
-//            , $description
-//            , $extra_description
-//            , $exercise_id
-//            , $videos);
+        if ($type == "1") {
         $sync_date = $this->get_date_after_n_days(starting_date: $program_starting_date, number_of_days_after_starting: $day - 1);
+        }
         // get the programs related to this template program
         $related_programs = $this->DB_ProgramClients->get_program_related_oto_programs($program_id);
 
         if (count($related_programs) > 0) {
             foreach ($related_programs as $oto_program) {
+                if ($type == "3") {
+                    $sync_date = $this->get_date_after_n_days(starting_date: $oto_program->oto_program->starting_date->starting_date, number_of_days_after_starting: $day - 1);
+                }
                 $exercise_arrangement = $this->DB_OneToOneProgramExercises->get_exercise_arrangement($oto_program->oto_program_id,
                     $sync_date);
                 $oto_exercise = $this->DB_OneToOneProgramExercises->add_oto_exercise($name, $description, $extra_description,

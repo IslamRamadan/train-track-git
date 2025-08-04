@@ -2,6 +2,7 @@
 
 namespace App\Services\Dashboard;
 
+use App\Mail\VerifyMail;
 use App\Mail\WelcomeMail;
 use App\Models\User;
 use App\Services\DatabaseServices\DB_Coaches;
@@ -12,6 +13,7 @@ use App\Services\DatabaseServices\DB_Users;
 use App\Services\PaymentServices\PaymentServices;
 use App\Services\ValidationServices;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -93,28 +95,30 @@ class CoachService
             $result = Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
-                    $btn = '
-                            <button type="button" class="btn btn-sm btn-primary updateDueDate mb-2" data-id=' . $row->id . ' data-status="0" data-toggle="modal" data-target="#updateDueDate">
-                              ' . __('translate.UpdateDueDate') . '
-                            </button>
-';
+                    $btn = '<div class="dropdown">
+  <button type="button" class="btn btn-link p-0 m-0 dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+    <i class="fa fa-ellipsis-v"></i>
+  </button>
+  <div class="dropdown-menu">
+    <a class="dropdown-item updateDueDate" data-id=' . $row->id . ' data-status="0" data-toggle="modal" data-target="#updateDueDate" href="#">' . __('translate.UpdateDueDate') . '</a>';
                     if ($row->coach->status == "1") {
                         $btn .= '
-                            <button type="button" class="btn btn-sm btn-danger blockCoach mb-2" data-id=' . $row->id . ' data-status="0" data-toggle="modal" data-target="#blockCoach">
-                              ' . __('translate.Block') . '
-                            </button>
+                            <a class="dropdown-item blockCoach" data-id=' . $row->id . ' data-status="0" data-toggle="modal" data-target="#blockCoach" href="#">' . __('translate.Block') . '</a>
 ';
                     } else {
                         $btn .= '
-                            <button type="button" class="btn btn-sm btn-warning blockCoach mb-2" data-id=' . $row->id . ' data-status="1" data-toggle="modal" data-target="#blockCoach">
-                              ' . __('translate.UnBlock') . '
-                            </button>
+                            <a class="dropdown-item blockCoach" data-id=' . $row->id . ' data-status="1" data-toggle="modal" data-target="#blockCoach" href="#">' . __('translate.UnBlock') . '</a>
 ';
                     }
-                    $btn .= '
-                            <button type="button" class="btn btn-sm btn-success updatePackage mb-2" data-id=' . $row->id . ' data-package=' . $row->coach->package_id . ' data-toggle="modal" data-target="#updatePackage" >
-                              ' . __('translate.UpdatePackage') . '
-                            </button>';
+                    $btn .= '<a class="dropdown-item updateCoachInfo" data-id=' . $row->id . ' data-phone=' . $row->phone . ' data-email=' . $row->email . ' data-toggle="modal" data-target="#updateCoachInfo" href="#">' . __('translate.Edit') . '</a>';
+                    $btn .= '<a class="dropdown-item updatePackage" data-id=' . $row->id . ' data-package=' . $row->coach->package_id . ' data-toggle="modal" data-target="#updatePackage" href="#">' . __('translate.UpdatePackage') . '</a>';
+                    if (!$row->email_verified_at) {
+                        $btn .= '
+                            <a class="dropdown-item verifyEmail" data-id=' . $row->id . ' data-toggle="modal" data-target="#verifyEmail" href="#">' . __('translate.Verify') . '</a>';
+                    }
+                    $btn .= '</div>
+</div>
+';
                     return $btn;
                 })
                 ->addColumn('due_date_tab', function ($row) {
@@ -128,6 +132,19 @@ class CoachService
                     }
                     $btn = '<div class="badge bg-' . $class . '" >
                               ' . $row->due_date . '
+                            </div>';
+                    return $btn;
+                })
+                ->addColumn('is_verified', function ($row) {
+                    if ($row->email_verified_at) {
+                        $class = "success";
+                        $title = __('translate.Verified');
+                    } else {
+                        $class = "danger";
+                        $title = __('translate.UnVerified');
+                    }
+                    $btn = '<div class="badge bg-' . $class . '" >
+                              ' . $title . '
                             </div>';
                     return $btn;
                 })
@@ -151,7 +168,7 @@ class CoachService
                 ->orderColumn('due_date_tab', function ($query,$order) {
                     $query->orderBy('due_date', $order); // Sort in descending order
                 })
-                ->rawColumns(['active_clients', 'action', 'due_date_tab', 'programs_number'])
+                ->rawColumns(['active_clients', 'action', 'due_date_tab', 'programs_number', 'is_verified'])
                 ->make();
             return $result;
         }
@@ -250,5 +267,44 @@ class CoachService
         }
 
         return view('coaches.coach-email-verified', compact('name'));
+    }
+
+    public function verify($id)
+    {
+        $coach = $this->DB_Users->get_user_info($id);
+        if (!$coach) {
+            abort(404);
+        }
+        $this->DB_Users->update_user_data($coach, ['email_verified_at' => Carbon::now()]);
+        return redirect()->back()->with(['msg' => "Email verified successfully"]);
+    }
+
+    public function update_info($id, Request $request)
+    {
+        $this->validationServices->update_coach_info($request, $id);
+        $emailArray = explode("@", $request->email);
+        if ($request->email && !checkdnsrr($emailArray[1])) {
+            return redirect()->back()->with('error', "email domain not valid");
+        }
+        $coach = $this->DB_Users->get_user_info($id);
+        if (!$coach) {
+            abort(404);
+        }
+        $oldEmail = $coach->email;
+        $phone = $request->phone;
+        $newEmail = $request->email;
+        $returnMsg = "Coach info updated successfully";
+        $updateArr = $newEmail != $oldEmail ? ['phone' => $phone, 'email' => $newEmail, 'email_verified_at' => null] : ['phone' => $phone, 'email' => $newEmail];
+        if ($newEmail != $oldEmail || !$coach->updated_at) {
+            try {
+                Mail::to($newEmail)->send(new VerifyMail(name: $coach->name, user_id: $coach->id));
+                $returnMsg .= " and sent a verification mail to his new email";
+
+            } catch (\Exception $exception) {
+                $returnMsg .= " and failed to send a verification mail to his new email";
+            }
+        }
+        $this->DB_Users->update_user_data($coach, $updateArr);
+        return redirect()->back()->with(['msg' => $returnMsg]);
     }
 }

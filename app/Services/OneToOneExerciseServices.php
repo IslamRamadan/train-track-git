@@ -471,7 +471,7 @@ class OneToOneExerciseServices
         $single_program_exercises_arr['description'] = $exercise->description;
         $single_program_exercises_arr['extra_description'] = $exercise->extra_description;
         $single_program_exercises_arr['date'] = $exercise->date;
-        $single_program_exercises_arr['is_done'] = $exercise->is_done;
+        $single_program_exercises_arr['is_done'] = $exercise->is_done ? $exercise->is_done : 0;
         $single_program_exercises_arr['videos'] = [];
         $single_program_exercises_arr['logs'] = [];
         if ($exercise->videos()->exists()) {

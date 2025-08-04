@@ -7,6 +7,7 @@ use App\Services\DatabaseServices\DB_Exercises;
 use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_OneToOneProgramExerciseVideos;
+use App\Services\DatabaseServices\DB_OneToOneProgramStartingDate;
 use App\Services\DatabaseServices\DB_ProgramClients;
 use App\Services\DatabaseServices\DB_ProgramExerciseVideos;
 use App\Services\DatabaseServices\DB_Programs;
@@ -24,6 +25,7 @@ class ProgramServices
                                 protected DB_ExerciseLog                   $DB_ExerciseLog,
                                 protected DB_OneToOneProgramExercises      $DB_OneToOneProgramExercises,
                                 protected ImageService                     $imageService,
+                                protected DB_OneToOneProgramStartingDate $DB_OneToOneProgramStartingDate
     )
     {
     }
@@ -52,7 +54,7 @@ class ProgramServices
                 "description" => $program->description,
                 "type" => $program->type_text,
                 "starting_date" => $program->type == "1" ? $program->starting_date : "",
-                "sync" => $program->type == "1" ? $program->sync : "",
+                "sync" => $program->type == "1" || $program->type == "3" ? $program->sync : "",
                 "exercise_days" => $program->exercise_days,
                 "clients_number" => $program->clients_number,
                 "image" => $program->image_path
@@ -105,7 +107,7 @@ class ProgramServices
             $program->save();
         }
         if ($program->sync == "1") {
-            $this->sync_on_update_program($program_id, $name, $description);
+            $this->sync_on_update_program($program_id, $name, $description, $type);
         }
         $this->DB_Programs->update_program($program, $name, $description, $type, $starting_date);
         DB::commit();
@@ -117,8 +119,13 @@ class ProgramServices
         $this->validationServices->edit_program_sync($request);
         $sync = $request['sync'];
         $program_id = $request['program_id'];
+        DB::beginTransaction();
         $program = $this->DB_Programs->find_program($program_id);
+        if ($program->sync == "1") {
+            $this->sync_on_update_program($program_id, $program->name, $program->description, $program->type);
+        }
         $this->DB_Programs->update_program_sync($program, $sync);
+        DB::commit();
         return sendResponse(['message' => "Program sync updated successfully"]);
     }
 
@@ -181,14 +188,20 @@ class ProgramServices
      * @param mixed $program_id
      * @param mixed $name
      * @param mixed $description
+     * @param mixed $type
      * @return void
      */
-    public function sync_on_update_program(mixed $program_id, mixed $name, mixed $description): void
+    public function sync_on_update_program(mixed $program_id, mixed $name, mixed $description, mixed $type): void
     {
         $related_oto_programs = $this->DB_ProgramClients->get_program_related_oto_programs($program_id);
         if (count($related_oto_programs) > 0) {
             foreach ($related_oto_programs as $related_program) {
-                $this->DB_OneToOneProgram->update_oto_program($related_program->oto_program, $name, $description);
+                $oto_program = $related_program->oto_program;
+                $this->DB_OneToOneProgram->update_oto_program($oto_program, $name, $description);
+                //type is standard and starting date is not set and first exercise date is set
+                if ($type == "3" && !$oto_program->starting_date && $oto_program->first_exercise_date) {
+                    $this->DB_OneToOneProgramStartingDate->create_starting_date($oto_program->id, $oto_program->first_exercise_date);
+                }
             }
         }
     }
