@@ -26,6 +26,12 @@
                                        data-validation="required"
                                 >
                             </div>
+                            <div class="form-group">
+                                <label for="merchant_id">Merchant ID</label>
+                                <input type="number" name="merchant_id" class="form-control" id="coachMerchantId"
+                                       placeholder="Merchant ID"
+                                >
+                            </div>
                         </div>
                     </div>
                 </div>

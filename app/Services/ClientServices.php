@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Http\Resources\ClientPaymentResource;
 use App\Mail\InvitationMail;
+use App\Services\DatabaseServices\DB_ClientPayments;
 use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_Coaches;
 use App\Services\DatabaseServices\DB_Exercises;
@@ -34,7 +36,8 @@ class ClientServices
                                 protected DB_PendingClients                $DB_PendingClients,
                                 protected DB_OneToOneProgramExerciseVideos $DB_OneToOneProgramExerciseVideos,
                                 protected CoachServices                    $coachServices,
-                                protected DB_OneToOneProgramStartingDate $DB_OneToOneProgramStartingDate
+                                protected DB_OneToOneProgramStartingDate $DB_OneToOneProgramStartingDate,
+                                protected DB_ClientPayments              $DB_ClientPayments
     )
     {
     }
@@ -543,6 +546,13 @@ class ClientServices
             "label" => $client?->client?->client?->label ?? "",
             "notes" => $client?->client?->client?->notes ?? "",
         ];
+    }
+
+    public function listClientsPayments(Request $request)
+    {
+        $this->validationServices->searchValidation($request);
+        $clientsPayments = $this->DB_ClientPayments->getClientsPayments($request->user()->id, $request->search);
+        return response()->json(ClientPaymentResource::collection($clientsPayments)) ;
     }
 
 

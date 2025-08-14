@@ -116,6 +116,9 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     Route::post('vv/program/exercise/days/copy', [VVExerciseController::class, 'copy_days']);
 
     // coping programs exercises from&to template and oto programs end
+
+    Route::post('clients/payments/list', [ClientController::class, 'listClientsPayments']);
+
     // Coach apis end
 
     // Client apis start

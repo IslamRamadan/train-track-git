@@ -110,7 +110,7 @@ class CoachService
                             <a class="dropdown-item blockCoach" data-id=' . $row->id . ' data-status="1" data-toggle="modal" data-target="#blockCoach" href="#">' . __('translate.UnBlock') . '</a>
 ';
                     }
-                    $btn .= '<a class="dropdown-item updateCoachInfo" data-id=' . $row->id . ' data-phone=' . $row->phone . ' data-email=' . $row->email . ' data-toggle="modal" data-target="#updateCoachInfo" href="#">' . __('translate.Edit') . '</a>';
+                    $btn .= '<a class="dropdown-item updateCoachInfo" data-id=' . $row->id . ' data-phone=' . $row->phone . ' data-email=' . $row->email . ' data-merchant-id="' . ($row->coach->merchant_id?:"") . '" data-toggle="modal" data-target="#updateCoachInfo" href="#">' . __('translate.Edit') . '</a>';
                     $btn .= '<a class="dropdown-item updatePackage" data-id=' . $row->id . ' data-package=' . $row->coach->package_id . ' data-toggle="modal" data-target="#updatePackage" href="#">' . __('translate.UpdatePackage') . '</a>';
                     if (!$row->email_verified_at) {
                         $btn .= '
@@ -293,6 +293,7 @@ class CoachService
         $oldEmail = $coach->email;
         $phone = $request->phone;
         $newEmail = $request->email;
+        $merchant_id = $request->merchant_id;
         $returnMsg = "Coach info updated successfully";
         $updateArr = $newEmail != $oldEmail ? ['phone' => $phone, 'email' => $newEmail, 'email_verified_at' => null] : ['phone' => $phone, 'email' => $newEmail];
         if ($newEmail != $oldEmail || !$coach->updated_at) {
@@ -304,7 +305,9 @@ class CoachService
                 $returnMsg .= " and failed to send a verification mail to his new email";
             }
         }
+
         $this->DB_Users->update_user_data($coach, $updateArr);
+        $this->DB_Coaches->update_coach_data($coach->id, ['merchant_id' => $merchant_id]);
         return redirect()->back()->with(['msg' => $returnMsg]);
     }
 }
