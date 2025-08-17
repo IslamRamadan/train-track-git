@@ -555,5 +555,28 @@ class ClientServices
         return response()->json(ClientPaymentResource::collection($clientsPayments)) ;
     }
 
+    public function createPaymentLink(Request $request)
+    {
+        $this->validationServices->createPaymentLinkValidation($request);
+        $client_id = $request['client_id'];
+        $amount = $request['amount'];
+        $client = $this->DB_Users->get_user_info($client_id);
+        $order_id = $this->generateOrderId();
+
+//        TODO::Create the payment link
+        $paymentLink="paymentLinkkkk";
+        DB::beginTransaction();
+        $this->DB_ClientPayments->createClientPayment(['client_id' => $request->client_id, 'order_id' => $order_id, 'amount' => $amount]);
+        $this->DB_Clients->update_client_payment_link($client->client,$paymentLink);
+        DB::commit();
+        dd($order_id);
+
+    }
+
+    private function generateOrderId()
+    {
+        return bin2hex(random_bytes(7));
+    }
+
 
 }

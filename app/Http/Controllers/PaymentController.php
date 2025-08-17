@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\DatabaseServices\DB_UserPayment;
 use App\Services\DatabaseServices\DB_Users;
-use App\Services\PaymentServices\PaymentServices;
+use App\Services\PaymentServices\PaymobServices;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
-    public function __construct(protected PaymentServices $paymentServices,
-                                protected DB_UserPayment  $DB_UserPayment, protected DB_Users $DB_Users)
+    public function __construct(protected PaymobServices $paymentServices,
+                                protected DB_UserPayment $DB_UserPayment, protected DB_Users $DB_Users)
     {
 
     }

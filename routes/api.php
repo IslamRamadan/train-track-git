@@ -117,7 +117,8 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
 
     // coping programs exercises from&to template and oto programs end
 
-    Route::post('clients/payments/list', [ClientController::class, 'listClientsPayments']);
+    Route::post('client/payments/list', [ClientController::class, 'listClientsPayments']);
+    Route::post('client/create/payment/link', [ClientController::class, 'createPaymentLink']);
 
     // Coach apis end
 
