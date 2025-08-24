@@ -15,8 +15,11 @@ return new class extends Migration {
             $table->unsignedBigInteger('client_id')->nullable();
             $table->foreign('client_id')->references('id')->on('users')->onDelete('cascade');
             $table->string('order_id', 191);
-            $table->enum('status', ['0', '1', '2'])->default('1');
+            $table->string('flash_order_id', 191);
+            $table->enum('status', ['0', '1', '2', '3'])->default('1');//3 is refunded
             $table->integer('amount')->default(0);
+            $table->integer('renew_days');
+            $table->date('last_due_date')->nullable();
             $table->timestamps();
         });
     }
