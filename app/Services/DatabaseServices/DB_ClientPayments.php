@@ -2,7 +2,6 @@
 
 namespace App\Services\DatabaseServices;
 
-use App\Http\Resources\ClientPaymentResource;
 use App\Models\ClientPayment;
 
 class DB_ClientPayments
@@ -43,5 +42,17 @@ class DB_ClientPayments
             ->orderBy('created_at', 'desc')
             ->get();
 
+    }
+
+    public function findClientPaymentWithOrderId(mixed $orderId)
+    {
+        return ClientPayment::query()
+            ->where('order_id', $orderId)
+            ->first();
+    }
+
+    public function updateClientPayment($payment, array $data)
+    {
+        $payment->update($data);
     }
 }

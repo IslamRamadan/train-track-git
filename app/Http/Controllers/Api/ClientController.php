@@ -159,4 +159,9 @@ class ClientController extends Controller
     {
         return $this->clientServices->createPaymentLink($request);
     }
+
+    public function checkoutProcessed(Request $request)
+    {
+        $this->clientServices->checkoutProcessed($request);
+    }
 }

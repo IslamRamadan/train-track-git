@@ -9,7 +9,7 @@ class DB_Users
 
     public function get_user_info($id)
     {
-        return User::with('coach', 'coach_client_client','client')->find($id);
+        return User::with('coach', 'coach_client_client.coach.coach','client')->find($id);
     }
 
     public function get_user_for_delete($id)

@@ -571,9 +571,9 @@ class GymServices
         }
 
         // If the coach is the gym owner and the admin is not, deny access.
-        if ($coach_gym->privilege == "1" && $admin_gym_privilege != "1") {
-            return sendError("Client coach is the gym owner, You can't see his clients", 403);
-        }
+//        if ($coach_gym->privilege == "1" && $admin_gym_privilege != "1") {
+//            return sendError("Client coach is the gym owner, You can't see his clients", 403);
+//        }
 
         return true;
     }
