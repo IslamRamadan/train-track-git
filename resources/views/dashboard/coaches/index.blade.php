@@ -131,6 +131,7 @@
                 $('#updateCoachInfoForm').attr('action', url);
                 $('#coachPhone').val($(this).attr('data-phone'));
                 $('#coachEmail').val($(this).attr('data-email'));
+                $('#coachMerchantId').val($(this).attr('data-merchant-id'));
             });
         });
 

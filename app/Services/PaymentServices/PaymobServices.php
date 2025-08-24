@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Log;
 use PayMob\Facades\PayMob;
 use Yajra\DataTables\Facades\DataTables;
 
-class PaymentServices
+class PaymobServices
 {
     public function __construct(protected DB_UserPayment    $DB_UserPayment,
                                 protected DB_Users          $DB_Users,

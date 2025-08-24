@@ -936,6 +936,7 @@ class ValidationServices
         $request->validate([
             'email' => 'required|email|email|email:rfc,dns|unique:users,email,' . $id,
             'phone' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|unique:users,phone,' . $id,
+            'merchant_id' => 'nullable|min:1|max:20|unique:coaches,merchant_id,' . $id . ',user_id',
         ], [
             'email.unique' => 'This email already exists in the system',
             'phone.unique' => 'This phone already exists in the system',
@@ -971,6 +972,15 @@ class ValidationServices
                 $validator->errors()->add('to_program_id', 'The selected to_program_id does not exist in oto_programs.');
             }
         });
+    }
+
+    public function createPaymentLinkValidation(Request $request)
+    {
+        $request->validate([
+            'client_id' => 'required|exists:clients,id',
+            'amount' => "required|numeric|min:10|max:10000",
+            'no_of_days' => "required|numeric|min:1|max:365"
+        ], []);
     }
 
 }

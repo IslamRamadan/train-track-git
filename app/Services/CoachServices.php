@@ -14,7 +14,7 @@ use App\Services\DatabaseServices\DB_Packages;
 use App\Services\DatabaseServices\DB_PendingClients;
 use App\Services\DatabaseServices\DB_UserPayment;
 use App\Services\DatabaseServices\DB_Users;
-use App\Services\PaymentServices\PaymentServices;
+use App\Services\PaymentServices\PaymobServices;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
@@ -31,11 +31,11 @@ class CoachServices
                                 protected DB_Notifications            $DB_Notifications,
                                 protected DB_Packages                 $DB_Packages,
                                 protected DB_UserPayment              $DB_UserPayment,
-                                protected PaymentServices             $paymentServices,
+                                protected PaymobServices              $paymentServices,
                                 protected DB_PendingClients           $DB_PendingClients,
                                 protected NotificationServices        $notificationServices,
-                                protected DB_OtoExerciseComments $DB_OtoExerciseComments,
-                                protected DB_OneToOneProgram     $DB_OneToOneProgram
+                                protected DB_OtoExerciseComments      $DB_OtoExerciseComments,
+                                protected DB_OneToOneProgram          $DB_OneToOneProgram
     )
     {
     }

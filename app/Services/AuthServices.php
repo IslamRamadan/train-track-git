@@ -144,6 +144,7 @@ class AuthServices
             "version" => $version,
             "user_type" => $user->user_type_text,//Coach or Athlete
             "due_date" => $user->due_date??"",
+            "merchant_id" => $user->coach ? (string)$user->coach->merchant_id ?: "" : "",
             "token" => $user->createToken('appToken')->accessToken,
         ];
     }
