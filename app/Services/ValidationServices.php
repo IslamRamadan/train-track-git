@@ -974,4 +974,13 @@ class ValidationServices
         });
     }
 
+    public function createPaymentLinkValidation(Request $request)
+    {
+        $request->validate([
+            'client_id' => 'required|exists:clients,id',
+            'amount' => "required|numeric|min:10|max:10000",
+            'no_of_days' => "required|numeric|min:1|max:365"
+        ], []);
+    }
+
 }

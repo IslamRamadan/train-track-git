@@ -154,4 +154,14 @@ class ClientController extends Controller
     {
         return $this->clientServices->listClientsPayments($request);
     }
+
+    public function createPaymentLink(Request $request): JsonResponse
+    {
+        return $this->clientServices->createPaymentLink($request);
+    }
+
+    public function checkoutProcessed(Request $request)
+    {
+        $this->clientServices->checkoutProcessed($request);
+    }
 }

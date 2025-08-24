@@ -10,7 +10,7 @@ use App\Services\DatabaseServices\DB_Packages;
 use App\Services\DatabaseServices\DB_Programs;
 use App\Services\DatabaseServices\DB_UserPayment;
 use App\Services\DatabaseServices\DB_Users;
-use App\Services\PaymentServices\PaymentServices;
+use App\Services\PaymentServices\PaymobServices;
 use App\Services\ValidationServices;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -24,7 +24,7 @@ class CoachService
 
     public function __construct(protected ValidationServices $validationServices, protected DB_Coaches $DB_Coaches, protected DB_Programs $DB_Programs,
                                 protected DB_Users           $DB_Users, protected DB_Packages $DB_Packages, protected DB_UserPayment $DB_UserPayment
-        , protected PaymentServices $paymentServices
+        , protected PaymobServices                           $paymentServices
     )
     {
     }

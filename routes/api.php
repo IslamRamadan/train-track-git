@@ -39,6 +39,7 @@ Route::post('client/register', [AuthController::class, 'client_register']);
 Route::post('coach/register', [AuthController::class, 'coach_register']);
 Route::post('forget/password', [AuthController::class, 'forget_password']);
 Route::post('checkout/processed', [PaymentController::class, 'checkout_processed']);
+Route::post('flash/checkout/processed', [ClientController::class, 'checkoutProcessed']);
 Route::post('coach/get/package', [CoachController::class, 'get_package']);
 Route::post('countries/list', [CountryController::class, 'list']);
 Route::post('genders/list', [GenderController::class, 'list']);
@@ -117,7 +118,8 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
 
     // coping programs exercises from&to template and oto programs end
 
-    Route::post('clients/payments/list', [ClientController::class, 'listClientsPayments']);
+    Route::post('client/payments/list', [ClientController::class, 'listClientsPayments']);
+    Route::post('client/create/payment/link', [ClientController::class, 'createPaymentLink']);
 
     // Coach apis end
 

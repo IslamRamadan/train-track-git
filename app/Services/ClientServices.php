@@ -16,10 +16,12 @@ use App\Services\DatabaseServices\DB_PendingClients;
 use App\Services\DatabaseServices\DB_ProgramClients;
 use App\Services\DatabaseServices\DB_Programs;
 use App\Services\DatabaseServices\DB_Users;
+use App\Services\PaymentServices\FlashServices;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class ClientServices
@@ -37,7 +39,8 @@ class ClientServices
                                 protected DB_OneToOneProgramExerciseVideos $DB_OneToOneProgramExerciseVideos,
                                 protected CoachServices                    $coachServices,
                                 protected DB_OneToOneProgramStartingDate $DB_OneToOneProgramStartingDate,
-                                protected DB_ClientPayments              $DB_ClientPayments
+                                protected DB_ClientPayments $DB_ClientPayments,
+                                protected FlashServices     $flashServices
     )
     {
     }
@@ -553,6 +556,79 @@ class ClientServices
         $this->validationServices->searchValidation($request);
         $clientsPayments = $this->DB_ClientPayments->getClientsPayments($request->user()->id, $request->search);
         return response()->json(ClientPaymentResource::collection($clientsPayments)) ;
+    }
+
+    public function createPaymentLink(Request $request)
+    {
+        $this->validationServices->createPaymentLinkValidation($request);
+        $merchantId = $request->user()->coach->merchant_id;
+        if ($merchantId) {
+        $client_id = $request['client_id'];
+        $amount = $request['amount'];
+            $renew_days = $request['no_of_days'];
+        $client = $this->DB_Users->get_user_info($client_id);
+        $order_id = $this->generateOrderId();
+            try {
+                $paymentLink = $this->flashServices->createPaymentLink($merchantId, $order_id, $amount, $client->phone);
+                DB::beginTransaction();
+                $this->DB_ClientPayments->createClientPayment([
+                    'client_id' => $client_id,
+                    'order_id' => $order_id,
+                    'amount' => $amount,
+                    'flash_order_id' => $paymentLink['orderId'],
+                    'renew_days' => $renew_days,
+                    'last_due_date' => $client['due_date'],
+                ]);
+                $this->DB_Clients->update_client_payment_link($client->client, $paymentLink['paymentLink']);
+                DB::commit();
+                Log::info("The client $client_id admin made a payment link to this client with order id " . $paymentLink['orderId'] . "and payment link " . $paymentLink['paymentLink']);
+            } catch (\Throwable $th) {
+                DB::rollBack();
+                Log::error("Error in client payment creation to client with id $client_id---->" . $th->getMessage());
+                return sendError("Unexpected error");
+            }
+        } else {
+            return sendError("You don't have a merchant account to use this service", 403);
+        }
+        return sendResponse(['message' => "Payment link created successfully", 'payment_link' => $paymentLink['paymentLink']]);
+
+    }
+
+    private function generateOrderId()
+    {
+        return bin2hex(random_bytes(7));
+    }
+
+    public function checkoutProcessed(Request $request): void
+    {
+        $status = $request->status;
+        $orderId = $request->merchantOrderId;
+        Log::info("Call back api called with body--->" . $request->getContent());
+
+        $payment = $this->DB_ClientPayments->findClientPaymentWithOrderId($orderId);
+        if ($payment) {
+            if ($status == "succeeded") {
+                $this->DB_ClientPayments->updateClientPayment($payment, ['status' => "2"]);
+                $newDueDate = $this->addDaysToDate($payment['last_due_date'], $payment['renew_days']);
+                $this->DB_Users->update_user_due_date($payment->client_id, $newDueDate);
+                Log::info("Order $orderId paid successfully and due date renewed from $payment->last_due_date to $newDueDate");
+
+            } elseif ($status == "refunded" && $payment->status == "2") {
+                $this->DB_ClientPayments->updateClientPayment($payment, ['status' => "3"]);
+                $this->DB_Users->update_user_due_date($payment->client_id, $payment['last_due_date']);
+                Log::info("Order $orderId refunded successfully and due date returned back to $payment->last_due_date");
+            } elseif ($status == "refunded" && $payment->status != "2") {
+                Log::info("Order $orderId status is not successful so we can not refund");
+            }
+        } else {
+            Log::error("Error in checkout processing request. the request is" . $request->getContent());
+        }
+
+    }
+
+    private function addDaysToDate(string $date, int $days): string
+    {
+        return Carbon::parse($date)->addDays($days)->toDateString();
     }
 
 
