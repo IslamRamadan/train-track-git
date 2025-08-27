@@ -3,6 +3,7 @@
 namespace App\Services\DatabaseServices;
 
 use App\Models\Client;
+use App\Models\ClientPayment;
 use App\Models\CoachClient;
 use App\Models\User;
 
@@ -124,11 +125,9 @@ class DB_Clients
             ->first();
     }
 
-    public function update_client_payment_link(mixed $client_info, mixed $payment_link)
+    public function update_client(mixed $client_info, mixed $data)
     {
-        $client_info->update([
-            'payment_link' => $payment_link
-        ]);
+        $client_info->update($data);
     }
 
     public function create_client_payment_link(mixed $client_id, mixed $payment_link)
@@ -162,6 +161,12 @@ public function update_client_info(mixed $client_info, mixed $data)
                 'user_id' => $client_id,
                 'tag' => $payment_link
             ]);
+    }
+    public function findClientWithPaymentLink(mixed $paymentLink)
+    {
+        return Client::query()
+            ->where('payment_link', $paymentLink)
+            ->first();
     }
 
 }

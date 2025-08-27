@@ -313,7 +313,10 @@ class CoachServices
     {
         $client_info = $this->DB_Clients->get_client_info($client_id);
         if ($client_info) {
-            $this->DB_Clients->update_client_payment_link($client_info, $payment_link);
+
+            $this->DB_Clients->update_client($client_info, [
+                'payment_link' => $payment_link
+            ]);
         } else {
             $this->DB_Clients->create_client_payment_link($client_id, $payment_link);
         }

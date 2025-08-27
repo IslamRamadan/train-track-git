@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\PaymentStatus;
 use App\Http\Resources\ClientPaymentResource;
 use App\Mail\InvitationMail;
 use App\Services\DatabaseServices\DB_ClientPayments;
@@ -571,15 +572,19 @@ class ClientServices
             try {
                 $paymentLink = $this->flashServices->createPaymentLink($merchantId, $order_id, $amount, $client->phone);
                 DB::beginTransaction();
-                $this->DB_ClientPayments->createClientPayment([
-                    'client_id' => $client_id,
-                    'order_id' => $order_id,
-                    'amount' => $amount,
-                    'flash_order_id' => $paymentLink['orderId'],
+//                $this->DB_ClientPayments->createClientPayment([
+//                    'client_id' => $client_id,
+//                    'order_id' => $order_id,
+//                    'amount' => $amount,
+//                    'flash_order_id' => $paymentLink['orderId'],
+//                    'renew_days' => $renew_days,
+//                    'last_due_date' => $client['due_date'],
+//                ]);
+                $updatedData = [
+                    'payment_link' => $paymentLink['paymentLink'],
                     'renew_days' => $renew_days,
-                    'last_due_date' => $client['due_date'],
-                ]);
-                $this->DB_Clients->update_client_payment_link($client->client, $paymentLink['paymentLink']);
+                ];
+                $this->DB_Clients->update_client($client->client, $updatedData);
                 DB::commit();
                 Log::info("The client $client_id admin made a payment link to this client with order id " . $paymentLink['orderId'] . "and payment link " . $paymentLink['paymentLink']);
             } catch (\Throwable $th) {
@@ -602,34 +607,80 @@ class ClientServices
     public function checkoutProcessed(Request $request): void
     {
         $status = $request->status;
+        $paymentLink = $request['order']['paymentLink'];
+        $amount = $request['order']['amountCents'] / 100;
+        $flashOrderId = $request['order']['id'];
         $orderId = $request->merchantOrderId;
         Log::info("Call back api called with body--->" . $request->getContent());
 
-        $payment = $this->DB_ClientPayments->findClientPaymentWithOrderId($orderId);
-        if ($payment) {
-            if ($status == "succeeded") {
-                $this->DB_ClientPayments->updateClientPayment($payment, ['status' => "2"]);
-                $newDueDate = $this->addDaysToDate($payment['last_due_date'], $payment['renew_days']);
-                $this->DB_Users->update_user_due_date($payment->client_id, $newDueDate);
-                Log::info("Order $orderId paid successfully and due date renewed from $payment->last_due_date to $newDueDate");
+        // Prevent duplicate processing (optional)
+        // if ($this->DB_ClientPayments->existsByFlashOrderId($flashOrderId)) return;
 
-            } elseif ($status == "refunded" && $payment->status == "2") {
-                $this->DB_ClientPayments->updateClientPayment($payment, ['status' => "3"]);
-                $this->DB_Users->update_user_due_date($payment->client_id, $payment['last_due_date']);
-                Log::info("Order $orderId refunded successfully and due date returned back to $payment->last_due_date");
-            } elseif ($status == "refunded" && $payment->status != "2") {
-                Log::info("Order $orderId status is not successful so we can not refund");
+        if ($status === 'succeeded') {
+            $client = $this->DB_Clients->findClientWithPaymentLink($paymentLink);
+
+            if (!$client) {
+                Log::warning('Client not found', ['paymentLink' => $paymentLink, 'orderId' => $orderId]);
+                return;
             }
-        } else {
-            Log::error("Error in checkout processing request. the request is" . $request->getContent());
+
+            $clientId = $client->client_id ?? $client->user_id;
+
+            DB::transaction(function () use ($client, $clientId, $orderId, $amount, $flashOrderId, $paymentLink) {
+                $this->DB_ClientPayments->updateClientPayment($client, ['status' => PaymentStatus::PAID->value]);
+
+                $this->DB_ClientPayments->createClientPayment([
+                    'client_id' => $client->user_id,
+                    'order_id' => $orderId,
+                    'amount' => $amount,
+                    'flash_order_id' => $flashOrderId,
+                    'renew_days' => $client->renew_days,
+                    'last_due_date' => $client->due_date,
+                    'status' => PaymentStatus::PAID->value,
+                ]);
+
+                $newDueDate = Carbon::now()->addDays((int)$client->renew_days)->toDateString();
+                $this->DB_Users->update_user_due_date($clientId, $newDueDate);
+
+                Log::info('Payment succeeded', [
+                    'paymentLink' => $paymentLink,
+                    'orderId' => $orderId,
+                    'oldDueDate' => $client->due_date,
+                    'newDueDate' => $newDueDate,
+                ]);
+            });
+
+            return; // guard clause
         }
 
+        // status: refunded
+        $payment = $this->DB_ClientPayments->findClientPaymentWithOrderId($orderId);
+
+        if (!$payment) {
+            Log::warning('Payment not found for refund', ['orderId' => $orderId, 'paymentLink' => $paymentLink]);
+            return;
+        }
+
+        if ($payment->status !== PaymentStatus::PAID->value) {
+            Log::info('Refund skipped: payment not in PAID state', [
+                'orderId' => $orderId,
+                'status' => $payment->status,
+            ]);
+            return;
+        }
+
+        DB::transaction(function () use ($payment, $paymentLink, $orderId) {
+            $this->DB_ClientPayments->updateClientPayment($payment, ['status' => PaymentStatus::REFUNDED->value]);
+            $this->DB_Users->update_user_due_date($payment->client_id, $payment['last_due_date']);
+
+            Log::info('Payment refunded', [
+                'paymentLink' => $paymentLink,
+                'orderId' => $orderId,
+                'restoredDue' => $payment->last_due_date,
+            ]);
+        });
     }
 
-    private function addDaysToDate(string $date, int $days): string
-    {
-        return Carbon::parse($date)->addDays($days)->toDateString();
-    }
 
 
 }
