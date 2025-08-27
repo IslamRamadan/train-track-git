@@ -342,9 +342,8 @@ class OneToOneExerciseServices
     public function log_client_exercise($request)
     {
         $this->validationServices->log_client_exercise($request);
-        $client_id = $request->user()->id;
         $client_name = $request->user()->name;
-
+        $user_type = $request->user()->user_type;
         $client_exercise_id = $request->client_exercise_id;
         $sets = $request->sets;
         $videos_paths = $request->videos_paths;
@@ -357,6 +356,12 @@ class OneToOneExerciseServices
             $this->DB_ExerciseLog->update_exercise_log($exercise_log->id, $sets, $details);
             if ($exercise_log->log_videos) $this->DB_ExerciseLogVideos->delete_exercise_log_videos($exercise_log);
         } else {
+            if ($user_type == "1") {
+                $client_id = $request->user()->id;
+            } else {
+                $find_exercise = $this->DB_OneToOneProgramExercises->find_exercise($client_exercise_id);
+                $client_id = $find_exercise->one_to_one_program->client_id;
+            }
             $exercise_log = $this->DB_ExerciseLog->create_exercise_log($client_exercise_id, $sets, $details, $client_id);
         }
         if ($videos_paths) {
@@ -372,7 +377,7 @@ class OneToOneExerciseServices
         $find_exercise_details = $this->DB_OneToOneProgramExercises->find_exercise($client_exercise_id);
         $exercise_name = $find_exercise_details->name;
         $exercise_date = $find_exercise_details->date;
-
+        if ($user_type == "1") {
         $this->send_notification_to_coach(
             user_id: $client_id,
             title: "New Log",
@@ -380,6 +385,7 @@ class OneToOneExerciseServices
             oto_program_id: $exercise_log->exercise->one_to_one_program_id,
             date: $exercise_log->exercise->date
         );
+        }
 
         return sendResponse(['message' => "Log created successfully"]);
     }
