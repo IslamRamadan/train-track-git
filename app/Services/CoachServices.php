@@ -240,7 +240,7 @@ class CoachServices
                     $dateData['comments'][] = [
                         'comment_id' => $comment['id'],
                         'comment_content' => $comment['comment'],
-                        'sender' => $comment['sender'] == 1 ? 'Coach' : 'Client',
+                        'sender' => $comment['sender'] == 1 ? 'Client' : 'Coach',
                         'coach_id' => $program->coach_id,
                         'coach_name' => optional($program->coach)->name ?? 'Unknown',
                         'client_id' => $client->id,
