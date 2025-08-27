@@ -624,9 +624,8 @@ class ClientServices
                 return;
             }
 
-            $clientId = $client->client_id ?? $client->user_id;
 
-            DB::transaction(function () use ($client, $clientId, $orderId, $amount, $flashOrderId, $paymentLink) {
+            DB::transaction(function () use ($client, $orderId, $amount, $flashOrderId, $paymentLink) {
                 $this->DB_ClientPayments->updateClientPayment($client, ['status' => PaymentStatus::PAID->value]);
 
                 $this->DB_ClientPayments->createClientPayment([
@@ -635,17 +634,17 @@ class ClientServices
                     'amount' => $amount,
                     'flash_order_id' => $flashOrderId,
                     'renew_days' => $client->renew_days,
-                    'last_due_date' => $client->due_date,
+                    'last_due_date' => $client->user->due_date,
                     'status' => PaymentStatus::PAID->value,
                 ]);
 
                 $newDueDate = Carbon::now()->addDays((int)$client->renew_days)->toDateString();
-                $this->DB_Users->update_user_due_date($clientId, $newDueDate);
+                $this->DB_Users->update_user_due_date($client->user_id, $newDueDate);
 
                 Log::info('Payment succeeded', [
                     'paymentLink' => $paymentLink,
                     'orderId' => $orderId,
-                    'oldDueDate' => $client->due_date,
+                    'oldDueDate' => $client->user->due_date,
                     'newDueDate' => $newDueDate,
                 ]);
             });
