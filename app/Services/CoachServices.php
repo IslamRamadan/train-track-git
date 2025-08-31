@@ -93,6 +93,7 @@ class CoachServices
             'is_owner' => strval($coach_info->isGymOwner),
             'is_admin' => strval($coach_info->isGymAdmin),
             'is_gym_coach' => strval($coach_info->withGym),
+            'merchant_id' => (string)$coach_info->coach?->merchant_id ?: "",
             'subscription' => [
                 'coach_package_id' => $coach_info->coach->package->id,
                 'coach_package_name' => $coach_info->coach->package->name,
