@@ -169,4 +169,10 @@ public function update_client_info(mixed $client_info, mixed $data)
             ->first();
     }
 
+    public function create_client_with_data($data)
+    {
+        Client::query()
+            ->create($data);
+    }
+
 }

@@ -352,16 +352,16 @@ class OneToOneExerciseServices
         $current_time = Carbon::now()->toDateTimeString();
 
         DB::beginTransaction();
+        if ($user_type == "1") {
+            $client_id = $request->user()->id;
+        } else {
+            $find_exercise = $this->DB_OneToOneProgramExercises->find_exercise($client_exercise_id);
+            $client_id = $find_exercise->one_to_one_program->client_id;
+        }
         if ($exercise_log) {
             $this->DB_ExerciseLog->update_exercise_log($exercise_log->id, $sets, $details);
             if ($exercise_log->log_videos) $this->DB_ExerciseLogVideos->delete_exercise_log_videos($exercise_log);
         } else {
-            if ($user_type == "1") {
-                $client_id = $request->user()->id;
-            } else {
-                $find_exercise = $this->DB_OneToOneProgramExercises->find_exercise($client_exercise_id);
-                $client_id = $find_exercise->one_to_one_program->client_id;
-            }
             $exercise_log = $this->DB_ExerciseLog->create_exercise_log($client_exercise_id, $sets, $details, $client_id);
         }
         if ($videos_paths) {

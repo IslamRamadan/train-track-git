@@ -567,6 +567,7 @@ class ClientServices
         $client_id = $request['client_id'];
         $amount = $request['amount'];
             $renew_days = $request['no_of_days'];
+            $dueDate = $request['due_date'];
         $client = $this->DB_Users->get_user_info($client_id);
         $order_id = $this->generateOrderId();
             try {
@@ -580,11 +581,18 @@ class ClientServices
 //                    'renew_days' => $renew_days,
 //                    'last_due_date' => $client['due_date'],
 //                ]);
-                $updatedData = [
+                $data = [
                     'payment_link' => $paymentLink['paymentLink'],
                     'renew_days' => $renew_days,
                 ];
-                $this->DB_Clients->update_client($client->client, $updatedData);
+                if ($dueDate) $this->DB_Users->update_user_due_date($client_id, $dueDate);
+                if ($client->client) {
+                    $this->DB_Clients->update_client($client->client, $data);
+                } else {
+                    $data['user_id'] = $client_id;
+                    $this->DB_Clients->create_client_with_data($data);
+                }
+
                 DB::commit();
                 Log::info("The client $client_id admin made a payment link to this client with order id " . $paymentLink['orderId'] . "and payment link " . $paymentLink['paymentLink']);
             } catch (\Throwable $th) {
