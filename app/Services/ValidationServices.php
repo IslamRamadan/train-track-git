@@ -982,7 +982,7 @@ class ValidationServices
             'client_id' => 'required|exists:clients,user_id',
             'amount' => "required|numeric|min:10|max:10000",
             'no_of_days' => "required|numeric|min:1|max:365",
-            'due_date' => "nullable|ate|date_format:Y-m-d"
+            'due_date' => "nullable|date|date_format:Y-m-d"
         ], []);
     }
 
