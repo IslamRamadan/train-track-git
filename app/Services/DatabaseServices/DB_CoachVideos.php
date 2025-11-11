@@ -6,6 +6,7 @@ use App\Models\CoachVideo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class DB_CoachVideos
 {
@@ -21,6 +22,22 @@ class DB_CoachVideos
                 $q->where('title', 'LIKE', '%' . $search . '%');
             })
             ->get();
+    }
+
+    /**
+     * @param mixed $coach_id
+     * @param mixed $search
+     * @param int $perPage
+     * @return LengthAwarePaginator
+     */
+    public function get_coach_videos_paginated(mixed $coach_id, mixed $search = null, int $perPage = 10): LengthAwarePaginator
+    {
+        return CoachVideo::query()->where('coach_id', $coach_id)
+            ->when(!empty($search), function ($q) use ($search) {
+                $q->where('title', 'LIKE', '%' . $search . '%');
+            })
+            ->select('id', 'title', 'link') // Only select these columns
+            ->paginate($perPage); // Use paginating for pagination
     }
 
     /**
