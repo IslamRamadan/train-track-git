@@ -111,6 +111,7 @@ class ClientServices
                         "phone" => "",
                         "payment_link" => "",
                         "payment_amount" => "",
+                        "renew_days" => "",
                         "due_date" => "",
                         "status" => "0",//0 for pending , 1 for active,2 for archived
                         "weight" => "",
@@ -543,6 +544,7 @@ class ClientServices
             "gender_name" => $client->client?->gender?->name ?? "",
             "payment_link" => $client->client?->client?->payment_link ?? "",
             "payment_amount" => $client->client?->client?->payment_amount ?? "",
+            "renew_days" => $client->client?->client?->renew_days ?? "",
             "tag" => $client->client->client->tag ?? "",
             "due_date" => $client->client->due_date ?? "",
             "status" => $client->status,//0 for pending , 1 for active,2 for archived
