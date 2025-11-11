@@ -110,6 +110,7 @@ class ClientServices
                         "email" => $client->email,
                         "phone" => "",
                         "payment_link" => "",
+                        "payment_amount" => "",
                         "due_date" => "",
                         "status" => "0",//0 for pending , 1 for active,2 for archived
                         "weight" => "",
@@ -540,7 +541,8 @@ class ClientServices
             "country_name" => $client->client?->country?->name ?? "",
             "gender_id" => $client->client->gender_id ?? "",
             "gender_name" => $client->client?->gender?->name ?? "",
-            "payment_link" => $client->client->client->payment_link ?? "",
+            "payment_link" => $client->client?->client?->payment_link ?? "",
+            "payment_amount" => $client->client?->client?->payment_amount ?? "",
             "tag" => $client->client->client->tag ?? "",
             "due_date" => $client->client->due_date ?? "",
             "status" => $client->status,//0 for pending , 1 for active,2 for archived
