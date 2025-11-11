@@ -220,7 +220,8 @@ class CoachServices
                 foreach ($exercises as $exercise) {
                     $log = $exercise->log;
 
-                    $dateData['exercises'][] = [
+                    // Add exercise details
+                    $exerciseData = [
                         'exercise_id' => $exercise->id,
                         'arrangement' => $exercise->arrangement,
                         'exercise_name' => $exercise->name,
@@ -231,9 +232,31 @@ class CoachServices
                         'log_details' => $log->details ?? "",
                         'log_date' => $log?->created_at?->format('Y-m-d') ?? "",
                         'log_time' => $log?->created_at?->format('H:i:s') ?? "",
+                        'log_videos' => [],  // Initialize an empty array for videos in logs
+//                        'videos' => [],  // Initialize an empty array for videos in logs
                     ];
+
+//                    // Check for videos in the exercise
+//                    if ($exercise->videos()->exists()) {
+//                        foreach ($exercise->videos as $video) {
+//                            $exerciseData['videos'][] = [
+//                                'title' => $video->title,
+//                                'link' => $video->link
+//                            ];
+//                        }
+//                    }
+
+                    // Check if the log has videos and add them to the exercise log
+                    if ($log && $log->log_videos()->exists()) {
+                        foreach ($log->log_videos as $logVideo) {
+                            $exerciseData['log_videos'][] = $logVideo->path;
+                        }
+                    }
+
+                    $dateData['exercises'][] = $exerciseData;
                 }
 
+                // Handle comments for the date
                 $commentKey = $program->id . '_' . $date;
                 $commentsForDate = $programsComments[$commentKey] ?? [];
 
