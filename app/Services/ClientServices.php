@@ -39,9 +39,9 @@ class ClientServices
                                 protected DB_PendingClients                $DB_PendingClients,
                                 protected DB_OneToOneProgramExerciseVideos $DB_OneToOneProgramExerciseVideos,
                                 protected CoachServices                    $coachServices,
-                                protected DB_OneToOneProgramStartingDate $DB_OneToOneProgramStartingDate,
-                                protected DB_ClientPayments $DB_ClientPayments,
-                                protected FlashServices     $flashServices
+                                protected DB_OneToOneProgramStartingDate   $DB_OneToOneProgramStartingDate,
+                                protected DB_ClientPayments                $DB_ClientPayments,
+                                protected FlashServices                    $flashServices
     )
     {
     }
@@ -87,6 +87,7 @@ class ClientServices
         $clients_arr = $this->active_clients_info_arr($clients);
         return sendResponse($clients_arr);
     }
+
     /**
      * @param $clients
      * @param $pending_clients
@@ -329,19 +330,18 @@ class ClientServices
         $gender_id = $request->gender_id;
 
         $this->DB_Users->update_user($client_id, $name, $email, $phone, $country_id, $gender_id);
-        $client=$this->DB_Clients->get_client_info($client_id);
-        if ($client){
-            $this->DB_Clients->update_client_info($client,[
+        $client = $this->DB_Clients->get_client_info($client_id);
+        if ($client) {
+            $this->DB_Clients->update_client_info($client, [
                 'weight' => $weight,
                 'height' => $height,
                 'fitness_goal' => $fitness_goal,
                 'label' => $label,
                 'notes' => $notes,
             ]);
-        }
-        else{
+        } else {
             $this->DB_Clients->create_client_data([
-                'user_id'=>$client_id,
+                'user_id' => $client_id,
                 'weight' => $weight,
                 'height' => $height,
                 'fitness_goal' => $fitness_goal,
@@ -443,7 +443,7 @@ class ClientServices
         $client_info->coach_client_client()->delete();
         //delete from clients table
         if ($client_info->client()->exists()) {
-        $client_info->client->delete();
+            $client_info->client->delete();
         }
         //delete user
         $client_info->delete();
@@ -556,55 +556,57 @@ class ClientServices
     {
         $this->validationServices->searchValidation($request);
         $clientsPayments = $this->DB_ClientPayments->getClientsPayments($request->user()->id, $request->search);
-        return response()->json(ClientPaymentResource::collection($clientsPayments)) ;
+        return response()->json(ClientPaymentResource::collection($clientsPayments));
     }
 
     public function createPaymentLink(Request $request)
     {
         $this->validationServices->createPaymentLinkValidation($request);
         $merchantId = $request->user()->coach->merchant_id;
-        if ($merchantId) {
-        $client_id = $request['client_id'];
-        $amount = $request['amount'];
-            $renew_days = $request['no_of_days'];
-            $dueDate = $request['due_date'];
-        $client = $this->DB_Users->get_user_info($client_id);
-        $order_id = $this->generateOrderId();
-            try {
-                $paymentLink = $this->flashServices->createPaymentLink($merchantId, $order_id, $amount, $client->phone);
-                DB::beginTransaction();
-//                $this->DB_ClientPayments->createClientPayment([
-//                    'client_id' => $client_id,
-//                    'order_id' => $order_id,
-//                    'amount' => $amount,
-//                    'flash_order_id' => $paymentLink['orderId'],
-//                    'renew_days' => $renew_days,
-//                    'last_due_date' => $client['due_date'],
-//                ]);
-                $data = [
-                    'payment_link' => $paymentLink['paymentLink'],
-                    'renew_days' => $renew_days,
-                ];
-                if ($dueDate) $this->DB_Users->update_user_due_date($client_id, $dueDate);
-                if ($client->client) {
-                    $this->DB_Clients->update_client($client->client, $data);
-                } else {
-                    $data['user_id'] = $client_id;
-                    $this->DB_Clients->create_client_with_data($data);
-                }
 
-                DB::commit();
-                Log::info("The client $client_id admin made a payment link to this client with order id " . $paymentLink['orderId'] . "and payment link " . $paymentLink['paymentLink']);
-            } catch (\Throwable $th) {
-                DB::rollBack();
-                Log::error("Error in client payment creation to client with id $client_id---->" . $th->getMessage());
-                return sendError("Unexpected error");
-            }
-        } else {
+        if (!$merchantId) {
             return sendError("You don't have a merchant account to use this service", 403);
         }
-        return sendResponse(['message' => "Payment link created successfully", 'payment_link' => $paymentLink['paymentLink']]);
 
+        $client_id = $request['client_id'];
+        $amount = $request['amount'];
+        $renew_days = $request['no_of_days'];
+        $dueDate = $request['due_date'];
+        $client = $this->DB_Users->get_user_info($client_id);
+        $order_id = $this->generateOrderId();
+
+        try {
+            $paymentLink = $this->flashServices->createPaymentLink($merchantId, $order_id, $amount, $client->phone, $client->name);
+
+            DB::beginTransaction();
+
+            $data = [
+                'payment_link' => $paymentLink['paymentLink'],
+                'renew_days' => $renew_days,
+                'payment_amount' => $amount,
+            ];
+
+            if ($dueDate) {
+                $this->DB_Users->update_user_due_date($client_id, $dueDate);
+            }
+
+            if ($client->client) {
+                $this->DB_Clients->update_client($client->client, $data);
+            } else {
+                $data['user_id'] = $client_id;
+                $this->DB_Clients->create_client_with_data($data);
+            }
+
+            DB::commit();
+
+            Log::info("The client $client_id admin made a payment link to this client with order id " . $paymentLink['orderId'] . " and payment link " . $paymentLink['paymentLink']);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            Log::error("Error in client payment creation to client with id $client_id ----> " . $th->getMessage());
+            return sendError("Unexpected error");
+        }
+
+        return sendResponse(['message' => "Payment link created successfully", 'payment_link' => $paymentLink['paymentLink']]);
     }
 
     private function generateOrderId()
@@ -619,10 +621,9 @@ class ClientServices
         $amount = $request['order']['amountCents'] / 100;
         $flashOrderId = $request['order']['id'];
         $orderId = $request->merchantOrderId;
-        Log::info("Call back api called with body--->" . $request->getContent());
+        $merchantId = $request->integrationId;
 
-        // Prevent duplicate processing (optional)
-        // if ($this->DB_ClientPayments->existsByFlashOrderId($flashOrderId)) return;
+        Log::info("Callback API called with body ---> " . $request->getContent());
 
         if ($status === 'succeeded') {
             $client = $this->DB_Clients->findClientWithPaymentLink($paymentLink);
@@ -633,9 +634,11 @@ class ClientServices
             }
 
 
-            DB::transaction(function () use ($client, $orderId, $amount, $flashOrderId, $paymentLink) {
+            DB::transaction(function () use ($client, $orderId, $amount, $flashOrderId, $paymentLink, $merchantId) {
+                // Update payment status
                 $this->DB_ClientPayments->updateClientPayment($client, ['status' => PaymentStatus::PAID->value]);
 
+                // Create payment record
                 $this->DB_ClientPayments->createClientPayment([
                     'client_id' => $client->user_id,
                     'order_id' => $orderId,
@@ -646,6 +649,7 @@ class ClientServices
                     'status' => PaymentStatus::PAID->value,
                 ]);
 
+                // Update due date
                 $newDueDate = Carbon::now()->addDays((int)$client->renew_days)->toDateString();
                 $this->DB_Users->update_user_due_date($client->user_id, $newDueDate);
 
@@ -655,12 +659,15 @@ class ClientServices
                     'oldDueDate' => $client->user->due_date,
                     'newDueDate' => $newDueDate,
                 ]);
+
+                // 🔁 Auto-create new payment link for next billing cycle
+                $this->autoCreateNextPaymentLink($client, $amount, $merchantId);
             });
 
             return; // guard clause
         }
 
-        // status: refunded
+        // Handle refunds
         $payment = $this->DB_ClientPayments->findClientPaymentWithOrderId($orderId);
 
         if (!$payment) {
@@ -688,6 +695,29 @@ class ClientServices
         });
     }
 
+    private function autoCreateNextPaymentLink($client, $amount, $merchantId)
+    {
+        try {
+            $newOrderId = $this->generateOrderId();
+            $newPaymentLink = $this->flashServices->createPaymentLink($merchantId, $newOrderId, $amount, $client->user->phone, $client->user->name);
+
+            // Update the client record with a new link
+            $this->DB_Clients->update_client($client, [
+                'payment_link' => $newPaymentLink['paymentLink'],
+                'renew_days' => $client->renew_days,
+            ]);
+
+            Log::info('New payment link auto-created after successful payment', [
+                'client_id' => $client->user_id,
+                'newOrderId' => $newOrderId,
+                'newPaymentLink' => $newPaymentLink['paymentLink'],
+            ]);
+        } catch (\Throwable $th) {
+            Log::error('Failed to auto-create new payment link: ' . $th->getMessage(), [
+                'client_id' => $client->user_id,
+            ]);
+        }
+    }
 
 
 }
