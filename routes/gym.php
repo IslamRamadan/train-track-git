@@ -40,6 +40,17 @@ Route::middleware(['auth:api', 'CheckSubscription', 'CheckCoachUser'])->group(fu
         Route::post('gym/client/program/exercises/list', [GymController::class, 'list_programs_exercises']);
         Route::post('gym/client/program/exercises/by/date/list', [GymController::class, 'list_client_program_exercises_by_date']);
 
+        // Exercise management
+        Route::post('gym/client/program/exercise/add', [GymController::class, 'add_client_exercise']);
+        Route::post('gym/client/program/exercise/edit', [GymController::class, 'edit_client_exercise']);
+        Route::post('gym/client/program/exercise/delete', [GymController::class, 'delete_client_exercise']);
+        Route::post('gym/client/program/exercise/copy', [GymController::class, 'copy_client_exercise']);
+        Route::post('gym/client/program/exercise/days/copy', [GymController::class, 'copy_client_exercise_days']);
+        Route::post('gym/client/program/exercise/days/cut', [GymController::class, 'cut_client_exercise_days']);
+        Route::post('gym/client/program/exercise/days/delete', [GymController::class, 'delete_client_exercise_days']);
+        
+        // Program management
+        Route::post('gym/client/programs/delete', [GymController::class, 'delete_client_program']);
     });
     Route::group(['middleware' => 'CheckCoachIsInGym'], function () {
         Route::post('gym/list/coaches', [GymController::class, 'list_gym_coaches']);

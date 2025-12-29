@@ -12,6 +12,7 @@ use App\Services\DatabaseServices\DB_GymLeaveRequest;
 use App\Services\DatabaseServices\DB_GymPendingCoach;
 use App\Services\DatabaseServices\DB_Gyms;
 use App\Services\DatabaseServices\DB_OneToOneProgram;
+use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_Users;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -30,7 +31,8 @@ class GymServices
                                 protected DB_Clients               $DB_Clients,
                                 protected OneToOneProgramServices  $oneToOneProgramServices,
                                 protected DB_OneToOneProgram       $DB_OneToOneProgram,
-                                protected DB_Exercises             $DB_Exercises
+                                protected DB_Exercises             $DB_Exercises,
+                                protected DB_OneToOneProgramExercises $DB_OneToOneProgramExercises
     )
     {
     }
@@ -605,5 +607,161 @@ class GymServices
         }
 
         return $this->oneToOneExerciseServices->list_client_exercises($request);
+    }
+
+    /**
+     * Validate access to a client program via gym membership
+     *
+     * @param int $program_id
+     * @param int $admin_gym_id
+     * @return JsonResponse|true True if validation passes, or an error response if not.
+     */
+    public function validateClientProgram(int $program_id, int $admin_gym_id): bool|JsonResponse
+    {
+        // Get the program
+        $program = $this->DB_OneToOneProgram->find_oto_program($program_id);
+        
+        if (!$program) {
+            return sendError("Program not found", 404);
+        }
+
+        // Get the client_id from the program
+        $coach_id = $program->coach_id;
+
+        // Check if the coach is assigned to the admin gym
+        $coach_gym = $this->DB_Coach_Gyms->gym_coach_exists($admin_gym_id, $coach_id);
+
+        // If the coach is not assigned to the admin gym, deny access
+        if (!$coach_gym) {
+            return sendError("Client coach is not assigned to your gym", 403);
+        }
+
+        return true;
+    }
+
+    /**
+     * Validate access to a client exercise via gym membership
+     *
+     * @param int $exercise_id
+     * @param int $admin_gym_id
+     * @return JsonResponse|true True if validation passes, or an error response if not.
+     */
+    public function validateClientExercise(int $exercise_id, int $admin_gym_id): bool|JsonResponse
+    {
+        // Get the exercise
+        $exercise = $this->DB_OneToOneProgramExercises->find_exercise($exercise_id);
+        
+        if (!$exercise) {
+            return sendError("Exercise not found", 404);
+        }
+
+        // Get the program_id from the exercise, then get client_id
+        $program = $exercise->one_to_one_program;
+        
+        if (!$program) {
+            return sendError("Program not found", 404);
+        }
+
+        $coach_id = $program->coach_id;
+
+        // Find the coach ID associated with the client
+        // Check if the coach is assigned to the admin gym
+        $coach_gym = $this->DB_Coach_Gyms->gym_coach_exists($admin_gym_id, $coach_id);
+
+        // If the coach is not assigned to the admin gym, deny access
+        if (!$coach_gym) {
+            return sendError("Client coach is not assigned to your gym", 403);
+        }
+
+        return true;
+    }
+
+
+    /**
+     * Add client exercise (gym admin/owner only)
+     *
+     * @param $request
+     * @return JsonResponse
+     */
+    public function add_client_exercise($request)
+    {
+        return $this->oneToOneExerciseServices->add_client_exercise($request);
+    }
+
+    /**
+     * Update client exercise (gym admin/owner only)
+     *
+     * @param $request
+     * @return JsonResponse
+     */
+    public function update_client_exercise($request)
+    {
+        return $this->oneToOneExerciseServices->update_client_exercise($request);
+    }
+
+    /**
+     * Delete client exercise (gym admin/owner only)
+     *
+     * @param $request
+     * @return JsonResponse
+     */
+    public function delete_client_exercise($request)
+    {
+        return $this->oneToOneExerciseServices->delete_client_exercise($request);
+    }
+
+    /**
+     * Copy client exercise (gym admin/owner only)
+     *
+     * @param $request
+     * @return JsonResponse
+     */
+    public function copy_client_exercise($request)
+    {
+        return $this->oneToOneExerciseServices->copy_client_exercise($request);
+    }
+
+    /**
+     * Copy client exercise days (gym admin/owner only)
+     *
+     * @param $request
+     * @return JsonResponse
+     */
+    public function copy_client_exercise_days($request)
+    {
+        return $this->oneToOneExerciseServices->copy_client_exercise_days($request);
+    }
+
+    /**
+     * Cut client exercise days (gym admin/owner only)
+     *
+     * @param $request
+     * @return JsonResponse
+     */
+    public function cut_client_exercise_days($request)
+    {
+        return $this->oneToOneExerciseServices->cut_client_exercise_days($request);
+    }
+
+    /**
+     * Delete client exercise days (gym admin/owner only)
+     *
+     * @param $request
+     * @return JsonResponse
+     */
+    public function delete_client_exercise_days($request)
+    {
+        return $this->oneToOneExerciseServices->delete_client_exercise_days($request);
+    }
+
+    /**
+     * Delete client program (gym admin/owner only)
+     *
+     * @param $request
+     * @return JsonResponse
+     */
+    public function delete_client_program($request)
+    {
+        return $this->oneToOneProgramServices->destroy($request);
     }
 }

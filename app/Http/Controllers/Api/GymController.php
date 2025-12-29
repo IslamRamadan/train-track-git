@@ -206,4 +206,177 @@ class GymController extends Controller
         return $this->gymServices->list_programs_exercises($request);
     }
 
+    /**
+     * Add client exercise (gym admin/owner only)
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function add_client_exercise(Request $request)
+    {
+        $admin_gym_id = $request->user()->gym_coach->gym_id;
+        $program_id = $request['client_program_id'];
+
+        $validationResult = $this->gymServices->validateClientProgram($program_id, $admin_gym_id);
+        if ($validationResult !== true) {
+            return $validationResult;
+        }
+
+        return $this->gymServices->add_client_exercise($request);
+    }
+
+    /**
+     * Edit client exercise (gym admin/owner only)
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function edit_client_exercise(Request $request)
+    {
+        $admin_gym_id = $request->user()->gym_coach->gym_id;
+        $exercise_id = $request['client_exercise_id'];
+
+        $validationResult = $this->gymServices->validateClientExercise($exercise_id, $admin_gym_id);
+        if ($validationResult !== true) {
+            return $validationResult;
+        }
+
+        return $this->gymServices->update_client_exercise($request);
+    }
+
+    /**
+     * Delete client exercise (gym admin/owner only)
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function delete_client_exercise(Request $request)
+    {
+        $admin_gym_id = $request->user()->gym_coach->gym_id;
+        $exercise_id = $request['client_exercise_id'];
+
+        $validationResult = $this->gymServices->validateClientExercise($exercise_id, $admin_gym_id);
+        if ($validationResult !== true) {
+            return $validationResult;
+        }
+
+        return $this->gymServices->delete_client_exercise($request);
+    }
+
+    /**
+     * Copy client exercise (gym admin/owner only)
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function copy_client_exercise(Request $request)
+    {
+        $admin_gym_id = $request->user()->gym_coach->gym_id;
+        $exercise_id = $request['client_exercise_id'];
+        $to_program_id = $request['to_client_program_id'];
+
+        // Validate both the source exercise and destination program
+        $validationResult = $this->gymServices->validateClientExercise($exercise_id, $admin_gym_id);
+        if ($validationResult !== true) {
+            return $validationResult;
+        }
+
+        $validationResult = $this->gymServices->validateClientProgram($to_program_id, $admin_gym_id);
+        if ($validationResult !== true) {
+            return $validationResult;
+        }
+
+        return $this->gymServices->copy_client_exercise($request);
+    }
+
+    /**
+     * Copy client exercise days (gym admin/owner only)
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function copy_client_exercise_days(Request $request)
+    {
+        $admin_gym_id = $request->user()->gym_coach->gym_id;
+        $from_program_id = $request['from_client_program_id'];
+        $to_program_id = $request['to_client_program_id'];
+
+        // Validate both programs
+        $validationResult = $this->gymServices->validateClientProgram($from_program_id, $admin_gym_id);
+        if ($validationResult !== true) {
+            return $validationResult;
+        }
+
+        $validationResult = $this->gymServices->validateClientProgram($to_program_id, $admin_gym_id);
+        if ($validationResult !== true) {
+            return $validationResult;
+        }
+
+        return $this->gymServices->copy_client_exercise_days($request);
+    }
+
+    /**
+     * Cut client exercise days (gym admin/owner only)
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function cut_client_exercise_days(Request $request)
+    {
+        $admin_gym_id = $request->user()->gym_coach->gym_id;
+        $from_program_id = $request['from_client_program_id'];
+        $to_program_id = $request['to_client_program_id'];
+
+        // Validate both programs
+        $validationResult = $this->gymServices->validateClientProgram($from_program_id, $admin_gym_id);
+        if ($validationResult !== true) {
+            return $validationResult;
+        }
+
+        $validationResult = $this->gymServices->validateClientProgram($to_program_id, $admin_gym_id);
+        if ($validationResult !== true) {
+            return $validationResult;
+        }
+
+        return $this->gymServices->cut_client_exercise_days($request);
+    }
+
+    /**
+     * Delete client exercise days (gym admin/owner only)
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function delete_client_exercise_days(Request $request)
+    {
+        $admin_gym_id = $request->user()->gym_coach->gym_id;
+        $program_id = $request['client_program_id'];
+
+        $validationResult = $this->gymServices->validateClientProgram($program_id, $admin_gym_id);
+        if ($validationResult !== true) {
+            return $validationResult;
+        }
+
+        return $this->gymServices->delete_client_exercise_days($request);
+    }
+
+    /**
+     * Delete client program (gym admin/owner only)
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function delete_client_program(Request $request)
+    {
+        $admin_gym_id = $request->user()->gym_coach->gym_id;
+        $program_id = $request['client_program_id'];
+
+        $validationResult = $this->gymServices->validateClientProgram($program_id, $admin_gym_id);
+        if ($validationResult !== true) {
+            return $validationResult;
+        }
+
+        return $this->gymServices->delete_client_program($request);
+    }
+
 }
