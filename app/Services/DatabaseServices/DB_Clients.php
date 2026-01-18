@@ -124,11 +124,9 @@ class DB_Clients
             ->first();
     }
 
-    public function update_client_payment_link(mixed $client_info, mixed $payment_link)
+    public function update_client(mixed $client_info, mixed $data)
     {
-        $client_info->update([
-            'payment_link' => $payment_link
-        ]);
+        $client_info->update($data);
     }
 
     public function create_client_payment_link(mixed $client_id, mixed $payment_link)
@@ -162,6 +160,19 @@ public function update_client_info(mixed $client_info, mixed $data)
                 'user_id' => $client_id,
                 'tag' => $payment_link
             ]);
+    }
+    public function findClientWithPaymentLink(mixed $paymentLink)
+    {
+        return Client::query()
+            ->with('user')
+            ->where('payment_link', $paymentLink)
+            ->first();
+    }
+
+    public function create_client_with_data($data)
+    {
+        Client::query()
+            ->create($data);
     }
 
 }

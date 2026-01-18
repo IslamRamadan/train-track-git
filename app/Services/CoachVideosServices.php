@@ -37,6 +37,7 @@ class CoachVideosServices
         $this->DB_CoachVideos->delete_coach_video($video);
         return sendResponse(["msg" => "Video deleted successfully"]);
     }
+
     /**
      * Add coach video
      * @param $request
@@ -63,19 +64,23 @@ class CoachVideosServices
     {
         $coach_id = $request->user()->id;
         $search = $request->search;
-        $videos = $this->DB_CoachVideos->get_coach_videos($coach_id, $search);
+        $perPage = $request->get('per_page', 10); // Default 10 items per page
+        // Get paginated videos
+        $videos = $this->DB_CoachVideos->get_coach_videos_paginated($coach_id, $search, $perPage);
+        // Prepare the response data
+        $coach_videos_arr = $videos->items(); // Get the items (videos) from the paginator
 
-        $coach_videos_arr = [];
-
-        foreach ($videos as $video) {
-            $single_video['id'] = $video->id;
-            $single_video['title'] = $video->title;
-            $single_video['link'] = $video->link;
-            $coach_videos_arr[] = $single_video;
-        }
-
-        return sendResponse($coach_videos_arr);
+        return sendResponse([
+            'data' => $coach_videos_arr,
+            'pagination' => [
+                'current_page' => $videos->currentPage(),
+                'per_page' => $videos->perPage(),
+                'total' => $videos->total(),
+                'last_page' => $videos->lastPage()
+            ]
+        ]);
     }
+
 
     /**
      * Import coach videos

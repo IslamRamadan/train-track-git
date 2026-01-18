@@ -13,6 +13,7 @@ class ClientPaymentResource extends JsonResource
             'id' => $this->id,
             'order_id' => $this->order_id,
             'amount' => $this->amount,
+            'renew_days' => $this->renew_days,
             'status' => $this->status_text,
             'client' => [
                 'name' => $this->client->name ?? null,

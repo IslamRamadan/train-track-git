@@ -502,12 +502,13 @@ class ValidationServices
         $request->validate([
             'client_exercise_id' => ['required',
                 'exists:one_to_one_program_exercises,id',
-                function ($attribute, $value, $fail) use ($request) {
-                    $verify_client_id = $this->DB_OneToOneProgramExercises->verify_client_id($request->user()->id, $request->client_exercise_id);
-                    if (!$verify_client_id) {
-                        $fail('The exercise must be the client exercise');
-                    }
-                },],
+//                function ($attribute, $value, $fail) use ($request) {
+//                    $verify_client_id = $this->DB_OneToOneProgramExercises->verify_client_id($request->user()->id, $request->client_exercise_id);
+//                    if (!$verify_client_id) {
+//                        $fail('The exercise must be the client exercise');
+//                    }
+//                }
+                ],
             'sets' => 'nullable|numeric',
             'videos_paths' => 'nullable|array',
             'details' => 'nullable'
@@ -521,12 +522,13 @@ class ValidationServices
         $request->validate([
             'log_id' => ['required',
                 'exists:exercise_logs,id',
-                function ($attribute, $value, $fail) use ($request) {
-                    $verify_client_id = $this->DB_ExerciseLog->verify_client_id($request->user()->id, $request->log_id);
-                    if (!$verify_client_id) {
-                        $fail('The exercise must be the client exercise');
-                    }
-                },],
+//                function ($attribute, $value, $fail) use ($request) {
+//                    $verify_client_id = $this->DB_ExerciseLog->verify_client_id($request->user()->id, $request->log_id);
+//                    if (!$verify_client_id) {
+//                        $fail('The exercise must be the client exercise');
+//                    }
+//                }
+                ],
             'sets' => 'nullable|numeric',
             'details' => 'nullable'
 
@@ -977,9 +979,10 @@ class ValidationServices
     public function createPaymentLinkValidation(Request $request)
     {
         $request->validate([
-            'client_id' => 'required|exists:clients,id',
+            'client_id' => 'required|exists:clients,user_id',
             'amount' => "required|numeric|min:10|max:10000",
-            'no_of_days' => "required|numeric|min:1|max:365"
+            'no_of_days' => "required|numeric|min:1|max:365",
+            'due_date' => "nullable|date|date_format:Y-m-d"
         ], []);
     }
 

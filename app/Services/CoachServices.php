@@ -93,6 +93,7 @@ class CoachServices
             'is_owner' => strval($coach_info->isGymOwner),
             'is_admin' => strval($coach_info->isGymAdmin),
             'is_gym_coach' => strval($coach_info->withGym),
+            'merchant_id' => (string)$coach_info->coach?->merchant_id ?: "",
             'subscription' => [
                 'coach_package_id' => $coach_info->coach->package->id,
                 'coach_package_name' => $coach_info->coach->package->name,
@@ -219,7 +220,8 @@ class CoachServices
                 foreach ($exercises as $exercise) {
                     $log = $exercise->log;
 
-                    $dateData['exercises'][] = [
+                    // Add exercise details
+                    $exerciseData = [
                         'exercise_id' => $exercise->id,
                         'arrangement' => $exercise->arrangement,
                         'exercise_name' => $exercise->name,
@@ -230,9 +232,31 @@ class CoachServices
                         'log_details' => $log->details ?? "",
                         'log_date' => $log?->created_at?->format('Y-m-d') ?? "",
                         'log_time' => $log?->created_at?->format('H:i:s') ?? "",
+                        'log_videos' => [],  // Initialize an empty array for videos in logs
+//                        'videos' => [],  // Initialize an empty array for videos in logs
                     ];
+
+//                    // Check for videos in the exercise
+//                    if ($exercise->videos()->exists()) {
+//                        foreach ($exercise->videos as $video) {
+//                            $exerciseData['videos'][] = [
+//                                'title' => $video->title,
+//                                'link' => $video->link
+//                            ];
+//                        }
+//                    }
+
+                    // Check if the log has videos and add them to the exercise log
+                    if ($log && $log->log_videos()->exists()) {
+                        foreach ($log->log_videos as $logVideo) {
+                            $exerciseData['log_videos'][] = $logVideo->path;
+                        }
+                    }
+
+                    $dateData['exercises'][] = $exerciseData;
                 }
 
+                // Handle comments for the date
                 $commentKey = $program->id . '_' . $date;
                 $commentsForDate = $programsComments[$commentKey] ?? [];
 
@@ -240,7 +264,7 @@ class CoachServices
                     $dateData['comments'][] = [
                         'comment_id' => $comment['id'],
                         'comment_content' => $comment['comment'],
-                        'sender' => $comment['sender'] == 1 ? 'Coach' : 'Client',
+                        'sender' => $comment['sender'] == 1 ? 'Client' : 'Coach',
                         'coach_id' => $program->coach_id,
                         'coach_name' => optional($program->coach)->name ?? 'Unknown',
                         'client_id' => $client->id,
@@ -313,7 +337,10 @@ class CoachServices
     {
         $client_info = $this->DB_Clients->get_client_info($client_id);
         if ($client_info) {
-            $this->DB_Clients->update_client_payment_link($client_info, $payment_link);
+
+            $this->DB_Clients->update_client($client_info, [
+                'payment_link' => $payment_link
+            ]);
         } else {
             $this->DB_Clients->create_client_payment_link($client_id, $payment_link);
         }
@@ -345,7 +372,6 @@ class CoachServices
         $amount = $coach_package->amount;
         $package_name = $coach_package->name;
         $package_clients_limit = $coach_package->clients_limit;
-
         if ($upgrade == "1") {
             list($upgraded_package) = $this->get_coach_package($coach_id);
             $package_id = $upgraded_package->id;
@@ -355,9 +381,10 @@ class CoachServices
         }
 
         $payment_description = $package_name . " payment with " . $package_clients_limit . " clients limit.";
+        dd($coach_package,$amount);
 
         try {
-            $payment = $this->paymentServices->pay(amount: $amount, full_name: $user->name, email: $user->email, description: $payment_description);
+            $payment = $this->paymentServices->pay(amount: $amount, full_name: $user->name, email: $user->email, description: $payment_description,phone: $user->phone);
             $payment_url = $payment->client_url;
             $order_id = $payment->order;
             $payment_amount = $payment->amount_cents / 100;

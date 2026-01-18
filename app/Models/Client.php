@@ -9,7 +9,7 @@ class Client extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'payment_link', 'tag', 'weight', 'height', 'fitness_goal', 'label', 'notes'];
+    protected $fillable = ['user_id', 'payment_link', 'tag', 'weight', 'height', 'fitness_goal', 'label', 'notes','renew_days','payment_amount'];
 
     public function user()
     {

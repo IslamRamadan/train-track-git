@@ -27,7 +27,7 @@ class FlashServices
         return null;
     }
 
-    public function createPaymentLink($integrationId, $aggregatorOrderId, $amount, $customerPhone)
+    public function createPaymentLink($integrationId, $aggregatorOrderId, $amount, $customerPhone, $customerName)
     {
         $accessToken = $this->generateAccessToken();
         if ($accessToken) {
@@ -54,8 +54,9 @@ class FlashServices
                         "type" => "sms"
                     ]],
                     "additionalInfo" => [
-                        ["key" => "product-code", "value" => "Train Track"]
-                    ]
+                        ["key" => "client-name", "value" => $customerName]
+                    ],
+                    'validity' => 5184000 // 60 days
                 ]
             );
             if ($response['success'] && isset($response['data']['paymentLink'])) {

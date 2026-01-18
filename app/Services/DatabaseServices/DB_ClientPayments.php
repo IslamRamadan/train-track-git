@@ -20,6 +20,7 @@ class DB_ClientPayments
                 'order_id',
                 'status',
                 'amount',
+                'renew_days',
 //                'status_text',
                 'created_at'
             ])
@@ -33,7 +34,9 @@ class DB_ClientPayments
                 $q->where('coach_id', $coachId);
             })
             ->when($search, function ($query) use ($search) {
-                $query->whereHas('client', function ($q) use ($search) {
+
+                $query->where('order_id', 'LIKE', "%{$search}%")
+                ->orWhereHas('client', function ($q) use ($search) {
                     $q->where('name', 'like', '%' . $search . '%')
                         ->orWhere('email', 'like', '%' . $search . '%')
                         ->orWhere('phone', 'like', '%' . $search . '%');
