@@ -820,17 +820,6 @@ class GymServices
     }
 
     /**
-     * Add gym program (for requesting admin/owner)
-     *
-     * @param $request
-     * @return JsonResponse
-     */
-    public function add_gym_program($request)
-    {
-        return $this->programServices->store($request);
-    }
-
-    /**
      * Update gym program
      *
      * @param $request
