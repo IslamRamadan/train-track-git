@@ -372,7 +372,6 @@ class CoachServices
         $amount = $coach_package->amount;
         $package_name = $coach_package->name;
         $package_clients_limit = $coach_package->clients_limit;
-
         if ($upgrade == "1") {
             list($upgraded_package) = $this->get_coach_package($coach_id);
             $package_id = $upgraded_package->id;
@@ -382,9 +381,10 @@ class CoachServices
         }
 
         $payment_description = $package_name . " payment with " . $package_clients_limit . " clients limit.";
+        dd($coach_package,$amount);
 
         try {
-            $payment = $this->paymentServices->pay(amount: $amount, full_name: $user->name, email: $user->email, description: $payment_description);
+            $payment = $this->paymentServices->pay(amount: $amount, full_name: $user->name, email: $user->email, description: $payment_description,phone: $user->phone);
             $payment_url = $payment->client_url;
             $order_id = $payment->order;
             $payment_amount = $payment->amount_cents / 100;

@@ -89,11 +89,11 @@ class PaymobServices
     }
 
 
-    public function pay($amount, $full_name, $email, $description)
+    public function pay($amount, $full_name, $email, $description,$phone)
     {
         $auth = PayMob::AuthenticationRequest();
         $payment_link_image = asset('images/logo.png');
-        return PayMob::createPaymentLink($auth->token, $payment_link_image, $amount * 100, $full_name, $email, $description);
+        return PayMob::createPaymentLink($auth->token, $payment_link_image, $amount * 100, $full_name, $email, $description, $phone);
     }
 
     public function checkout_response($request)
