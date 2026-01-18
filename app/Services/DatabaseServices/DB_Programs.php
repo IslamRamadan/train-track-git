@@ -84,4 +84,15 @@ class DB_Programs
             ])
             ->exists();
     }
+
+    /**
+     * Get only the coach_id for a program (lightweight query for validation)
+     *
+     * @param mixed $program_id
+     * @return mixed
+     */
+    public function get_program_coach_id(mixed $program_id)
+    {
+        return Program::where('id', $program_id)->value('coach_id');
+    }
 }

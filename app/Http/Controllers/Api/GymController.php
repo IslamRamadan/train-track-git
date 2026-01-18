@@ -379,4 +379,169 @@ class GymController extends Controller
         return $this->gymServices->delete_client_program($request);
     }
 
+    /**
+     * List gym programs (similar to ProgramController::index())
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function list_gym_programs(Request $request)
+    {
+        return $this->gymServices->list_gym_programs($request);
+    }
+
+    /**
+     * Add gym program
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function add_gym_program(Request $request)
+    {
+        return $this->gymServices->add_gym_program($request);
+    }
+
+    /**
+     * Update gym program
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function update_gym_program(Request $request)
+    {
+        return $this->gymServices->update_gym_program($request);
+    }
+
+    /**
+     * Delete gym program
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function delete_gym_program(Request $request)
+    {
+        return $this->gymServices->delete_gym_program($request);
+    }
+
+    /**
+     * Update gym program sync
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function update_gym_program_sync(Request $request)
+    {
+        return $this->gymServices->update_gym_program_sync($request);
+    }
+
+    /**
+     * List gym program days
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function list_gym_program_days(Request $request)
+    {
+        return $this->gymServices->list_gym_program_days($request);
+    }
+
+    /**
+     * List gym program exercises
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function list_gym_program_exercises(Request $request)
+    {
+        return $this->gymServices->list_gym_program_exercises($request);
+    }
+
+    /**
+     * List gym program exercises by day
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function list_gym_program_exercises_by_day(Request $request)
+    {
+        return $this->gymServices->list_gym_program_exercises_by_day($request);
+    }
+
+    /**
+     * Add gym program exercise
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function add_gym_program_exercise(Request $request)
+    {
+        return $this->gymServices->add_gym_program_exercise($request);
+    }
+
+    /**
+     * Update gym program exercise
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function update_gym_program_exercise(Request $request)
+    {
+        return $this->gymServices->update_gym_program_exercise($request);
+    }
+
+    /**
+     * Delete gym program exercise
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function delete_gym_program_exercise(Request $request)
+    {
+        return $this->gymServices->delete_gym_program_exercise($request);
+    }
+
+    /**
+     * Copy gym program exercise
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function copy_gym_program_exercise(Request $request)
+    {
+        return $this->gymServices->copy_gym_program_exercise($request);
+    }
+
+    /**
+     * Copy gym program exercise days
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function copy_gym_program_exercise_days(Request $request)
+    {
+        return $this->gymServices->copy_gym_program_exercise_days($request);
+    }
+
+    /**
+     * Cut gym program exercise days
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function cut_gym_program_exercise_days(Request $request)
+    {
+        return $this->gymServices->cut_gym_program_exercise_days($request);
+    }
+
+    /**
+     * Delete gym program exercise days
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function delete_gym_program_exercise_days(Request $request)
+    {
+        return $this->gymServices->delete_gym_program_exercise_days($request);
+    }
+
 }

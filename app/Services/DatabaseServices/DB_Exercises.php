@@ -99,4 +99,15 @@ class DB_Exercises
         return ProgramExercise::query()->where('id', $id)->exists();
     }
 
+    /**
+     * Get only the program_id for an exercise (lightweight query for validation)
+     *
+     * @param mixed $exercise_id
+     * @return mixed
+     */
+    public function get_exercise_program_id(mixed $exercise_id)
+    {
+        return ProgramExercise::where('id', $exercise_id)->value('program_id');
+    }
+
 }
