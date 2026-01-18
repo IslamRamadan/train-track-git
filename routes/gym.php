@@ -54,7 +54,6 @@ Route::middleware(['auth:api', 'CheckSubscription', 'CheckCoachUser'])->group(fu
 
         // Template Program management
         Route::post('gym/programs/list', [GymController::class, 'list_gym_programs']);
-        Route::post('gym/program/add', [GymController::class, 'add_gym_program']);
         Route::post('gym/program/edit', [GymController::class, 'update_gym_program']);
         Route::post('gym/program/delete', [GymController::class, 'delete_gym_program']);
         Route::post('gym/program/update/sync', [GymController::class, 'update_gym_program_sync']);
