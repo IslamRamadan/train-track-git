@@ -18,7 +18,7 @@ class ProgramController extends Controller
      */
     public function index(Request $request)
     {
-        return $this->programServices->index($request);
+        return $this->programServices->index($request, $request->user()->id);
     }
 
     /**
