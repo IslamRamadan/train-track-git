@@ -55,6 +55,12 @@ class DB_Coach_Gyms
             ->where(['coach_id' => $coach_id, 'gym_id' => $gym_id])
             ->first();
     }
+    public function gym_coach_exists(mixed $gym_id, mixed $coach_id)
+    {
+        return GymCoach::query()
+            ->where(['coach_id' => $coach_id, 'gym_id' => $gym_id])
+            ->exists();
+    }
 
     public function delete_gym_coach($gym_coach)
     {
