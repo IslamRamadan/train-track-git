@@ -246,7 +246,7 @@ class GymServices
                 "id" => strval($join_request->id),
                 "gym_name" => $join_request->gym->name,
                 "gym_admin_email" => $join_request->admin ? $join_request->admin->email : "",
-                "coach_email" => $join_request->coach->email,
+                "coach_email" => $join_request->email,
                 "request_date" => Carbon::parse($join_request->created_at)->toDateString(),
                 "request_time" => Carbon::parse($join_request->created_at)->toTimeString(),
                 "request_type" => $send_type,
@@ -548,7 +548,6 @@ class GymServices
         if ($validationResult !== true) {
             return $validationResult;
         }
-
         return $this->oneToOneProgramServices->index($request);
     }
 
@@ -556,14 +555,16 @@ class GymServices
      * Validate if the client coach belongs to the admins gym and
      * if the admin has the privilege to access the coach's clients.
      *
-     * @param int $client_id
+     * @param int|null $client_id
      * @param string $admin_gym_privilege
      * @param int $admin_gym_id
      * @return JsonResponse|true True if validation passes, or an error response if not.
      */
-    public function validateClientCoach(int $client_id, string $admin_gym_privilege, int $admin_gym_id): bool|JsonResponse
+    public function validateClientCoach(int|null $client_id, string $admin_gym_privilege, int $admin_gym_id): bool|JsonResponse
     {
-
+        if (!$client_id) {
+            return sendError("Client not found", 404);
+        }
 
         // Find the coach ID associated with the client.
         $coach_id = $this->DB_Clients->find_coach_id($client_id)->coach_id;
