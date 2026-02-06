@@ -40,6 +40,35 @@ Route::middleware(['auth:api', 'CheckSubscription', 'CheckCoachUser'])->group(fu
         Route::post('gym/client/program/exercises/list', [GymController::class, 'list_programs_exercises']);
         Route::post('gym/client/program/exercises/by/date/list', [GymController::class, 'list_client_program_exercises_by_date']);
 
+        // Exercise management
+        Route::post('gym/client/program/exercise/add', [GymController::class, 'add_client_exercise']);
+        Route::post('gym/client/program/exercise/edit', [GymController::class, 'edit_client_exercise']);
+        Route::post('gym/client/program/exercise/delete', [GymController::class, 'delete_client_exercise']);
+        Route::post('gym/client/program/exercise/copy', [GymController::class, 'copy_client_exercise']);
+        Route::post('gym/client/program/exercise/days/copy', [GymController::class, 'copy_client_exercise_days']);
+        Route::post('gym/client/program/exercise/days/cut', [GymController::class, 'cut_client_exercise_days']);
+        Route::post('gym/client/program/exercise/days/delete', [GymController::class, 'delete_client_exercise_days']);
+        
+        // Program management
+        Route::post('gym/client/programs/delete', [GymController::class, 'delete_client_program']);
+
+        // Template Program management
+        Route::post('gym/programs/list', [GymController::class, 'list_gym_programs']);
+        Route::post('gym/program/edit', [GymController::class, 'update_gym_program']);
+        Route::post('gym/program/delete', [GymController::class, 'delete_gym_program']);
+        Route::post('gym/program/update/sync', [GymController::class, 'update_gym_program_sync']);
+        Route::post('gym/program/days/list', [GymController::class, 'list_gym_program_days']);
+
+        // Template Program exercise management
+        Route::post('gym/program/exercises/list', [GymController::class, 'list_gym_program_exercises']);
+        Route::post('gym/program/exercises/by/day/list', [GymController::class, 'list_gym_program_exercises_by_day']);
+        Route::post('gym/program/exercise/add', [GymController::class, 'add_gym_program_exercise']);
+        Route::post('gym/program/exercise/edit', [GymController::class, 'update_gym_program_exercise']);
+        Route::post('gym/program/exercise/delete', [GymController::class, 'delete_gym_program_exercise']);
+        Route::post('gym/program/exercise/copy', [GymController::class, 'copy_gym_program_exercise']);
+        Route::post('gym/program/exercise/days/copy', [GymController::class, 'copy_gym_program_exercise_days']);
+        Route::post('gym/program/exercise/days/cut', [GymController::class, 'cut_gym_program_exercise_days']);
+        Route::post('gym/program/exercise/days/delete', [GymController::class, 'delete_gym_program_exercise_days']);
     });
     Route::group(['middleware' => 'CheckCoachIsInGym'], function () {
         Route::post('gym/list/coaches', [GymController::class, 'list_gym_coaches']);

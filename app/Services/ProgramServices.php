@@ -30,10 +30,13 @@ class ProgramServices
     {
     }
 
-    public function index($request)
+    public function index($request, $coach_id = null)
     {
         $this->validationServices->list_programs($request);
-        $coach_id = $request->user()->id;
+        // If coach_id is not provided, use the authenticated user's ID (backward compatibility)
+        if ($coach_id === null) {
+            $coach_id = $request->user()->id;
+        }
         $search = $request['search'];
         $programs = $this->DB_Programs->get_programs_with_coach($coach_id, $search);
         $programs_arr = $this->program_info_arr($programs);

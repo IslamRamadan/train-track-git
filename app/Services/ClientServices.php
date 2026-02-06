@@ -670,33 +670,34 @@ class ClientServices
 
             return; // guard clause
         }
+        if ($status == "refunded") {
+            // Handle refunds
+            $payment = $this->DB_ClientPayments->findClientPaymentWithOrderId($orderId);
 
-        // Handle refunds
-        $payment = $this->DB_ClientPayments->findClientPaymentWithOrderId($orderId);
+            if (!$payment) {
+                Log::warning('Payment not found for refund', ['orderId' => $orderId, 'paymentLink' => $paymentLink]);
+                return;
+            }
 
-        if (!$payment) {
-            Log::warning('Payment not found for refund', ['orderId' => $orderId, 'paymentLink' => $paymentLink]);
-            return;
+            if ($payment->status !== PaymentStatus::PAID->value) {
+                Log::info('Refund skipped: payment not in PAID state', [
+                    'orderId' => $orderId,
+                    'status' => $payment->status,
+                ]);
+                return;
+            }
+
+            DB::transaction(function () use ($payment, $paymentLink, $orderId) {
+                $this->DB_ClientPayments->updateClientPayment($payment, ['status' => PaymentStatus::REFUNDED->value]);
+                $this->DB_Users->update_user_due_date($payment->client_id, $payment['last_due_date']);
+
+                Log::info('Payment refunded', [
+                    'paymentLink' => $paymentLink,
+                    'orderId' => $orderId,
+                    'restoredDue' => $payment->last_due_date,
+                ]);
+            });
         }
-
-        if ($payment->status !== PaymentStatus::PAID->value) {
-            Log::info('Refund skipped: payment not in PAID state', [
-                'orderId' => $orderId,
-                'status' => $payment->status,
-            ]);
-            return;
-        }
-
-        DB::transaction(function () use ($payment, $paymentLink, $orderId) {
-            $this->DB_ClientPayments->updateClientPayment($payment, ['status' => PaymentStatus::REFUNDED->value]);
-            $this->DB_Users->update_user_due_date($payment->client_id, $payment['last_due_date']);
-
-            Log::info('Payment refunded', [
-                'paymentLink' => $paymentLink,
-                'orderId' => $orderId,
-                'restoredDue' => $payment->last_due_date,
-            ]);
-        });
     }
 
     private function autoCreateNextPaymentLink($client, $amount, $merchantId)
