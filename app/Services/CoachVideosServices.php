@@ -55,12 +55,35 @@ class CoachVideosServices
         return sendResponse(["msg" => "Video added successfully"]);
     }
 
-    /**
+  /**
      * List coach videos with a search word as optional parameter in the request
      * @param $request
      * @return JsonResponse
      */
     public function list($request)
+    {
+        $coach_id = $request->user()->id;
+        $search = $request->search;
+        $videos = $this->DB_CoachVideos->get_coach_videos($coach_id, $search);
+
+        $coach_videos_arr = [];
+
+        foreach ($videos as $video) {
+            $single_video['id'] = $video->id;
+            $single_video['title'] = $video->title;
+            $single_video['link'] = $video->link;
+            $coach_videos_arr[] = $single_video;
+        }
+
+        return sendResponse($coach_videos_arr);
+    }
+    
+    /**
+     * List coach videos with a search word as optional parameter in the request
+     * @param $request
+     * @return JsonResponse
+     */
+    public function list_paginated($request)
     {
         $coach_id = $request->user()->id;
         $search = $request->search;
@@ -80,6 +103,7 @@ class CoachVideosServices
             ]
         ]);
     }
+
 
 
     /**

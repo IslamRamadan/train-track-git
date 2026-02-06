@@ -28,6 +28,11 @@ class CoachVideosController extends Controller
         return $this->coachVideosServices->list($request);
     }
 
+    public function list_paginated(Request $request)
+    {
+        return $this->coachVideosServices->list_paginated($request);
+    }
+    
     public function delete(Request $request)
     {
         return $this->coachVideosServices->delete($request);

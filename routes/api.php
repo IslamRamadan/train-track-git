@@ -97,6 +97,7 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     Route::post('coach/videos/add', [CoachVideosController::class, 'add']);
     Route::post('coach/videos/edit', [CoachVideosController::class, 'edit']);
     Route::post('coach/videos/list', [CoachVideosController::class, 'list']);
+    Route::post('coach/videos/list/paginated', [CoachVideosController::class, 'list_paginated']);
     Route::post('coach/videos/delete', [CoachVideosController::class, 'delete']);
 
     Route::post('coach/exercise/templates/add', [ExerciseTemplateController::class, 'add']);
