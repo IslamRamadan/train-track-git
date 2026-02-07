@@ -148,19 +148,19 @@ class ClientServices
         return $clients_arr;
     }
 
-    /**
-     * Assign a program to a client
-     * @param $request
-     * @return JsonResponse
-     */
-    public function assign_program_to_client($request): JsonResponse
+    public function assign_program_to_client($request, $coach_id = null): JsonResponse
     {
         $this->validationServices->assign_program_to_client($request);
-        $coach_id = $request->user()->id;
+        
+        // If coach_id is not provided, use the authenticated user's ID (backward compatibility)
+        if ($coach_id === null) {
+            $coach_id = $request->user()->id;
+        }
+        
         $clients_id = $request['clients_id'];
         $program_id = $request['program_id'];
-        $start_date = $request['start_date'];//
-        $start_day = $request['start_day'];//
+        $start_date = $request['start_date'];
+        $start_day = $request['start_day'];
         $end_day = $request['end_day'];
         $notify_client = $request['notify_client'];
         $parent_program = $this->DB_Programs->find_program(program_id: $program_id);
@@ -168,15 +168,15 @@ class ClientServices
         if ($clientAssignedBefore) {
             return sendError("This program already assigned to this client");
         }
-
+    
         if ($parent_program->type == "0" || $parent_program->type == "3") {
             if (($start_date == null || $start_day == null)) {
                 return sendError("Start date and Start day is required when program type is template or standard", 401);
             }
         }
-
+    
         if ($parent_program->type == "1") {
-            $start_date = $parent_program->starting_date;//
+            $start_date = $parent_program->starting_date;
             if (count($this->DB_Exercises->get_program_exercises_days($program_id)) > 0) {
                 if ($start_day == null) {
                     $start_day = 1;
@@ -185,48 +185,39 @@ class ClientServices
                 return sendError("the program must have at least one exercise", 401);
             }
         }
-
-//       1-get all program exercises days
+    
+        // Get all program exercises days
         $program_exercises = $this->DB_Exercises->get_program_exercises_day_sorted($program_id, $start_day, $end_day);
         if (count($program_exercises) > 0) {
-//       2-assign end day to the last day if not exist
-
+            // Assign end day to the last day if not exist
             $end_day = $end_day != "" ? $end_day : $program_exercises->last()->day;
-//       3-get the difference between two days as number
+            // Get the difference between two days as number
             $start_and_difference = intval($end_day) - intval($start_day);
-
-//       4-increase this difference to the start date to get the end date
+    
+            // Increase this difference to the start date to get the end date
             $end_date = $this->get_date_after_n_days($start_date, $start_and_difference);
             $success_clients = [];
             foreach ($clients_id as $client_id) {
                 $client_info = $this->DB_Users->get_user_info($client_id);
-                //5-check if the user has any conflict in client schedule (will check in one_to_one_program_exercises table with client_id
-                //and start_date and end_date)
                 $success_clients[] = $client_info->name;
-
-                //if there is no conflict then create the program with exercises
-//                //8-get the parent program
-//                $parent_program = $this->DB_Programs->find_program($program_id);
-
-                //9-create the custom program assigned to user
+    
+                // Create the custom program assigned to user
                 $one_to_program = $this->DB_OneToOneProgram->create_one_to_program($parent_program->name, $parent_program->description, $client_id, $coach_id);
-                //-if program type is standard then add starting_date
+                // If program type is standard then add starting_date
                 if ($parent_program->type == "3") $this->DB_OneToOneProgramStartingDate->create_starting_date($one_to_program->id, $start_date);
-                //10-create row with client_id and program_id in program_clients table
+                // Create row with client_id and program_id in program_clients table
                 $this->DB_ProgramClients->create_program_client($program_id, $client_id, $one_to_program->id);
-                //11-create the custom program exercises assigned to custom program
+                // Create the custom program exercises assigned to custom program
                 foreach ($program_exercises as $exercise) {
-                    $exercise_date = $this->get_date_after_n_days($start_date, $exercise->day - $start_day);//get the day after the current day
+                    $exercise_date = $this->get_date_after_n_days($start_date, $exercise->day - $start_day);
                     $oto_exercise = $this->DB_OneToOneProgramExercises->create_one_to_one_program_exercises($exercise->name,
                         $exercise->description, $exercise->extra_description, $exercise->arrangement, $exercise_date,
                         $one_to_program->id, $exercise->id);
-                    //add exercises videos if exists
+                    // Add exercises videos if exists
                     $this->add_exercises_videos($oto_exercise->id, $exercise);
                 }
             }
-
         } else {
-//            return error the program must have at least one exercise
             return sendError("the program must have at least one exercise", 401);
         }
         if (count($success_clients) > 0) {

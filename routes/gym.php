@@ -39,6 +39,7 @@ Route::middleware(['auth:api', 'CheckSubscription', 'CheckCoachUser'])->group(fu
         Route::post('gym/client/programs/list', [GymController::class, 'list_client_programs']);
         Route::post('gym/client/program/exercises/list', [GymController::class, 'list_programs_exercises']);
         Route::post('gym/client/program/exercises/by/date/list', [GymController::class, 'list_client_program_exercises_by_date']);
+        Route::post('gym/clients/list', [GymController::class, 'list_all_gym_clients']);
 
         // Exercise management
         Route::post('gym/client/program/exercise/add', [GymController::class, 'add_client_exercise']);
@@ -51,6 +52,7 @@ Route::middleware(['auth:api', 'CheckSubscription', 'CheckCoachUser'])->group(fu
         
         // Program management
         Route::post('gym/client/programs/delete', [GymController::class, 'delete_client_program']);
+        Route::post('gym/program/client/assign', [GymController::class, 'assign_gym_program_to_client']);
 
         // Template Program management
         Route::post('gym/programs/list', [GymController::class, 'list_gym_programs']);

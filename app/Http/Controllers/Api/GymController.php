@@ -207,6 +207,28 @@ class GymController extends Controller
     }
 
     /**
+     * List all gym coaches' clients (aggregated)
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function list_all_gym_clients(Request $request)
+    {
+        return $this->gymServices->list_all_gym_clients($request);
+    }
+
+    /**
+     * Assign program to client (gym admin/owner only)
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function assign_gym_program_to_client(Request $request)
+    {
+        return $this->gymServices->assign_gym_program_to_client($request);
+    }
+
+    /**
      * Add client exercise (gym admin/owner only)
      *
      * @param Request $request

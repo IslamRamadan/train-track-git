@@ -175,4 +175,38 @@ public function update_client_info(mixed $client_info, mixed $data)
             ->create($data);
     }
 
+    /**
+     * Get clients from multiple coaches
+     *
+     * @param array $coach_ids
+     * @param mixed $search
+     * @param mixed $status
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function get_clients_by_coach_ids(array $coach_ids, mixed $search, $status)
+    {
+        return CoachClient::with('coach', 'client.client')
+            ->when(!empty($search), function ($q) use ($search) {
+                $q->whereHas('client', function ($query) use ($search) {
+                    $query->where('name', 'LIKE', '%' . $search . '%')
+                        ->orWhere('email', 'LIKE', '%' . $search . '%')
+                        ->orWhere('phone', 'LIKE', '%' . $search . '%')
+                        ->orWhereHas('client', function ($query2) use ($search) {
+                            $query2->where('tag', 'LIKE', '%' . $search . '%');
+                        });
+                });
+            })
+            ->when($status == 'pending', function ($q) {
+                $q->where('status', '0');
+            })
+            ->when($status == 'active', function ($q) {
+                $q->where('status', '1');
+            })
+            ->when($status == 'archived', function ($q) {
+                $q->where('status', '2');
+            })
+            ->whereIn('coach_id', $coach_ids)
+            ->get();
+    }
+
 }

@@ -14,6 +14,9 @@ use App\Services\DatabaseServices\DB_GymPendingCoach;
 use App\Services\DatabaseServices\DB_Gyms;
 use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
+use App\Services\DatabaseServices\DB_OneToOneProgramExerciseVideos;
+use App\Services\DatabaseServices\DB_OneToOneProgramStartingDate;
+use App\Services\DatabaseServices\DB_ProgramClients;
 use App\Services\DatabaseServices\DB_Users;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -34,6 +37,9 @@ class GymServices
                                 protected DB_OneToOneProgram       $DB_OneToOneProgram,
                                 protected DB_Exercises             $DB_Exercises,
                                 protected DB_OneToOneProgramExercises $DB_OneToOneProgramExercises,
+                                protected DB_OneToOneProgramExerciseVideos $DB_OneToOneProgramExerciseVideos,
+                                protected DB_OneToOneProgramStartingDate $DB_OneToOneProgramStartingDate,
+                                protected DB_ProgramClients         $DB_ProgramClients,
                                 protected ProgramServices          $programServices,
                                 protected ExerciseServices         $exerciseServices,
                                 protected DB_Programs              $DB_Programs
@@ -1104,5 +1110,137 @@ class GymServices
         }
 
         return $this->exerciseServices->delete_days($request);
+    }
+
+    /**
+     * Validate that a client belongs to a coach in the same gym
+     *
+     * @param int $client_id
+     * @param int $admin_gym_id
+     * @return JsonResponse|true True if validation passes, or an error response if not.
+     */
+    public function validateGymClient(int $client_id, int $admin_gym_id): bool|JsonResponse
+    {
+        // Find the coach ID associated with the client
+        $coach_client = $this->DB_Clients->find_coach_id($client_id);
+        
+        if (!$coach_client) {
+            return sendError("Client not found", 404);
+        }
+
+        $coach_id = $coach_client->coach_id;
+
+        // Check if the coach is assigned to the admin gym
+        $coach_gym = $this->DB_Coach_Gyms->gym_coach_exists($admin_gym_id, $coach_id);
+
+        // If the coach is not assigned to the admin gym, deny access
+        if (!$coach_gym) {
+            return sendError("Client coach is not assigned to your gym", 403);
+        }
+
+        return true;
+    }
+
+    /**
+     * List all clients from all coaches in the gym (aggregated)
+     *
+     * @param $request
+     * @return JsonResponse
+     */
+    public function list_all_gym_clients($request)
+    {
+        $this->validationServices->list_clients($request);
+        
+        $gym_id = $request->user()->gym_coach->gym_id;
+        $search = $request['search'] ?? null;
+        $status = $request['status'] ?? 'all';
+
+        // Get all coach IDs in the gym
+        $coach_ids = $this->DB_Coach_Gyms->get_all_gym_coach_ids($gym_id);
+
+        if (empty($coach_ids)) {
+            return sendResponse([]);
+        }
+
+        // Get all clients from these coaches
+        $clients = $this->DB_Clients->get_clients_by_coach_ids($coach_ids, $search, $status);
+
+        // Format the results with coach information
+        $clients_arr = [];
+        foreach ($clients as $coach_client) {
+            $client = $coach_client->client;
+            $coach = $coach_client->coach;
+            $client_info = $client->client ?? null;
+
+            $status_text = match ($coach_client->status) {
+                "0" => "Pending",
+                "1" => "Active",
+                "2" => "Archived",
+                default => "Unknown",
+            };
+
+            $clients_arr[] = [
+                "id" => $client->id,
+                "name" => $client->name,
+                "email" => $client->email,
+                "phone" => $client->phone,
+                "status" => $status_text,
+                "coach_id" => $coach->id,
+                "coach_name" => $coach->name,
+                "payment_link" => $client_info->payment_link ?? "",
+                "payment_amount" => $client_info->payment_amount ?? "",
+                "renew_days" => $client_info->renew_days ?? "",
+                "due_date" => $client->due_date ?? "",
+                "weight" => $client_info->weight ?? "",
+                "height" => $client_info->height ?? "",
+                "fitness_goal" => $client_info->fitness_goal ?? "",
+                "label" => $client_info->tag ?? "",
+                "notes" => $client_info->notes ?? "",
+            ];
+        }
+
+        return sendResponse($clients_arr);
+    }
+
+    /**
+     * Assign a template program (from any gym coach) to a client (from any gym coach)
+     *
+     * @param $request
+     * @return JsonResponse
+     */
+    public function assign_gym_program_to_client($request)
+    {
+        $this->validationServices->assign_program_to_client($request);
+        
+        $admin_gym_id = $request->user()->gym_coach->gym_id;
+        $program_id = $request['program_id'];
+        $clients_id = $request['clients_id'];
+    
+        // Validate that the program belongs to a coach in the same gym
+        $validationResult = $this->validateGymProgram($program_id, $admin_gym_id);
+        if ($validationResult !== true) {
+            return $validationResult;
+        }
+    
+        // Validate that all clients belong to coaches in the same gym
+        foreach ($clients_id as $client_id) {
+            $validationResult = $this->validateGymClient($client_id, $admin_gym_id);
+            if ($validationResult !== true) {
+                return $validationResult;
+            }
+        }
+    
+        // Get the program to find its coach_id
+        $parent_program = $this->DB_Programs->find_program($program_id);
+        
+        if (!$parent_program) {
+            return sendError("Program not found", 404);
+        }
+    
+        // Use the program's original coach_id instead of the requesting admin's id
+        $program_coach_id = $parent_program->coach_id;
+    
+        // Delegate to ClientServices with the program's coach_id
+        return $this->clientServices->assign_program_to_client($request, $program_coach_id);
     }
 }
