@@ -827,6 +827,30 @@ class GymServices
     }
 
     /**
+     * Add gym program (gym admin/owner can add program for any coach in gym)
+     *
+     * @param $request
+     * @return JsonResponse
+     */
+    public function add_gym_program($request)
+    {
+        $this->validationServices->coach_id_validation($request);
+        
+        $coach_id = $request['coach_id'];
+        $admin_gym_id = $request->user()->gym_coach->gym_id;
+
+        // Validate coach_id belongs to the same gym
+        $coach_gym_exists = $this->DB_Coach_Gyms->gym_coach_exists($admin_gym_id, $coach_id);
+        
+        if (!$coach_gym_exists) {
+            return sendError("Coach is not assigned to your gym", 403);
+        }
+
+        // Call ProgramServices::store() with the validated coach_id
+        return $this->programServices->store($request, $coach_id);
+    }
+
+    /**
      * Update gym program
      *
      * @param $request

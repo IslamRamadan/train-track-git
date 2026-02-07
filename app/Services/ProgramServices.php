@@ -68,10 +68,13 @@ class ProgramServices
         return $programs_arr;
     }
 
-    public function store($request)
+    public function store($request, $coach_id = null)
     {
         $this->validationServices->add_program($request);
-        $coach_id = $request->user()->id;
+        // If coach_id is not provided, use the authenticated user's ID (backward compatibility)
+        if ($coach_id === null) {
+            $coach_id = $request->user()->id;
+        }
         $name = $request['name'];
         $description = $request['description'];
         $type = $request['type'];

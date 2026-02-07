@@ -985,5 +985,10 @@ class ValidationServices
             'due_date' => "nullable|date|date_format:Y-m-d"
         ], []);
     }
-
+    public function coach_id_validation($request)
+    {
+        $request->validate([
+            'coach_id' => 'required|exists:users,id',
+        ]);
+    }
 }

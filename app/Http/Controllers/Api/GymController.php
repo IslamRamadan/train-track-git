@@ -412,6 +412,17 @@ class GymController extends Controller
         return $this->gymServices->list_gym_programs($request);
     }
 
+    /**
+     * Add gym program (gym admin/owner can add program for any coach in gym)
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function add_gym_program(Request $request)
+    {
+        return $this->gymServices->add_gym_program($request);
+    }
+
 
     /**
      * Update gym program
