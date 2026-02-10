@@ -9,9 +9,7 @@ use Illuminate\Http\Request;
 
 class GymController extends Controller
 {
-    public function __construct(protected GymServices $gymServices)
-    {
-    }
+    public function __construct(protected GymServices $gymServices) {}
 
     /**
      * Store a newly created resource in storage.
@@ -123,6 +121,30 @@ class GymController extends Controller
     public function remove_coach_from_gym(Request $request)
     {
         return $this->gymServices->remove_coach_from_gym($request);
+    }
+
+    /**
+     * Create gym payment link (gym owner only)
+     */
+    public function create_payment_link(Request $request): JsonResponse
+    {
+        return $this->gymServices->create_payment_link($request);
+    }
+
+    /**
+     * Check gym package limit
+     */
+    public function check_package_limit(Request $request): JsonResponse
+    {
+        return $this->gymServices->check_package_limit($request);
+    }
+
+    /**
+     * List gym payments
+     */
+    public function list_payments(Request $request): JsonResponse
+    {
+        return $this->gymServices->list_payments($request);
     }
 
     /**
@@ -566,5 +588,4 @@ class GymController extends Controller
     {
         return $this->gymServices->delete_gym_program_exercise_days($request);
     }
-
 }

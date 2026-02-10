@@ -116,6 +116,20 @@ class DB_Clients
         return CoachClient::query()->where(['coach_id' => $coach_id, "status" => "1"])->count();
     }
 
+    /**
+     * Get total active clients count for multiple coaches in one query
+     */
+    public function get_active_clients_count_for_coaches(array $coach_ids): int
+    {
+        if (empty($coach_ids)) {
+            return 0;
+        }
+        return CoachClient::query()
+            ->whereIn('coach_id', $coach_ids)
+            ->where('status', '1')
+            ->count();
+    }
+
 
     public function get_client_info(mixed $client_id)
     {
@@ -144,7 +158,7 @@ class DB_Clients
             'tag' => $payment_link
         ]);
     }
-public function update_client_info(mixed $client_info, mixed $data)
+    public function update_client_info(mixed $client_info, mixed $data)
     {
         $client_info->update($data);
     }
@@ -208,5 +222,4 @@ public function update_client_info(mixed $client_info, mixed $data)
             ->whereIn('coach_id', $coach_ids)
             ->get();
     }
-
 }

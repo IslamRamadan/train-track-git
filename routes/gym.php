@@ -28,8 +28,11 @@ Route::middleware(['auth:api', 'CheckSubscription', 'CheckCoachUser'])->group(fu
         Route::post('gym/delete', [GymController::class, 'delete']);
         Route::post('gym/edit/coach/privilege', [GymController::class, 'edit_coach_privilege']);
         Route::post('gym/remove/coach', [GymController::class, 'remove_coach_from_gym']);
+        Route::post('gym/payment/link/create', [GymController::class, 'create_payment_link']);
+        Route::post('gym/list/payments', [GymController::class, 'list_payments']);
     });
     Route::group(['middleware' => 'CheckCoachIsAdmin'], function () {
+        Route::post('gym/check/package/limit', [GymController::class, 'check_package_limit']);
         Route::post('gym/change/join/request/status', [GymController::class, 'change_join_request_status']);
         Route::post('gym/list/join/requests', [GymController::class, 'list_join_requests']);
         Route::post('gym/coach/invite', [GymController::class, 'invite_coach_to_gym']);
@@ -49,7 +52,7 @@ Route::middleware(['auth:api', 'CheckSubscription', 'CheckCoachUser'])->group(fu
         Route::post('gym/client/program/exercise/days/copy', [GymController::class, 'copy_client_exercise_days']);
         Route::post('gym/client/program/exercise/days/cut', [GymController::class, 'cut_client_exercise_days']);
         Route::post('gym/client/program/exercise/days/delete', [GymController::class, 'delete_client_exercise_days']);
-        
+
         // Program management
         Route::post('gym/client/programs/delete', [GymController::class, 'delete_client_program']);
         Route::post('gym/program/client/assign', [GymController::class, 'assign_gym_program_to_client']);
@@ -78,6 +81,4 @@ Route::middleware(['auth:api', 'CheckSubscription', 'CheckCoachUser'])->group(fu
         Route::post('gym/send/leave/request', [GymController::class, 'send_leave_request']);
         Route::post('gym/info', [GymController::class, 'info']);
     });
-
 });
-

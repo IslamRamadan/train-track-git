@@ -17,18 +17,17 @@ use Illuminate\Validation\Rule;
 
 class ValidationServices
 {
-    public function __construct(protected DB_OneToOneProgramExercises $DB_OneToOneProgramExercises,
-                                protected DB_ExerciseLog              $DB_ExerciseLog,
-                                protected DB_Clients                  $DB_Clients,
-                                protected DB_Programs                 $DB_Programs,
-                                protected DB_OneToOneProgram          $DB_OneToOneProgram,
-                                protected DB_CoachVideos              $DB_CoachVideos,
-                                protected DB_Users                    $DB_Users,
-                                protected DB_CoachExerciseTemplates $DB_ExerciseTemplates,
-                                protected DB_Exercises              $DB_Exercises,
-    )
-    {
-    }
+    public function __construct(
+        protected DB_OneToOneProgramExercises $DB_OneToOneProgramExercises,
+        protected DB_ExerciseLog              $DB_ExerciseLog,
+        protected DB_Clients                  $DB_Clients,
+        protected DB_Programs                 $DB_Programs,
+        protected DB_OneToOneProgram          $DB_OneToOneProgram,
+        protected DB_CoachVideos              $DB_CoachVideos,
+        protected DB_Users                    $DB_Users,
+        protected DB_CoachExerciseTemplates $DB_ExerciseTemplates,
+        protected DB_Exercises              $DB_Exercises,
+    ) {}
 
     public function login($request)
     {
@@ -133,28 +132,35 @@ class ValidationServices
             ],
         ]);
         $validator->after(function ($validator) use ($request) {
-            if ($request->input('from_type') === 'template' &&
-                !$this->DB_Exercises->verify_exercise_id($request->exercise_id)) {
+            if (
+                $request->input('from_type') === 'template' &&
+                !$this->DB_Exercises->verify_exercise_id($request->exercise_id)
+            ) {
                 $validator->errors()->add('exercise_id', 'The selected exercise_id does not exist in exercises.');
             }
 
-            if ($request->input('from_type') === 'oto' &&
-                !$this->DB_OneToOneProgramExercises->verify_exercise_id($request->exercise_id)) {
+            if (
+                $request->input('from_type') === 'oto' &&
+                !$this->DB_OneToOneProgramExercises->verify_exercise_id($request->exercise_id)
+            ) {
                 $validator->errors()->add('exercise_id', 'The selected exercise_id does not exist in exercises.');
             }
 
-            if ($request->input('to_type') === 'template' &&
-                !$this->DB_Programs->verify_program_id($request->to_program_id)) {
+            if (
+                $request->input('to_type') === 'template' &&
+                !$this->DB_Programs->verify_program_id($request->to_program_id)
+            ) {
                 $validator->errors()->add('to_program_id', 'The selected to_program_id does not exist in template_programs.');
             }
 
-            if ($request->input('to_type') === 'oto' &&
-                !$this->DB_OneToOneProgram->verify_program_id($request->to_program_id)) {
+            if (
+                $request->input('to_type') === 'oto' &&
+                !$this->DB_OneToOneProgram->verify_program_id($request->to_program_id)
+            ) {
                 $validator->errors()->add('to_program_id', 'The selected to_program_id does not exist in oto_programs.');
             }
         });
         $validator->validate();
-
     }
     public function copy_program_exercise_days($request)
     {
@@ -210,14 +216,16 @@ class ValidationServices
     {
         $request->validate([
             'deleted_days' => 'required|array',
-            'program_id' => ['required',
+            'program_id' => [
+                'required',
                 'exists:programs,id',
                 function ($attribute, $value, $fail) use ($request) {
                     $verify_coach_id = $this->DB_Programs->verify_coach_id($request->user()->id, $value);
                     if (!$verify_coach_id) {
                         $fail('The program must be the coach program');
                     }
-                },]
+                },
+            ]
         ]);
     }
 
@@ -454,7 +462,8 @@ class ValidationServices
                     if (!$verify_coach_id) {
                         $fail('The program must be the coach program');
                     }
-                },]
+                },
+            ]
         ]);
     }
 
@@ -500,15 +509,16 @@ class ValidationServices
     public function log_client_exercise($request)
     {
         $request->validate([
-            'client_exercise_id' => ['required',
+            'client_exercise_id' => [
+                'required',
                 'exists:one_to_one_program_exercises,id',
-//                function ($attribute, $value, $fail) use ($request) {
-//                    $verify_client_id = $this->DB_OneToOneProgramExercises->verify_client_id($request->user()->id, $request->client_exercise_id);
-//                    if (!$verify_client_id) {
-//                        $fail('The exercise must be the client exercise');
-//                    }
-//                }
-                ],
+                //                function ($attribute, $value, $fail) use ($request) {
+                //                    $verify_client_id = $this->DB_OneToOneProgramExercises->verify_client_id($request->user()->id, $request->client_exercise_id);
+                //                    if (!$verify_client_id) {
+                //                        $fail('The exercise must be the client exercise');
+                //                    }
+                //                }
+            ],
             'sets' => 'nullable|numeric',
             'videos_paths' => 'nullable|array',
             'details' => 'nullable'
@@ -520,15 +530,16 @@ class ValidationServices
     public function log_client_exercise_update($request)
     {
         $request->validate([
-            'log_id' => ['required',
+            'log_id' => [
+                'required',
                 'exists:exercise_logs,id',
-//                function ($attribute, $value, $fail) use ($request) {
-//                    $verify_client_id = $this->DB_ExerciseLog->verify_client_id($request->user()->id, $request->log_id);
-//                    if (!$verify_client_id) {
-//                        $fail('The exercise must be the client exercise');
-//                    }
-//                }
-                ],
+                //                function ($attribute, $value, $fail) use ($request) {
+                //                    $verify_client_id = $this->DB_ExerciseLog->verify_client_id($request->user()->id, $request->log_id);
+                //                    if (!$verify_client_id) {
+                //                        $fail('The exercise must be the client exercise');
+                //                    }
+                //                }
+            ],
             'sets' => 'nullable|numeric',
             'details' => 'nullable'
 
@@ -538,14 +549,15 @@ class ValidationServices
     public function update_exercise_status($request)
     {
         $request->validate([
-            'client_exercise_id' => ['required',
+            'client_exercise_id' => [
+                'required',
                 'exists:one_to_one_program_exercises,id',
-//                function ($attribute, $value, $fail) use ($request) {
-//                    $verify_client_id = $this->DB_OneToOneProgramExercises->verify_client_id($request->user()->id, $request->client_exercise_id);
-//                    if (!$verify_client_id) {
-//                        $fail('The exercise must be the client exercise');
-//                    }
-//                },
+                //                function ($attribute, $value, $fail) use ($request) {
+                //                    $verify_client_id = $this->DB_OneToOneProgramExercises->verify_client_id($request->user()->id, $request->client_exercise_id);
+                //                    if (!$verify_client_id) {
+                //                        $fail('The exercise must be the client exercise');
+                //                    }
+                //                },
             ],
             'status' => 'required|in:0,1,2',
         ]);
@@ -557,11 +569,11 @@ class ValidationServices
             'name' => 'required',
             'email' => 'required|email|email|email:rfc,dns|unique:users,email,' . $request->user()->id,
             'phone' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|unique:users,phone,' . $request->user()->id,
-            'weight'=>'nullable|numeric|min:20|max:500',
-            'height'=>'nullable|numeric|min:50|max:300',
-            'fitness_goal'=>'nullable',
-            'label'=>'nullable',
-            'notes'=>'nullable',
+            'weight' => 'nullable|numeric|min:20|max:500',
+            'height' => 'nullable|numeric|min:50|max:300',
+            'fitness_goal' => 'nullable',
+            'label' => 'nullable',
+            'notes' => 'nullable',
         ], [
             'email.unique' => 'This email already exists in the system',
             'phone.unique' => 'This phone already exists in the system',
@@ -670,7 +682,7 @@ class ValidationServices
         $request->validate([
             'coach_id' => ['exists:users,id'],
             'due_date' => 'required|date_format:Y-m-d'
-//            'due_date' => 'required|date_format:Y-m-d|after_or_equal:tomorrow'
+            //            'due_date' => 'required|date_format:Y-m-d|after_or_equal:tomorrow'
         ]);
     }
 
@@ -793,14 +805,25 @@ class ValidationServices
         $request->validate([
             'name' => ['required', 'max:50'],
             'description' => 'required|max:1000',
-            'logo' => "nullable"
+            'logo' => "nullable",
+            'package_id' => ['nullable', 'exists:packages,id'],
         ]);
     }
 
-    public function invite_coach_to_gym($request,$check_email_belongs_to_client)
+    public function gym_create_payment_link($request)
     {
         $request->validate([
-            'email' => ['required', 'email', function ($attribute, $value, $fail) use ($request,$check_email_belongs_to_client) {
+            'upgrade' => 'required|in:0,1',
+            'package_id' => ['nullable', 'exists:packages,id'],
+        ]);
+    }
+
+
+
+    public function invite_coach_to_gym($request, $check_email_belongs_to_client)
+    {
+        $request->validate([
+            'email' => ['required', 'email', function ($attribute, $value, $fail) use ($request, $check_email_belongs_to_client) {
                 if ($check_email_belongs_to_client && $check_email_belongs_to_client->user_type == "1") {
                     $fail('The email belongs to a client');
                 }
@@ -888,11 +911,11 @@ class ValidationServices
                 }
             }],
             'tag' => "nullable|max:50",
-            'weight'=>'nullable|numeric|min:20|max:500',
-            'height'=>'nullable|numeric|min:50|max:300',
-            'fitness_goal'=>'nullable',
-            'label'=>'nullable',
-            'notes'=>'nullable',
+            'weight' => 'nullable|numeric|min:20|max:500',
+            'height' => 'nullable|numeric|min:50|max:300',
+            'fitness_goal' => 'nullable',
+            'label' => 'nullable',
+            'notes' => 'nullable',
             'country_id' => 'nullable|exists:countries,id',
             'gender_id' => 'nullable|exists:genders,id',
         ]);
@@ -933,7 +956,7 @@ class ValidationServices
         ]);
     }
 
-    public function update_coach_info(Request $request,$id)
+    public function update_coach_info(Request $request, $id)
     {
         $request->validate([
             'email' => 'required|email|email|email:rfc,dns|unique:users,email,' . $id,
@@ -952,25 +975,33 @@ class ValidationServices
      */
     private function validateProgramExist(\Illuminate\Validation\Validator $validator, $request): void
     {
-// Additional validation for checking program existence
+        // Additional validation for checking program existence
         $validator->after(function ($validator) use ($request) {
-            if ($request->input('from_type') === 'template' &&
-                !$this->DB_Programs->verify_program_id($request->from_program_id)) {
+            if (
+                $request->input('from_type') === 'template' &&
+                !$this->DB_Programs->verify_program_id($request->from_program_id)
+            ) {
                 $validator->errors()->add('from_program_id', 'The selected from_program_id does not exist in template_programs.');
             }
 
-            if ($request->input('from_type') === 'oto' &&
-                !$this->DB_OneToOneProgram->verify_program_id($request->from_program_id)) {
+            if (
+                $request->input('from_type') === 'oto' &&
+                !$this->DB_OneToOneProgram->verify_program_id($request->from_program_id)
+            ) {
                 $validator->errors()->add('from_program_id', 'The selected from_program_id does not exist in oto_programs.');
             }
 
-            if ($request->input('to_type') === 'template' &&
-                !$this->DB_Programs->verify_program_id($request->to_program_id)) {
+            if (
+                $request->input('to_type') === 'template' &&
+                !$this->DB_Programs->verify_program_id($request->to_program_id)
+            ) {
                 $validator->errors()->add('to_program_id', 'The selected to_program_id does not exist in template_programs.');
             }
 
-            if ($request->input('to_type') === 'oto' &&
-                !$this->DB_OneToOneProgram->verify_program_id($request->to_program_id)) {
+            if (
+                $request->input('to_type') === 'oto' &&
+                !$this->DB_OneToOneProgram->verify_program_id($request->to_program_id)
+            ) {
                 $validator->errors()->add('to_program_id', 'The selected to_program_id does not exist in oto_programs.');
             }
         });

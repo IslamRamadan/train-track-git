@@ -27,24 +27,23 @@ use Illuminate\Support\Facades\Mail;
 
 class ClientServices
 {
-    public function __construct(protected ValidationServices               $validationServices,
-                                protected DB_Clients                       $DB_Clients,
-                                protected DB_Coaches                       $DB_Coaches,
-                                protected DB_Exercises                     $DB_Exercises,
-                                protected DB_OneToOneProgramExercises      $DB_OneToOneProgramExercises,
-                                protected DB_Programs                      $DB_Programs,
-                                protected DB_OneToOneProgram               $DB_OneToOneProgram,
-                                protected DB_Users                         $DB_Users,
-                                protected DB_ProgramClients                $DB_ProgramClients,
-                                protected DB_PendingClients                $DB_PendingClients,
-                                protected DB_OneToOneProgramExerciseVideos $DB_OneToOneProgramExerciseVideos,
-                                protected CoachServices                    $coachServices,
-                                protected DB_OneToOneProgramStartingDate   $DB_OneToOneProgramStartingDate,
-                                protected DB_ClientPayments                $DB_ClientPayments,
-                                protected FlashServices                    $flashServices
-    )
-    {
-    }
+    public function __construct(
+        protected ValidationServices               $validationServices,
+        protected DB_Clients                       $DB_Clients,
+        protected DB_Coaches                       $DB_Coaches,
+        protected DB_Exercises                     $DB_Exercises,
+        protected DB_OneToOneProgramExercises      $DB_OneToOneProgramExercises,
+        protected DB_Programs                      $DB_Programs,
+        protected DB_OneToOneProgram               $DB_OneToOneProgram,
+        protected DB_Users                         $DB_Users,
+        protected DB_ProgramClients                $DB_ProgramClients,
+        protected DB_PendingClients                $DB_PendingClients,
+        protected DB_OneToOneProgramExerciseVideos $DB_OneToOneProgramExerciseVideos,
+        protected CoachServices                    $coachServices,
+        protected DB_OneToOneProgramStartingDate   $DB_OneToOneProgramStartingDate,
+        protected DB_ClientPayments                $DB_ClientPayments,
+        protected FlashServices                    $flashServices
+    ) {}
 
 
     public function index($request)
@@ -113,7 +112,7 @@ class ClientServices
                         "payment_amount" => "",
                         "renew_days" => "",
                         "due_date" => "",
-                        "status" => "0",//0 for pending , 1 for active,2 for archived
+                        "status" => "0", //0 for pending , 1 for active,2 for archived
                         "weight" => "",
                         "height" => "",
                         "fitness_goal" => "",
@@ -151,12 +150,12 @@ class ClientServices
     public function assign_program_to_client($request, $coach_id = null): JsonResponse
     {
         $this->validationServices->assign_program_to_client($request);
-        
+
         // If coach_id is not provided, use the authenticated user's ID (backward compatibility)
         if ($coach_id === null) {
             $coach_id = $request->user()->id;
         }
-        
+
         $clients_id = $request['clients_id'];
         $program_id = $request['program_id'];
         $start_date = $request['start_date'];
@@ -168,13 +167,13 @@ class ClientServices
         if ($clientAssignedBefore) {
             return sendError("This program already assigned to this client");
         }
-    
+
         if ($parent_program->type == "0" || $parent_program->type == "3") {
             if (($start_date == null || $start_day == null)) {
                 return sendError("Start date and Start day is required when program type is template or standard", 401);
             }
         }
-    
+
         if ($parent_program->type == "1") {
             $start_date = $parent_program->starting_date;
             if (count($this->DB_Exercises->get_program_exercises_days($program_id)) > 0) {
@@ -185,7 +184,7 @@ class ClientServices
                 return sendError("the program must have at least one exercise", 401);
             }
         }
-    
+
         // Get all program exercises days
         $program_exercises = $this->DB_Exercises->get_program_exercises_day_sorted($program_id, $start_day, $end_day);
         if (count($program_exercises) > 0) {
@@ -193,14 +192,14 @@ class ClientServices
             $end_day = $end_day != "" ? $end_day : $program_exercises->last()->day;
             // Get the difference between two days as number
             $start_and_difference = intval($end_day) - intval($start_day);
-    
+
             // Increase this difference to the start date to get the end date
             $end_date = $this->get_date_after_n_days($start_date, $start_and_difference);
             $success_clients = [];
             foreach ($clients_id as $client_id) {
                 $client_info = $this->DB_Users->get_user_info($client_id);
                 $success_clients[] = $client_info->name;
-    
+
                 // Create the custom program assigned to user
                 $one_to_program = $this->DB_OneToOneProgram->create_one_to_program($parent_program->name, $parent_program->description, $client_id, $coach_id);
                 // If program type is standard then add starting_date
@@ -210,9 +209,15 @@ class ClientServices
                 // Create the custom program exercises assigned to custom program
                 foreach ($program_exercises as $exercise) {
                     $exercise_date = $this->get_date_after_n_days($start_date, $exercise->day - $start_day);
-                    $oto_exercise = $this->DB_OneToOneProgramExercises->create_one_to_one_program_exercises($exercise->name,
-                        $exercise->description, $exercise->extra_description, $exercise->arrangement, $exercise_date,
-                        $one_to_program->id, $exercise->id);
+                    $oto_exercise = $this->DB_OneToOneProgramExercises->create_one_to_one_program_exercises(
+                        $exercise->name,
+                        $exercise->description,
+                        $exercise->extra_description,
+                        $exercise->arrangement,
+                        $exercise_date,
+                        $one_to_program->id,
+                        $exercise->id
+                    );
                     // Add exercises videos if exists
                     $this->add_exercises_videos($oto_exercise->id, $exercise);
                 }
@@ -259,8 +264,13 @@ class ClientServices
         $coach_email = $request->user()->name;
         $email = $request['email'];
 
-        list($coach_package, $upgrade) = $this->coachServices->get_coach_package($coach_id);
-        if ($upgrade) return sendError("Need to upgrade to package " . $coach_package->name . " that has " . $coach_package->clients_limit . " clients limit with " . $coach_package->amount . " EGP monthly.");
+        list($coach_package, $upgrade, $is_gym_context) = $this->coachServices->getEffectivePackageAndUpgrade($coach_id);
+        if ($upgrade) {
+            $msg = $is_gym_context
+                ? "The gym owner needs to upgrade to " . $coach_package->name . " that supports " . $coach_package->clients_limit . " clients for " . $coach_package->amount . " EGP monthly."
+                : "You need to upgrade to " . $coach_package->name . " that supports " . $coach_package->clients_limit . " clients for " . $coach_package->amount . " EGP monthly.";
+            return sendError($msg);
+        }
         try {
             Mail::to($email)->send(new InvitationMail($email, $coach_email));
         } catch (\Exception $exception) {
@@ -303,7 +313,6 @@ class ClientServices
         ];
 
         return sendResponse($client_info_arr);
-
     }
 
     public function update_info($request)
@@ -345,7 +354,6 @@ class ClientServices
 
 
         return sendResponse(['message' => "Client information updated successfully"]);
-
     }
 
     public function client_dashboard($request)
@@ -374,7 +382,6 @@ class ClientServices
         $result['today_done_exercises_percentage'] = $done_exercises_percentage;
         $result['programs_progress'] = $programs;
         return sendResponse($result);
-
     }
 
     public function archive_account($request)
@@ -492,7 +499,6 @@ class ClientServices
             $clients_arr[] = $single_client;
         }
         return sendResponse($clients_arr);
-
     }
 
     /**
@@ -504,7 +510,10 @@ class ClientServices
     public function getClientsAssignedToProgram(Request $request): JsonResponse
     {
         $this->validationServices->getClientsAssignedToProgram($request);
-        $coach_id = $request->user()->id;
+        $coach_id = $request->coach_id ?? null;
+        if ($coach_id == null) {
+            $coach_id = $request->user()->id;
+        }
         $program_id = $request->program_id; // template program id
         $clients = $this->DB_ProgramClients->get_clients_assigned_to_program($coach_id, $program_id);
         $clients_arr = [];
@@ -538,7 +547,7 @@ class ClientServices
             "renew_days" => $client->client?->client?->renew_days ?? "",
             "tag" => $client->client->client->tag ?? "",
             "due_date" => $client->client->due_date ?? "",
-            "status" => $client->status,//0 for pending , 1 for active,2 for archived
+            "status" => $client->status, //0 for pending , 1 for active,2 for archived
             "weight" => $client?->client?->client?->weight ?? "",
             "height" => $client?->client?->client?->height ?? "",
             "fitness_goal" => $client?->client?->client?->fitness_goal ?? "",
@@ -714,6 +723,4 @@ class ClientServices
             ]);
         }
     }
-
-
 }

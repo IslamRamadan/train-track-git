@@ -4,20 +4,25 @@ namespace App\Services;
 
 use App\Mail\GymInvitationMail;
 use App\Mail\InvitationMail;
+use App\Models\RequestInfoLog;
 use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_Coach_Gyms;
 use App\Services\DatabaseServices\DB_Exercises;
 use App\Services\DatabaseServices\DB_GymJoinRequest;
-use App\Services\DatabaseServices\DB_Programs;
 use App\Services\DatabaseServices\DB_GymLeaveRequest;
+use App\Services\DatabaseServices\DB_GymPayments;
 use App\Services\DatabaseServices\DB_GymPendingCoach;
 use App\Services\DatabaseServices\DB_Gyms;
 use App\Services\DatabaseServices\DB_OneToOneProgram;
 use App\Services\DatabaseServices\DB_OneToOneProgramExercises;
 use App\Services\DatabaseServices\DB_OneToOneProgramExerciseVideos;
 use App\Services\DatabaseServices\DB_OneToOneProgramStartingDate;
+use App\Services\DatabaseServices\DB_Packages;
+use App\Services\DatabaseServices\DB_PendingClients;
 use App\Services\DatabaseServices\DB_ProgramClients;
+use App\Services\DatabaseServices\DB_Programs;
 use App\Services\DatabaseServices\DB_Users;
+use App\Services\PaymentServices\PaymobServices;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -25,27 +30,34 @@ use Illuminate\Support\Facades\Mail;
 
 class GymServices
 {
-    public function __construct(protected ValidationServices   $validationServices
-        , protected DB_Gyms                                    $DB_Gyms, protected DB_Coach_Gyms $DB_Coach_Gyms,
-                                protected ImageService         $imageService, protected DB_GymPendingCoach $DB_GymPendingCoach,
-                                protected DB_Users             $DB_Users, protected DB_GymJoinRequest $DB_GymJoinRequest,
-                                protected NotificationServices $notificationServices, protected DB_GymLeaveRequest $DB_GymLeaveRequest,
-                                protected ClientServices           $clientServices,
-                                protected OneToOneExerciseServices $oneToOneExerciseServices,
-                                protected DB_Clients               $DB_Clients,
-                                protected OneToOneProgramServices  $oneToOneProgramServices,
-                                protected DB_OneToOneProgram       $DB_OneToOneProgram,
-                                protected DB_Exercises             $DB_Exercises,
-                                protected DB_OneToOneProgramExercises $DB_OneToOneProgramExercises,
-                                protected DB_OneToOneProgramExerciseVideos $DB_OneToOneProgramExerciseVideos,
-                                protected DB_OneToOneProgramStartingDate $DB_OneToOneProgramStartingDate,
-                                protected DB_ProgramClients         $DB_ProgramClients,
-                                protected ProgramServices          $programServices,
-                                protected ExerciseServices         $exerciseServices,
-                                protected DB_Programs              $DB_Programs
-    )
-    {
-    }
+    public function __construct(
+        protected ValidationServices   $validationServices,
+        protected DB_Gyms                                    $DB_Gyms,
+        protected DB_Coach_Gyms $DB_Coach_Gyms,
+        protected ImageService         $imageService,
+        protected DB_GymPendingCoach $DB_GymPendingCoach,
+        protected DB_Users             $DB_Users,
+        protected DB_GymJoinRequest $DB_GymJoinRequest,
+        protected NotificationServices $notificationServices,
+        protected DB_GymLeaveRequest $DB_GymLeaveRequest,
+        protected ClientServices           $clientServices,
+        protected OneToOneExerciseServices $oneToOneExerciseServices,
+        protected DB_Clients               $DB_Clients,
+        protected OneToOneProgramServices  $oneToOneProgramServices,
+        protected DB_OneToOneProgram       $DB_OneToOneProgram,
+        protected DB_Exercises             $DB_Exercises,
+        protected DB_OneToOneProgramExercises $DB_OneToOneProgramExercises,
+        protected DB_OneToOneProgramExerciseVideos $DB_OneToOneProgramExerciseVideos,
+        protected DB_OneToOneProgramStartingDate $DB_OneToOneProgramStartingDate,
+        protected DB_ProgramClients         $DB_ProgramClients,
+        protected ProgramServices          $programServices,
+        protected ExerciseServices         $exerciseServices,
+        protected DB_Programs              $DB_Programs,
+        protected DB_GymPayments         $DB_GymPayments,
+        protected DB_Packages             $DB_Packages,
+        protected DB_PendingClients        $DB_PendingClients,
+        protected PaymobServices          $paymentServices
+    ) {}
 
 
     /**
@@ -62,6 +74,7 @@ class GymServices
         $name = $request->name;
         $description = $request->description;
         $logo = $request->logo;
+        $package_id = $request->package_id ?? 1;
 
         // Save the gym logo if provided
         $logo_name = null;
@@ -74,21 +87,197 @@ class GymServices
         }
         DB::beginTransaction();
         // Create the gym
-        $gym = $this->DB_Gyms->create_gym($owner_id, $name, $description, $logo_name);
+        $gym = $this->DB_Gyms->create_gym($owner_id, $name, $description, $logo_name, $package_id);
         // Create Gym Coach
         $this->DB_Coach_Gyms->create_gym_coach($gym->id, $owner_id, "1");
         DB::commit();
         return sendResponse(['message' => "Gym added successfully"]);
     }
 
-    public function update($request)
-    {
+    public function update($request) {}
 
+    public function destroy($request) {}
+
+    /**
+     * Get active and pending client counts for all coaches in the gym (single coach_ids query + 2 count queries)
+     *
+     * @return array{active: int, pending: int}
+     */
+    private function getGymActiveAndPendingClients($gym_id): array
+    {
+        $coach_ids = $this->DB_Coach_Gyms->get_all_gym_coach_ids($gym_id);
+        return [
+            'active' => $this->DB_Clients->get_active_clients_count_for_coaches($coach_ids),
+            'pending' => $this->DB_PendingClients->get_pending_clients_count_for_coaches($coach_ids),
+        ];
     }
 
-    public function destroy($request)
+    /**
+     * Get the appropriate package for gym based on current active + pending clients
+     */
+    public function getGymCurrentPackage($gym_id)
+    {
+        $counts = $this->getGymActiveAndPendingClients($gym_id);
+        $total_gym_clients = $counts['active'] + $counts['pending'];
+        return $this->DB_Packages->get_appropriate_package($total_gym_clients, ">=");
+    }
+
+    /**
+     * Get gym package and upgrade flag (true if adding one client would exceed limit)
+     *
+     * @return array [package, upgrade]
+     */
+    public function getGymPackage($gym_id): array
+    {
+        $counts = $this->getGymActiveAndPendingClients($gym_id);
+        $total_gym_clients = $counts['active'] + $counts['pending'];
+
+        $gym = $this->DB_Gyms->find_gym($gym_id);
+        $gym_package = $gym?->package ? $gym->package : null;
+
+        if (!$gym_package) {
+            $gym_package = $this->DB_Packages->get_appropriate_package($total_gym_clients, ">=");
+            $upgrade = $total_gym_clients + 1 > $gym_package->clients_limit;
+            if ($upgrade) {
+                $gym_package = $this->DB_Packages->get_appropriate_package($total_gym_clients);
+            }
+            return [$gym_package, $upgrade];
+        }
+
+        $upgrade = $total_gym_clients + 1 > $gym_package->clients_limit;
+        if ($upgrade) {
+            $gym_package = $this->DB_Packages->get_appropriate_package($total_gym_clients);
+        }
+        return [$gym_package, $upgrade];
+    }
+
+    /**
+     * Create gym payment link (gym owner only)
+     */
+    public function create_payment_link($request): JsonResponse
+    {
+        $this->validationServices->gym_create_payment_link($request);
+
+        RequestInfoLog::query()->create([
+            "user_id" => $request->user()->id,
+            "ip" => $request->ip(),
+            "user_agent" => $request->header('User-Agent'),
+            "route" => $request->getPathInfo(),
+            "body" => $request->getContent(),
+        ]);
+
+        $gym_id = $request->user()->gym_coach->gym_id;
+        $upgrade = $request->upgrade;
+        $user = $this->DB_Users->get_user_info($request->user()->id);
+        $gym = $this->DB_Gyms->find_gym($gym_id);
+
+        if (!$gym) {
+            return sendError("Gym not found");
+        }
+
+        $gym_package_id = $gym->package_id;
+        $old_package = $gym_package_id ? $this->DB_Packages->find_package($gym_package_id) : null;
+
+        $gym_package = $this->getGymCurrentPackage($gym_id);
+
+        $package_id = $gym_package->id;
+        $amount = $gym_package->amount;
+        $package_name = $gym_package->name;
+        $package_clients_limit = $gym_package->clients_limit;
+
+        if ($upgrade == "1") {
+            if ($request->package_id) {
+                $requested_package = $this->DB_Packages->find_package($request->package_id);
+                if ($requested_package) {
+                    $package_id = $requested_package->id;
+                    $amount = $requested_package->amount - ($old_package->amount ?? 0);
+                    $package_name = $requested_package->name;
+                    $package_clients_limit = $requested_package->clients_limit;
+                } else {
+                    list($upgraded_package) = $this->getGymPackage($gym_id);
+                    $package_id = $upgraded_package->id;
+                    $amount = $upgraded_package->amount - ($old_package->amount ?? 0);
+                    $package_name = $upgraded_package->name;
+                    $package_clients_limit = $upgraded_package->clients_limit;
+                }
+            } else {
+                list($upgraded_package) = $this->getGymPackage($gym_id);
+                $package_id = $upgraded_package->id;
+                $amount = $upgraded_package->amount - ($old_package->amount ?? 0);
+                $package_name = $upgraded_package->name;
+                $package_clients_limit = $upgraded_package->clients_limit;
+            }
+        }
+
+        $payment_description = $package_name . " payment with " . $package_clients_limit . " clients limit.";
+
+        try {
+            $payment = $this->paymentServices->pay(amount: $amount, full_name: $user->name, email: $user->email, description: $payment_description, phone: $user->phone ?? '');
+            $payment_url = $payment->client_url;
+            $order_id = $payment->order;
+            $payment_amount = $payment->amount_cents / 100;
+            $this->DB_GymPayments->create_gym_payment($gym_id, $order_id, $payment_amount, $package_id, $upgrade);
+
+            RequestInfoLog::query()->create([
+                "user_id" => $request->user()->id,
+                "ip" => $request->ip(),
+                "user_agent" => $request->header('User-Agent'),
+                "route" => $request->getPathInfo(),
+                "body" => "Payment link created successfully with link-->" . $payment_url,
+            ]);
+
+            return sendResponse(["payment_url" => $payment_url]);
+        } catch (\Exception $exception) {
+            RequestInfoLog::query()->create([
+                "user_id" => $request->user()->id,
+                "ip" => $request->ip(),
+                "user_agent" => $request->header('User-Agent'),
+                "route" => $request->getPathInfo(),
+                "body" => "Payment failed-->" . $exception->getMessage(),
+            ]);
+            return sendError("Payment failed, Please try again later.");
+        }
+    }
+
+    /**
+     * Check gym package limit
+     */
+    public function check_package_limit($request): JsonResponse
     {
 
+        $gym_id = $request->user()->gym_coach->gym_id;
+        list($gym_package, $upgrade) = $this->getGymPackage($gym_id);
+
+        return sendResponse([
+            "upgrade" => $upgrade,
+            "package_id" => $gym_package->id,
+            "package_name" => $gym_package->name,
+            "package_amount" => $gym_package->amount,
+            "package_clients_limit" => $gym_package->clients_limit,
+        ]);
+    }
+
+    /**
+     * List gym payments
+     */
+    public function list_payments($request): JsonResponse
+    {
+        $gym_id = $request->user()->gym_coach->gym_id;
+        $gym_payments = $this->DB_GymPayments->get_gym_payment_orders($gym_id)->toArray();
+
+        $payments_arr = array_map(function ($payment) {
+            return [
+                'id' => $payment['id'],
+                'order_id' => $payment['order_id'],
+                'amount' => $payment['amount'],
+                'status' => $payment['status_text'],
+                'package_name' => $payment['package'] ? $payment['package']['name'] : "",
+                'order_date' => Carbon::parse($payment['created_at'])->toDateString(),
+                'order_time' => Carbon::parse($payment['created_at'])->toTimeString(),
+            ];
+        }, $gym_payments);
+
+        return sendResponse($payments_arr);
     }
 
     /**
@@ -109,19 +298,19 @@ class GymServices
         $email = $request->email;
         $admin_email = $request->user()->email;
         $admin_name = $request->user()->name;
-//        check email is invited to gym
+        //        check email is invited to gym
         if ($this->DB_GymJoinRequest->check_email_is_invited_to_gym($email, $admin_gym_id)) return sendError("Coach is already invited to your gym", 403);;
 
-//      check if the invited coach is assigned to another gym
+        //      check if the invited coach is assigned to another gym
         if ($this->DB_Coach_Gyms->check_coach_assigned_to_gym($admin_gym_id, $email)) return sendError("Coach is already assigned to gym", 403);
 
-//        if user exists in system
+        //        if user exists in system
         if ($check_email_belongs_to_client) {
             // check if this email coach is not invited before with status pending to this gym
             if ($this->DB_GymJoinRequest->check_coach_is_requested_to_gym($admin_gym_id, $check_email_belongs_to_client->id)) return sendError("Coach is already invited to your gym", 403);;
             $gym_name = $request->user()->gym_coach->gym->name;
 
-//            send notification to coach to notify him with the invitation
+            //            send notification to coach to notify him with the invitation
             try {
                 Mail::to($email)->send(new GymInvitationMail($email, $gym_name, $admin_gym_id, $check_email_belongs_to_client->id));
                 $title = "Gym Invitation";
@@ -130,7 +319,6 @@ class GymServices
             } catch (\Exception $exception) {
                 return sendError("Failed to send the email,Please try again later.");
             }
-
         } else {
             // else then will send email to coach
             try {
@@ -166,9 +354,9 @@ class GymServices
         $admin_id = $request->user()->id;
         $search = $request['search'];
         $privilege = $request['privilege'];
-//      get gym coaches except the logged in coach
+        //      get gym coaches except the logged in coach
         $gym_coaches = $this->DB_Coach_Gyms->get_gym_coaches($gym_id, $admin_id, $search, $privilege);
-//        $pending_gym_coaches = $this->DB_GymPendingCoach->get_gym_pending_coaches($coach_id, $search);
+        //        $pending_gym_coaches = $this->DB_GymPendingCoach->get_gym_pending_coaches($coach_id, $search);
         $coaches_arr = $this->gym_coaches_arr($gym_coaches);
         return sendResponse($coaches_arr);
     }
@@ -184,36 +372,36 @@ class GymServices
                 default => "Coach",
             };
 
-//            $status = match ($coach->client->status) {
-//                1 => "Active",
-//                2 => "Archived",
-//                default => "Pending",
-//            };
+            //            $status = match ($coach->client->status) {
+            //                1 => "Active",
+            //                2 => "Archived",
+            //                default => "Pending",
+            //            };
 
             $coaches_arr[] = [
                 "id" => $coach->coach->id,
                 "name" => $coach->coach->name,
                 "email" => $coach->coach->email,
                 "phone" => $coach->coach->phone,
-                "due_date" => $coach->coach->due_date??"",
+                "due_date" => $coach->coach->due_date ?? "",
                 "privilege" => $privilege,
                 "active_clients" => $coach->coach->active_clients,
             ];
         }
 
-//        if ($status === "all" || $status === "pending") {
-//            foreach ($pending_gym_coaches as $coach) {
-//                $coaches_arr[] = [
-//                    "id" => "",
-//                    "name" => "",
-//                    "email" => $coach->email,
-//                    "phone" => "",
-//                    "due_date" => "",
-//                    "privilege" => "0", // 0 for pending, 1 for active, 2 for archived
-//                    "status" => "Pending",
-//                ];
-//            }
-//        }
+        //        if ($status === "all" || $status === "pending") {
+        //            foreach ($pending_gym_coaches as $coach) {
+        //                $coaches_arr[] = [
+        //                    "id" => "",
+        //                    "name" => "",
+        //                    "email" => $coach->email,
+        //                    "phone" => "",
+        //                    "due_date" => "",
+        //                    "privilege" => "0", // 0 for pending, 1 for active, 2 for archived
+        //                    "status" => "Pending",
+        //                ];
+        //            }
+        //        }
 
         return $coaches_arr;
     }
@@ -221,13 +409,13 @@ class GymServices
     public function list_join_requests($request)
     {
         $search = $request['search'];
-//        if coach is admin then he will get all his gym join requests (Received and Sent)
+        //        if coach is admin then he will get all his gym join requests (Received and Sent)
         if ($this->check_coach_is_gym_admin($request)) {
             $is_admin = true;
             $admin_gym_id = $request->user()->gym_coach->gym_id;
             $gym_join_requests = $this->DB_GymJoinRequest->get_gym_join_requests($admin_gym_id, $search);
         } else {
-//        if coach is not an admin then he will get all gyms join requests (Received and Sent)
+            //        if coach is not an admin then he will get all gyms join requests (Received and Sent)
             $is_admin = false;
             $coach_id = $request->user()->id;
             $gym_join_requests = $this->DB_GymJoinRequest->get_coach_gym_join_requests($coach_id, $search);
@@ -294,7 +482,7 @@ class GymServices
             }
             $this->DB_GymJoinRequest->update_join_request($join_request, null, $status);
             if ($status == "2") {
-            $this->DB_Coach_Gyms->create_gym_coach($gym_id, $join_request->coach_id, "3");
+                $this->DB_Coach_Gyms->create_gym_coach($gym_id, $join_request->coach_id, "3");
                 $title = "Join Request Accepted";
                 $message = "Your request to join $gym_name gym is accepted";
                 $this->notificationServices->send_notification_to_user($join_request->coach_id, $title, $message, ["gym_name" => $gym_name]);
@@ -303,7 +491,6 @@ class GymServices
             return sendError("Join request is not found");
         }
         return sendResponse(['message' => "Join request status updated successfully"]);
-
     }
 
     /**
@@ -389,12 +576,10 @@ class GymServices
             } else {
                 return sendError("Coach is not found in gym");
             }
-
         } else {
             return sendError("Leave request is not found");
         }
         return sendResponse(['message' => "Leave request status updated successfully"]);
-
     }
 
     /**
@@ -584,9 +769,9 @@ class GymServices
         }
 
         // If the coach is the gym owner and the admin is not, deny access.
-//        if ($coach_gym->privilege == "1" && $admin_gym_privilege != "1") {
-//            return sendError("Client coach is the gym owner, You can't see his clients", 403);
-//        }
+        //        if ($coach_gym->privilege == "1" && $admin_gym_privilege != "1") {
+        //            return sendError("Client coach is the gym owner, You can't see his clients", 403);
+        //        }
 
         return true;
     }
@@ -631,7 +816,7 @@ class GymServices
     {
         // Get the program
         $program = $this->DB_OneToOneProgram->find_oto_program($program_id);
-        
+
         if (!$program) {
             return sendError("Program not found", 404);
         }
@@ -661,14 +846,14 @@ class GymServices
     {
         // Get the exercise
         $exercise = $this->DB_OneToOneProgramExercises->find_exercise($exercise_id);
-        
+
         if (!$exercise) {
             return sendError("Exercise not found", 404);
         }
 
         // Get the program_id from the exercise, then get client_id
         $program = $exercise->one_to_one_program;
-        
+
         if (!$program) {
             return sendError("Program not found", 404);
         }
@@ -787,7 +972,7 @@ class GymServices
     {
         // Get only the coach_id (lightweight query - no relationships loaded)
         $coach_id = $this->DB_Programs->get_program_coach_id($program_id);
-        
+
         if (!$coach_id) {
             return sendError("Program not found", 404);
         }
@@ -817,7 +1002,7 @@ class GymServices
 
         // Validate coach_id belongs to the same gym
         $coach_gym_exists = $this->DB_Coach_Gyms->gym_coach_exists($admin_gym_id, $coach_id);
-        
+
         if (!$coach_gym_exists) {
             return sendError("Coach is not assigned to your gym", 403);
         }
@@ -835,13 +1020,13 @@ class GymServices
     public function add_gym_program($request)
     {
         $this->validationServices->coach_id_validation($request);
-        
+
         $coach_id = $request['coach_id'];
         $admin_gym_id = $request->user()->gym_coach->gym_id;
 
         // Validate coach_id belongs to the same gym
         $coach_gym_exists = $this->DB_Coach_Gyms->gym_coach_exists($admin_gym_id, $coach_id);
-        
+
         if (!$coach_gym_exists) {
             return sendError("Coach is not assigned to your gym", 403);
         }
@@ -1147,7 +1332,7 @@ class GymServices
     {
         // Find the coach ID associated with the client
         $coach_client = $this->DB_Clients->find_coach_id($client_id);
-        
+
         if (!$coach_client) {
             return sendError("Client not found", 404);
         }
@@ -1174,7 +1359,7 @@ class GymServices
     public function list_all_gym_clients($request)
     {
         $this->validationServices->list_clients($request);
-        
+
         $gym_id = $request->user()->gym_coach->gym_id;
         $search = $request['search'] ?? null;
         $status = $request['status'] ?? 'all';
@@ -1235,17 +1420,17 @@ class GymServices
     public function assign_gym_program_to_client($request)
     {
         $this->validationServices->assign_program_to_client($request);
-        
+
         $admin_gym_id = $request->user()->gym_coach->gym_id;
         $program_id = $request['program_id'];
         $clients_id = $request['clients_id'];
-    
+
         // Validate that the program belongs to a coach in the same gym
         $validationResult = $this->validateGymProgram($program_id, $admin_gym_id);
         if ($validationResult !== true) {
             return $validationResult;
         }
-    
+
         // Validate that all clients belong to coaches in the same gym
         foreach ($clients_id as $client_id) {
             $validationResult = $this->validateGymClient($client_id, $admin_gym_id);
@@ -1253,17 +1438,17 @@ class GymServices
                 return $validationResult;
             }
         }
-    
+
         // Get the program to find its coach_id
         $parent_program = $this->DB_Programs->find_program($program_id);
-        
+
         if (!$parent_program) {
             return sendError("Program not found", 404);
         }
-    
+
         // Use the program's original coach_id instead of the requesting admin's id
         $program_coach_id = $parent_program->coach_id;
-    
+
         // Delegate to ClientServices with the program's coach_id
         return $this->clientServices->assign_program_to_client($request, $program_coach_id);
     }
