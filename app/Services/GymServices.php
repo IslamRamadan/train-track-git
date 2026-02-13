@@ -26,6 +26,7 @@ use App\Services\PaymentServices\PaymobServices;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class GymServices
@@ -156,28 +157,94 @@ class GymServices
      */
     public function create_payment_link($request): JsonResponse
     {
-        $this->validationServices->gym_create_payment_link($request);
+        $user_id = $request->user()->id;
+        $route = $request->getPathInfo();
+        $ip = $request->ip();
+        $user_agent = $request->header('User-Agent');
+        $request_body = $request->getContent();
+
+        // Log initial request
+        Log::info("[GymPayment] Payment link creation request started", [
+            'user_id' => $user_id,
+            'route' => $route,
+            'ip' => $ip,
+            'request_body' => $request_body
+        ]);
 
         RequestInfoLog::query()->create([
-            "user_id" => $request->user()->id,
-            "ip" => $request->ip(),
-            "user_agent" => $request->header('User-Agent'),
-            "route" => $request->getPathInfo(),
-            "body" => $request->getContent(),
+            "user_id" => $user_id,
+            "ip" => $ip,
+            "user_agent" => $user_agent,
+            "route" => $route,
+            "body" => $request_body,
         ]);
+
+        // Validation
+        try {
+            $this->validationServices->gym_create_payment_link($request);
+            Log::info("[GymPayment] Validation passed", ['user_id' => $user_id]);
+        } catch (\Exception $e) {
+            Log::warning("[GymPayment] Validation failed", [
+                'user_id' => $user_id,
+                'error' => $e->getMessage()
+            ]);
+            RequestInfoLog::query()->create([
+                "user_id" => $user_id,
+                "ip" => $ip,
+                "user_agent" => $user_agent,
+                "route" => $route,
+                "body" => "Validation failed-->" . $e->getMessage(),
+            ]);
+            throw $e;
+        }
 
         $gym_id = $request->user()->gym_coach->gym_id;
         $upgrade = $request->upgrade;
-        $user = $this->DB_Users->get_user_info($request->user()->id);
+        
+        Log::info("[GymPayment] Extracted request data", [
+            'user_id' => $user_id,
+            'gym_id' => $gym_id,
+            'upgrade' => $upgrade,
+        ]);
+
+        // Get user and gym info
+        $user = $this->DB_Users->get_user_info($user_id);
         $gym = $this->DB_Gyms->find_gym($gym_id);
 
         if (!$gym) {
+            Log::error("[GymPayment] Gym not found", [
+                'user_id' => $user_id,
+                'gym_id' => $gym_id,
+            ]);
+            RequestInfoLog::query()->create([
+                "user_id" => $user_id,
+                "ip" => $ip,
+                "user_agent" => $user_agent,
+                "route" => $route,
+                "body" => "Gym not found for gym_id: $gym_id",
+            ]);
             return sendError("Gym not found");
         }
+
+        Log::info("[GymPayment] Gym and user info retrieved", [
+            'user_id' => $user_id,
+            'gym_id' => $gym_id,
+            'gym_name' => $gym->name,
+            'user_name' => $user->name,
+            'user_email' => $user->email,
+        ]);
 
         $gym_package_id = $gym->package_id;
         $old_package = $gym_package_id ? $this->DB_Packages->find_package($gym_package_id) : null;
 
+        Log::info("[GymPayment] Current gym package info", [
+            'gym_id' => $gym_id,
+            'current_package_id' => $gym_package_id,
+            'old_package_name' => $old_package?->name,
+            'old_package_amount' => $old_package?->amount,
+        ]);
+
+        // Get current package
         $gym_package = $this->getGymCurrentPackage($gym_id);
 
         $package_id = $gym_package->id;
@@ -185,7 +252,21 @@ class GymServices
         $package_name = $gym_package->name;
         $package_clients_limit = $gym_package->clients_limit;
 
+        Log::info("[GymPayment] Current package calculated", [
+            'gym_id' => $gym_id,
+            'package_id' => $package_id,
+            'package_name' => $package_name,
+            'package_amount' => $amount,
+            'package_clients_limit' => $package_clients_limit,
+        ]);
+
+        // Handle upgrade logic
         if ($upgrade == "1") {
+            Log::info("[GymPayment] Upgrade requested", [
+                'gym_id' => $gym_id,
+                'requested_package_id' => $request->package_id ?? null,
+            ]);
+
             if ($request->package_id) {
                 $requested_package = $this->DB_Packages->find_package($request->package_id);
                 if ($requested_package) {
@@ -193,12 +274,29 @@ class GymServices
                     $amount = $requested_package->amount - ($old_package->amount ?? 0);
                     $package_name = $requested_package->name;
                     $package_clients_limit = $requested_package->clients_limit;
+                    
+                    Log::info("[GymPayment] Using requested package for upgrade", [
+                        'gym_id' => $gym_id,
+                        'requested_package_id' => $request->package_id,
+                        'new_package_id' => $package_id,
+                        'new_package_name' => $package_name,
+                        'upgrade_amount' => $amount,
+                        'old_package_amount' => $old_package->amount ?? 0,
+                    ]);
                 } else {
                     list($upgraded_package) = $this->getGymPackage($gym_id);
                     $package_id = $upgraded_package->id;
                     $amount = $upgraded_package->amount - ($old_package->amount ?? 0);
                     $package_name = $upgraded_package->name;
                     $package_clients_limit = $upgraded_package->clients_limit;
+                    
+                    Log::info("[GymPayment] Requested package not found, using auto-calculated upgrade package", [
+                        'gym_id' => $gym_id,
+                        'requested_package_id' => $request->package_id,
+                        'auto_calculated_package_id' => $package_id,
+                        'auto_calculated_package_name' => $package_name,
+                        'upgrade_amount' => $amount,
+                    ]);
                 }
             } else {
                 list($upgraded_package) = $this->getGymPackage($gym_id);
@@ -206,35 +304,103 @@ class GymServices
                 $amount = $upgraded_package->amount - ($old_package->amount ?? 0);
                 $package_name = $upgraded_package->name;
                 $package_clients_limit = $upgraded_package->clients_limit;
+                
+                Log::info("[GymPayment] No package_id provided, using auto-calculated upgrade package", [
+                    'gym_id' => $gym_id,
+                    'auto_calculated_package_id' => $package_id,
+                    'auto_calculated_package_name' => $package_name,
+                    'upgrade_amount' => $amount,
+                ]);
             }
         }
 
         $payment_description = $package_name . " payment with " . $package_clients_limit . " clients limit.";
 
+        Log::info("[GymPayment] Payment details prepared", [
+            'gym_id' => $gym_id,
+            'package_id' => $package_id,
+            'package_name' => $package_name,
+            'amount' => $amount,
+            'payment_description' => $payment_description,
+            'upgrade' => $upgrade,
+        ]);
+
+        // Create payment link
         try {
             $payment = $this->paymentServices->pay(amount: $amount, full_name: $user->name, email: $user->email, description: $payment_description, phone: $user->phone ?? '');
+            Log::info("[GymPayment] Attempting to create payment link via payment service", [
+                'gym_id' => $gym_id,
+                'amount' => $amount,
+                'user_name' => $user->name,
+                'user_email' => $user->email,
+                'user_phone' => $user->phone ?? '',
+            ]);
+
+            $payment = $this->paymentServices->pay(
+                amount: $amount,
+                full_name: $user->name,
+                email: $user->email,
+                description: $payment_description,
+                phone: $user->phone ?? ''
+            );
+
             $payment_url = $payment->client_url;
             $order_id = $payment->order;
             $payment_amount = $payment->amount_cents / 100;
+
+            Log::info("[GymPayment] Payment link created successfully", [
+                'gym_id' => $gym_id,
+                'order_id' => $order_id,
+                'payment_url' => $payment_url,
+                'payment_amount' => $payment_amount,
+                'package_id' => $package_id,
+            ]);
+
+            // Save payment record
             $this->DB_GymPayments->create_gym_payment($gym_id, $order_id, $payment_amount, $package_id, $upgrade);
 
+            Log::info("[GymPayment] Payment record saved to database", [
+                'gym_id' => $gym_id,
+                'order_id' => $order_id,
+                'payment_amount' => $payment_amount,
+                'package_id' => $package_id,
+                'upgrade' => $upgrade,
+            ]);
+
             RequestInfoLog::query()->create([
-                "user_id" => $request->user()->id,
-                "ip" => $request->ip(),
-                "user_agent" => $request->header('User-Agent'),
-                "route" => $request->getPathInfo(),
-                "body" => "Payment link created successfully with link-->" . $payment_url,
+                "user_id" => $user_id,
+                "ip" => $ip,
+                "user_agent" => $user_agent,
+                "route" => $route,
+                "body" => "Payment link created successfully. Order ID: $order_id, Payment URL: $payment_url, Amount: $payment_amount, Package: $package_name (ID: $package_id), Upgrade: $upgrade",
+            ]);
+
+            Log::info("[GymPayment] Payment link creation completed successfully", [
+                'user_id' => $user_id,
+                'gym_id' => $gym_id,
+                'order_id' => $order_id,
+                'payment_url' => $payment_url,
             ]);
 
             return sendResponse(["payment_url" => $payment_url]);
         } catch (\Exception $exception) {
-            RequestInfoLog::query()->create([
-                "user_id" => $request->user()->id,
-                "ip" => $request->ip(),
-                "user_agent" => $request->header('User-Agent'),
-                "route" => $request->getPathInfo(),
-                "body" => "Payment failed-->" . $exception->getMessage(),
+            Log::error("[GymPayment] Payment link creation failed", [
+                'user_id' => $user_id,
+                'gym_id' => $gym_id,
+                'error_message' => $exception->getMessage(),
+                'error_trace' => $exception->getTraceAsString(),
+                'package_id' => $package_id ?? null,
+                'amount' => $amount ?? null,
             ]);
+
+            RequestInfoLog::query()->create([
+                "user_id" => $user_id,
+                "ip" => $ip,
+                "user_agent" => $user_agent,
+                "route" => $route,
+                "body" => "Payment failed. Error: " . $exception->getMessage() . " | Package ID: " . ($package_id ?? 'N/A') . " | Amount: " . ($amount ?? 'N/A'),
+            ]);
+
             return sendError("Payment failed, Please try again later.");
         }
     }
