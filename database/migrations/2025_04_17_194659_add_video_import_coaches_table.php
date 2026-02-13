@@ -11,7 +11,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('coaches', function (Blueprint $table) {
-            $table->enum('video_import', ['0', '1'])->default("0")->after('package_id');
+            $table->enum('video_import', ['0', '1'])->default("0");
         });
     }
 

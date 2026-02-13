@@ -15,11 +15,11 @@ return new class extends Migration {
             $table->id();
             $table->string('name', 200);
             $table->text('description');
-            $table->foreignIdFor(ProgramType::class);
+            $table->foreignIdFor(ProgramType::class)->nullable();
             $table->unsignedBigInteger('coach_id')->nullable();
             $table->foreign('coach_id')->references('id')->on('users');
-            $table->unsignedBigInteger('program_type_id')->nullable();
-            $table->foreign('program_type_id')->references('id')->on('program_types');
+            // $table->unsignedBigInteger('program_type_id')->nullable();
+            // $table->foreign('program_type_id')->references('id')->on('program_types');
             $table->timestamps();
         });
     }

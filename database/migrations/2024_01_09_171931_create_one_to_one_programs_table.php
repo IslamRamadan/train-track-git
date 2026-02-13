@@ -12,19 +12,14 @@ return new class extends Migration {
     {
         Schema::create('one_to_one_programs', function (Blueprint $table) {
             $table->id();
-//            $table->index('client_id');
-//            $table->foreign('client_id')->references('id')->on('users')->onDelete('strict');
-//            $table->index('coach_id');
-//            $table->foreign('coach_id')->references('id')->on('users')->onDelete('strict');
-//            $table->index('program_id');
-//            $table->foreign('program_id')->references('id')->on('programs')->onDelete('strict');
             $table->unsignedBigInteger('client_id');
             $table->foreign('client_id')->references('id')->on('users');
             $table->unsignedBigInteger('coach_id');
             $table->foreign('coach_id')->references('id')->on('users');
-            $table->unsignedBigInteger('program_id ');
+            // Make sure there's no trailing space after 'program_id'
+            $table->unsignedBigInteger('program_id')->nullable();
             $table->foreign('program_id')->references('id')->on('programs');
-
+    
             $table->string('name');
             $table->text('description');
             $table->timestamps();
