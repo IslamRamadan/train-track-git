@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+Route::middleware(['auth:api', 'CheckCoachIsOwner'])->group(function () {
+    Route::post('gym/payment/link/create', [GymController::class, 'create_payment_link']);
+});
+
 
 Route::middleware(['auth:api', 'CheckSubscription', 'CheckCoachUser'])->group(function () {
 
@@ -28,7 +32,6 @@ Route::middleware(['auth:api', 'CheckSubscription', 'CheckCoachUser'])->group(fu
         Route::post('gym/delete', [GymController::class, 'delete']);
         Route::post('gym/edit/coach/privilege', [GymController::class, 'edit_coach_privilege']);
         Route::post('gym/remove/coach', [GymController::class, 'remove_coach_from_gym']);
-        Route::post('gym/payment/link/create', [GymController::class, 'create_payment_link']);
         Route::post('gym/list/payments', [GymController::class, 'list_payments']);
     });
     Route::group(['middleware' => 'CheckCoachIsAdmin'], function () {
