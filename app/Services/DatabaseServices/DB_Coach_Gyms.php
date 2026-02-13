@@ -73,4 +73,18 @@ class DB_Coach_Gyms
             'privilege' => $privilege,
         ]);
     }
+
+    /**
+     * Get all coach IDs in a gym
+     *
+     * @param int $gym_id
+     * @return array
+     */
+    public function get_all_gym_coach_ids(int $gym_id): array
+    {
+        return GymCoach::query()
+            ->where('gym_id', $gym_id)
+            ->pluck('coach_id')
+            ->toArray();
+    }
 }

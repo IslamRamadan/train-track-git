@@ -22,18 +22,19 @@ use Illuminate\Support\Facades\Mail;
 
 class AuthServices
 {
-    public function __construct(protected DB_Users           $DB_Users,
-                                protected ValidationServices $validationServices,
-                                protected DB_Clients         $DB_Clients,
-                                protected DB_PendingClients  $DB_PendingClients,
-                                protected DB_Coaches         $DB_Coaches,
-                                protected DB_Notifications   $DB_Notifications,
-                                protected DB_Settings $DB_Settings,
-                                protected DB_OneToOneProgram $DB_OneToOneProgram, protected DB_OneToOneProgramExercises $DB_OneToOneProgramExercises,
-                                protected DB_GymJoinRequest  $DB_GymJoinRequest,
-    )
-    {
-    }
+    public function __construct(
+        protected DB_Users           $DB_Users,
+        protected ValidationServices $validationServices,
+        protected DB_Clients         $DB_Clients,
+        protected DB_PendingClients  $DB_PendingClients,
+        protected DB_Coaches         $DB_Coaches,
+        protected DB_Notifications   $DB_Notifications,
+        protected DB_Settings $DB_Settings,
+        protected DB_OneToOneProgram $DB_OneToOneProgram,
+        protected DB_OneToOneProgramExercises $DB_OneToOneProgramExercises,
+        protected DB_GymJoinRequest  $DB_GymJoinRequest,
+        protected CoachServices     $coachServices,
+    ) {}
 
     public function login($request)
     {
@@ -50,7 +51,7 @@ class AuthServices
 
             if ($user->user_type == "0") {
                 if ($user->coach->status == "0") {
-                return sendError("Blocked Coach");
+                    return sendError("Blocked Coach");
                 }
                 if ($user->email_verified_at == null) {
                     return sendError("Email is not verified");
@@ -86,16 +87,26 @@ class AuthServices
         $coach_info = $this->DB_Users->get_user_info($coach_id);
         DB::beginTransaction();
         $client = $this->DB_Clients->create_client($name, $email, $phone, $password, $country_id, $gender_id);
-//        delete email from pending clients
+        //        delete email from pending clients
         $this->DB_PendingClients->delete_pending_client($email);
-//        create coach_clients record
+        //        create coach_clients record
         $this->DB_Clients->assign_client_to_coach($coach_id, $client->id);
 
-        $oto_program = $this->DB_OneToOneProgram->create_one_to_program("Welcome " . $name,
-            $name . " welcome program", $client->id, $coach_id);
+        $oto_program = $this->DB_OneToOneProgram->create_one_to_program(
+            "Welcome " . $name,
+            $name . " welcome program",
+            $client->id,
+            $coach_id
+        );
 
-        $this->DB_OneToOneProgramExercises->create_one_to_one_program_exercises("Welcome " . $name,
-            "", "", 1, Carbon::today()->toDateString(), $oto_program->id);
+        $this->DB_OneToOneProgramExercises->create_one_to_one_program_exercises(
+            "Welcome " . $name,
+            "",
+            "",
+            1,
+            Carbon::today()->toDateString(),
+            $oto_program->id
+        );
         DB::commit();
         return sendResponse(['message' => "Client Created Successfully and added to coach " . $coach_info->name]);
     }
@@ -142,8 +153,8 @@ class AuthServices
             "name" => $user->name,
             "phone" => $user->phone,
             "version" => $version,
-            "user_type" => $user->user_type_text,//Coach or Athlete
-            "due_date" => $user->due_date??"",
+            "user_type" => $user->user_type_text, //Coach or Athlete
+            "due_date" => $user->due_date ?? "",
             "merchant_id" => $user->coach ? (string)$user->coach->merchant_id ?: "" : "",
             "token" => $user->createToken('appToken')->accessToken,
         ];
@@ -167,12 +178,10 @@ class AuthServices
             $userNotificationToken = $this->DB_Notifications->find_user_notification_token($user_id);
             if ($userNotificationToken) {
                 $this->DB_Notifications->uodate_user_notification_token($userNotificationToken, $token);
-
             } else {
                 $this->DB_Notifications->create_user_notification_token($user_id, $token);
             }
         }
-
     }
 
     public function forget_password($request)
@@ -191,7 +200,6 @@ class AuthServices
             'message' => 'The new password sent to your email'
         ];
         return response()->json($response, 201);
-
     }
 
     public function update_version($request)
@@ -213,6 +221,4 @@ class AuthServices
         }
         return $password;
     }
-
-
 }

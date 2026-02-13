@@ -16,8 +16,12 @@ return new class extends Migration {
             $table->text('description');
             $table->integer('day');
             $table->integer('arrangement');
+            // Create the program_id column first
+            $table->unsignedBigInteger('program_id');
+            // Then add the foreign key constraint
             $table->foreign('program_id')->references('id')->on('programs');
-            $table->unsignedBigInteger('program_exercises_program_id_foreign')->nullable();
+            // Remove this line - it's incorrect:
+            // $table->unsignedBigInteger('program_exercises_program_id_foreign')->nullable();
             $table->timestamps();
         });
     }

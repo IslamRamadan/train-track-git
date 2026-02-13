@@ -37,6 +37,18 @@ class DB_PendingClients
     public function get_pending_clients(mixed $coach_id)
     {
         return PendingClient::where('coach_id', $coach_id)->count();
+    }
 
+    /**
+     * Get total pending clients count for multiple coaches in one query
+     */
+    public function get_pending_clients_count_for_coaches(array $coach_ids): int
+    {
+        if (empty($coach_ids)) {
+            return 0;
+        }
+        return PendingClient::query()
+            ->whereIn('coach_id', $coach_ids)
+            ->count();
     }
 }

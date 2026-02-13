@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\RequestInfoLog;
+use App\Services\DatabaseServices\DB_Coach_Gyms;
 use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_Coaches;
 use App\Services\DatabaseServices\DB_ExerciseLog;
@@ -22,23 +23,23 @@ use Illuminate\Http\Request;
 
 class CoachServices
 {
-    public function __construct(protected ValidationServices          $validationServices,
-                                protected DB_Clients                  $DB_Clients,
-                                protected DB_Coaches                  $DB_Coaches,
-                                protected DB_Users                    $DB_Users,
-                                protected DB_ExerciseLog              $DB_ExerciseLog,
-                                protected DB_OneToOneProgramExercises $DB_OneToOneProgramExercises,
-                                protected DB_Notifications            $DB_Notifications,
-                                protected DB_Packages                 $DB_Packages,
-                                protected DB_UserPayment              $DB_UserPayment,
-                                protected PaymobServices              $paymentServices,
-                                protected DB_PendingClients           $DB_PendingClients,
-                                protected NotificationServices        $notificationServices,
-                                protected DB_OtoExerciseComments      $DB_OtoExerciseComments,
-                                protected DB_OneToOneProgram          $DB_OneToOneProgram
-    )
-    {
-    }
+    public function __construct(
+        protected ValidationServices          $validationServices,
+        protected DB_Clients                  $DB_Clients,
+        protected DB_Coaches                  $DB_Coaches,
+        protected DB_Users                    $DB_Users,
+        protected DB_ExerciseLog              $DB_ExerciseLog,
+        protected DB_OneToOneProgramExercises $DB_OneToOneProgramExercises,
+        protected DB_Notifications            $DB_Notifications,
+        protected DB_Packages                 $DB_Packages,
+        protected DB_UserPayment              $DB_UserPayment,
+        protected PaymobServices              $paymentServices,
+        protected DB_PendingClients           $DB_PendingClients,
+        protected NotificationServices        $notificationServices,
+        protected DB_OtoExerciseComments      $DB_OtoExerciseComments,
+        protected DB_OneToOneProgram          $DB_OneToOneProgram,
+        protected DB_Coach_Gyms               $DB_Coach_Gyms
+    ) {}
 
 
     /**
@@ -51,23 +52,23 @@ class CoachServices
     public function coach_dashboard($request)
     {
         $coach_id = $request->user()->id;
-//        number of clients
+        //        number of clients
         $number_of_clients = $this->DB_Clients->get_coach_clients_count($coach_id);
 
-//        number of clients active
+        //        number of clients active
         $number_of_active_clients = $this->DB_Clients->get_coach_clients_count($coach_id, "1");
 
         $coach_info = $this->DB_Users->get_user_info($coach_id);
 
-//        Workouts done today
+        //        Workouts done today
         $today = Carbon::now()->toDateString();
         list($clients_activity, $done_workout) = $this->clients_activities($today, $coach_id);
 
-//        get the today's logs of the coach clients
+        //        get the today's logs of the coach clients
         $clients_logs_today = $this->DB_ExerciseLog->list_coach_clients_logs_today($coach_id, $today);
         $list_logs_arr = $this->list_logs_arr($clients_logs_today);
         $unread_notifications = $this->DB_Notifications->user_has_unread_notifications($coach_id);
-//        Daily Activity done exercises/total workouts
+        //        Daily Activity done exercises/total workouts
         return sendResponse([
             'coach_id' => $coach_info->id,
             'coach_name' => $coach_info->name,
@@ -233,18 +234,18 @@ class CoachServices
                         'log_date' => $log?->created_at?->format('Y-m-d') ?? "",
                         'log_time' => $log?->created_at?->format('H:i:s') ?? "",
                         'log_videos' => [],  // Initialize an empty array for videos in logs
-//                        'videos' => [],  // Initialize an empty array for videos in logs
+                        //                        'videos' => [],  // Initialize an empty array for videos in logs
                     ];
 
-//                    // Check for videos in the exercise
-//                    if ($exercise->videos()->exists()) {
-//                        foreach ($exercise->videos as $video) {
-//                            $exerciseData['videos'][] = [
-//                                'title' => $video->title,
-//                                'link' => $video->link
-//                            ];
-//                        }
-//                    }
+                    //                    // Check for videos in the exercise
+                    //                    if ($exercise->videos()->exists()) {
+                    //                        foreach ($exercise->videos as $video) {
+                    //                            $exerciseData['videos'][] = [
+                    //                                'title' => $video->title,
+                    //                                'link' => $video->link
+                    //                            ];
+                    //                        }
+                    //                    }
 
                     // Check if the log has videos and add them to the exercise log
                     if ($log && $log->log_videos()->exists()) {
@@ -309,7 +310,6 @@ class CoachServices
         $this->DB_Coaches->update_coach($coach_id, $gym, $speciality, $certificates);
 
         return sendResponse(['message' => "Coach information updated successfully"]);
-
     }
 
     public function list_client_logs($request)
@@ -319,7 +319,6 @@ class CoachServices
 
         $logs = $this->DB_ExerciseLog->list_cient_logs($client_id);
         return sendResponse($this->list_logs_arr($logs));
-
     }
 
     public function update_due_date($request)
@@ -381,10 +380,9 @@ class CoachServices
         }
 
         $payment_description = $package_name . " payment with " . $package_clients_limit . " clients limit.";
-        dd($coach_package,$amount);
 
         try {
-            $payment = $this->paymentServices->pay(amount: $amount, full_name: $user->name, email: $user->email, description: $payment_description,phone: $user->phone);
+            $payment = $this->paymentServices->pay(amount: $amount, full_name: $user->name, email: $user->email, description: $payment_description, phone: $user->phone);
             $payment_url = $payment->client_url;
             $order_id = $payment->order;
             $payment_amount = $payment->amount_cents / 100;
@@ -394,7 +392,7 @@ class CoachServices
                 "ip" => $request->ip(),
                 "user_agent" => $request->header('User-Agent'),
                 "route" => $request->getPathInfo(),
-                "body" => "Payment link created successfully with link-->".$payment_url,
+                "body" => "Payment link created successfully with link-->" . $payment_url,
             ]);
             return sendResponse(["payment_url" => $payment_url]);
         } catch (\Exception $exception) {
@@ -403,11 +401,10 @@ class CoachServices
                 "ip" => $request->ip(),
                 "user_agent" => $request->header('User-Agent'),
                 "route" => $request->getPathInfo(),
-                "body" => "Payment failed-->".$exception->getMessage(),
+                "body" => "Payment failed-->" . $exception->getMessage(),
             ]);
             return sendError("Payment failed,Please try again later.");
         }
-
     }
 
     public function check_package_limit($request)
@@ -478,13 +475,13 @@ class CoachServices
                 $single_log_arr['programs']['exercises']['log_details'] = $log->details;
                 $single_log_arr['programs']['exercises']['log_date'] = $log->created_at->format("Y-m-d");
                 $single_log_arr['programs']['exercises']['log_time'] = $log->created_at->format("H:i:s");
-//                $single_log_arr['videos'] = [];
-//
-//                if ($log->log_videos()->exists()) {
-//                    foreach ($log->log_videos as $log_video) {
-//                        $single_log_arr['videos'][] = $log_video->path;
-//                    }
-//                }
+                //                $single_log_arr['videos'] = [];
+                //
+                //                if ($log->log_videos()->exists()) {
+                //                    foreach ($log->log_videos as $log_video) {
+                //                        $single_log_arr['videos'][] = $log_video->path;
+                //                    }
+                //                }
                 $logs_arr[] = $single_log_arr;
             }
         }
@@ -538,13 +535,54 @@ class CoachServices
         $upgrade = false;
 
         if ($total_coach_clients + 1 > $coach_package->clients_limit) {
-//          the coach now will exceed the client limit
+            //          the coach now will exceed the client limit
             $upgrade = true;
-//          get the higher package
+            //          get the higher package
 
             $coach_package = $this->DB_Packages->get_appropriate_package($total_coach_clients);
         }
         return array($coach_package, $upgrade);
+    }
+
+    /**
+     * Get effective package and upgrade flag - uses gym limit when coach is in a gym
+     *
+     * @param mixed $coach_id
+     * @return array [package, upgrade, is_gym_context]
+     */
+    public function getEffectivePackageAndUpgrade(mixed $coach_id): array
+    {
+        $user = $this->DB_Users->get_user_info($coach_id);
+        $gym_coach = $user->gym_coach;
+
+        if ($gym_coach) {
+            $gym_id = $gym_coach->gym_id;
+            $coach_ids = $this->DB_Coach_Gyms->get_all_gym_coach_ids($gym_id);
+            $active_clients = 0;
+            $pending_clients = 0;
+            foreach ($coach_ids as $cid) {
+                $active_clients += $this->DB_Clients->get_active_clients($cid);
+                $pending_clients += $this->DB_PendingClients->get_pending_clients($cid);
+            }
+            $total_gym_clients = $active_clients + $pending_clients;
+
+            $gym = $gym_coach->gym;
+            $gym_package = $gym?->package_id ? $this->DB_Packages->find_package($gym->package_id) : null;
+
+            if (!$gym_package) {
+                $gym_package = $this->DB_Packages->get_appropriate_package($total_gym_clients, ">=");
+            }
+
+            $upgrade = $total_gym_clients + 1 > $gym_package->clients_limit;
+            if ($upgrade) {
+                $gym_package = $this->DB_Packages->get_appropriate_package($total_gym_clients);
+            }
+
+            return [$gym_package, $upgrade, true];
+        }
+
+        list($coach_package, $upgrade) = $this->get_coach_package($coach_id);
+        return [$coach_package, $upgrade, false];
     }
 
     public function getCoachCurrentPackage(mixed $coach_id)
@@ -580,7 +618,7 @@ class CoachServices
                 'order_id' => $payment['order_id'],
                 'amount' => $payment['amount'],
                 'status' => $payment['status_text'],
-                'package_name' => $payment['package']?$payment['package']['name']:"",
+                'package_name' => $payment['package'] ? $payment['package']['name'] : "",
                 'order_date' => Carbon::parse($payment['created_at'])->toDateString(),
                 'order_time' => Carbon::parse($payment['created_at'])->toTimeString(),
             ];

@@ -9,9 +9,7 @@ use Illuminate\Http\Request;
 
 class GymController extends Controller
 {
-    public function __construct(protected GymServices $gymServices)
-    {
-    }
+    public function __construct(protected GymServices $gymServices) {}
 
     /**
      * Store a newly created resource in storage.
@@ -126,6 +124,30 @@ class GymController extends Controller
     }
 
     /**
+     * Create gym payment link (gym owner only)
+     */
+    public function create_payment_link(Request $request): JsonResponse
+    {
+        return $this->gymServices->create_payment_link($request);
+    }
+
+    /**
+     * Check gym package limit
+     */
+    public function check_package_limit(Request $request): JsonResponse
+    {
+        return $this->gymServices->check_package_limit($request);
+    }
+
+    /**
+     * List gym payments
+     */
+    public function list_payments(Request $request): JsonResponse
+    {
+        return $this->gymServices->list_payments($request);
+    }
+
+    /**
      * Send join request
      *
      * @param Request $request
@@ -204,6 +226,28 @@ class GymController extends Controller
     public function list_programs_exercises(Request $request)
     {
         return $this->gymServices->list_programs_exercises($request);
+    }
+
+    /**
+     * List all gym coaches' clients (aggregated)
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function list_all_gym_clients(Request $request)
+    {
+        return $this->gymServices->list_all_gym_clients($request);
+    }
+
+    /**
+     * Assign program to client (gym admin/owner only)
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function assign_gym_program_to_client(Request $request)
+    {
+        return $this->gymServices->assign_gym_program_to_client($request);
     }
 
     /**
@@ -390,6 +434,17 @@ class GymController extends Controller
         return $this->gymServices->list_gym_programs($request);
     }
 
+    /**
+     * Add gym program (gym admin/owner can add program for any coach in gym)
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function add_gym_program(Request $request)
+    {
+        return $this->gymServices->add_gym_program($request);
+    }
+
 
     /**
      * Update gym program
@@ -533,5 +588,4 @@ class GymController extends Controller
     {
         return $this->gymServices->delete_gym_program_exercise_days($request);
     }
-
 }

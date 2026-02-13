@@ -11,12 +11,21 @@ class Gym extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'description', 'logo', 'owner_id'
+        'name',
+        'description',
+        'logo',
+        'owner_id',
+        'package_id'
     ];
 
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function package()
+    {
+        return $this->belongsTo(Package::class, 'package_id');
     }
 
     protected function imagePath(): Attribute

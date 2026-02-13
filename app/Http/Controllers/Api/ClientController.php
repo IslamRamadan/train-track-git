@@ -35,15 +35,9 @@ class ClientController extends Controller
         return $this->clientServices->list_active_clients($request);
     }
 
-    /**
-     * Assign program to client
-     * @param Request $request
-     * @return JsonResponse
-     */
     public function assign_program_to_client(Request $request): JsonResponse
     {
-        return $this->clientServices->assign_program_to_client($request);
-
+        return $this->clientServices->assign_program_to_client($request, $request->user()->id);
     }
 
     /**

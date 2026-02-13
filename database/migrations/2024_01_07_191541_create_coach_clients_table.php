@@ -13,9 +13,9 @@ return new class extends Migration {
         Schema::create('coach_clients', function (Blueprint $table) {
             $table->id();
             $table->foreign('coach_id')->references('id')->on('users');
-            $table->unsignedBigInteger('coaches_id')->nullable();
+            $table->unsignedBigInteger('coach_id');
             $table->foreign('client_id')->references('id')->on('users');
-            $table->unsignedBigInteger('clients_id')->nullable();
+            $table->unsignedBigInteger('client_id');
             $table->enum('status', ["0", "1", "2"]);
             $table->timestamps();
         });

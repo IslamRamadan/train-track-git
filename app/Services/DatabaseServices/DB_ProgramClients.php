@@ -39,12 +39,13 @@ class DB_ProgramClients
             ->whereHas('program', function ($q) use ($coach_id) {
                 $q->where('coach_id', $coach_id);
             })
-            ->get();
+            ->get()
+            ->unique('client_id'); // Removing duplicates after fetching
+
     }
 
     public function programAssignedToClientBefore(mixed $program_id, mixed $client_id)
     {
         return ProgramClient::query()->where(['program_id' => $program_id, 'client_id' => $client_id])->exists();
     }
-
 }

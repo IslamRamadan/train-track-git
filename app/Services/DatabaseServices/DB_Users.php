@@ -9,13 +9,20 @@ class DB_Users
 
     public function get_user_info($id)
     {
-        return User::with('coach', 'coach_client_client.coach.coach','client')->find($id);
+        return User::with('coach', 'coach_client_client.coach.coach', 'client')->find($id);
     }
 
     public function get_user_for_delete($id)
     {
-        return User::with('client','coach', 'coach_client_client', 'client_programs.exercises.log', 'program_clients', 'client_programs.comments',
-            'client_programs.exercises.videos')->find($id);
+        return User::with(
+            'client',
+            'coach',
+            'coach_client_client',
+            'client_programs.exercises.log',
+            'program_clients',
+            'client_programs.comments',
+            'client_programs.exercises.videos'
+        )->find($id);
     }
 
     public function create_user(mixed $name, mixed $email, mixed $phone, mixed $password, $due_date, $country_id, $gender_id, $user_type = "0")
@@ -60,6 +67,25 @@ class DB_Users
         ]);
     }
 
+    /**
+     * Update due_date for multiple users in one query
+     */
+    public function update_users_due_date_by_ids(array $user_ids, string $due_date): int
+    {
+        if (empty($user_ids)) {
+            return 0;
+        }
+        return User::query()->whereIn('id', $user_ids)->update(['due_date' => $due_date]);
+    }
+
+    /**
+     * Get only the due_date for a user (lightweight query)
+     */
+    public function get_user_due_date($user_id): ?string
+    {
+        return User::query()->where('id', $user_id)->value('due_date');
+    }
+
 
     public function get_clients_have_not_exercises_in_date($coachId, $date, $clientHasExercisesInDate)
     {
@@ -68,9 +94,9 @@ class DB_Users
             ->whereHas('coach_client_client', function ($query) use ($coachId, $date) {
                 $query->where('coach_id', $coachId)
                     ->where('status', "!=", "2");
-        })
+            })
             ->where('user_type', "1") // Ensure we are selecting only clients
-        ->get();
+            ->get();
     }
 
     public function update_user_data($user, array $data)
