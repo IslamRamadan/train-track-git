@@ -267,7 +267,7 @@ class ClientServices
         list($coach_package, $upgrade, $is_gym_context) = $this->coachServices->getEffectivePackageAndUpgrade($coach_id);
         if ($upgrade) {
             $msg = $is_gym_context
-                ? "The gym owner needs to upgrade to " . $coach_package->name . " that supports " . $coach_package->clients_limit . " clients for " . $coach_package->amount . " EGP monthly."
+                ? "The gym owner needs to upgrade gym package."
                 : "You need to upgrade to " . $coach_package->name . " that supports " . $coach_package->clients_limit . " clients for " . $coach_package->amount . " EGP monthly.";
             return sendError($msg);
         }
@@ -467,9 +467,13 @@ class ClientServices
         $client_id = $request['client_id'];
         $status = $request['status'];
         if ($status == "1") {
-            //  check the active clients if
-            list($coach_package, $upgrade) = $this->coachServices->get_coach_package($coach_id);
-            if ($upgrade) return sendError("Need to upgrade to package " . $coach_package->name . " that has " . $coach_package->clients_limit . " clients limit with " . $coach_package->amount . " EGP monthly.");
+            list($coach_package, $upgrade, $is_gym_context) = $this->coachServices->getEffectivePackageAndUpgrade($coach_id);
+            if ($upgrade) {
+                $msg = $is_gym_context
+                    ? "The gym owner needs to upgrade gym package."
+                    : "You need to upgrade to " . $coach_package->name . " that supports " . $coach_package->clients_limit . " clients for " . $coach_package->amount . " EGP monthly.";
+                return sendError($msg);
+            }
         }
         $this->DB_Clients->archive_client(client_id: $client_id, status: $status);
         $type = $status == "2" ? "archived" : "unarchived";
