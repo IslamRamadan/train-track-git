@@ -206,7 +206,7 @@ class ProgramServices
                 $this->DB_OneToOneProgram->update_oto_program($oto_program, $name, $description);
                 //type is standard and starting date is not set and first exercise date is set
                 if ($type == "3" && !$oto_program->starting_date && $oto_program->first_exercise_date) {
-                    $this->DB_OneToOneProgramStartingDate->create_starting_date($oto_program->id, $oto_program->first_exercise_date);
+                    $this->DB_OneToOneProgramStartingDate->create_starting_date($oto_program->id, $oto_program->first_exercise_date, 1);
                 }
             }
         }

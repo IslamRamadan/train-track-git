@@ -1010,7 +1010,7 @@ class ValidationServices
     public function createPaymentLinkValidation(Request $request)
     {
         $request->validate([
-            'client_id' => 'required|exists:clients,user_id',
+            'client_id' => 'required|exists:users,id',
             'amount' => "required|numeric|min:10|max:10000",
             'no_of_days' => "required|numeric|min:1|max:365",
             'due_date' => "nullable|date|date_format:Y-m-d"

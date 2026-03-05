@@ -8,5 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class OneToOneProgramStartingDate extends Model
 {
     use HasFactory;
-    protected $fillable = ["one_to_one_program_id","starting_date"];
+    protected $fillable = ["one_to_one_program_id","starting_date","start_day"];
 }
