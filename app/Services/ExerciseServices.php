@@ -460,7 +460,8 @@ class ExerciseServices
         if (count($related_programs) > 0) {
             foreach ($related_programs as $oto_program) {
                 if ($type == "3") {
-                    $sync_date = $this->get_date_after_n_days(starting_date: $oto_program->oto_program->starting_date->starting_date, number_of_days_after_starting: $day - 1);
+                    $start_day_offset = $oto_program->oto_program->starting_date->start_day ?? 1;
+                    $sync_date = $this->get_date_after_n_days(starting_date: $oto_program->oto_program->starting_date->starting_date, number_of_days_after_starting: $day - $start_day_offset);
                 }
                 $exercise_arrangement = $this->DB_OneToOneProgramExercises->get_exercise_arrangement($oto_program->oto_program_id,
                     $sync_date);

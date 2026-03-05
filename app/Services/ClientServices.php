@@ -203,7 +203,7 @@ class ClientServices
                 // Create the custom program assigned to user
                 $one_to_program = $this->DB_OneToOneProgram->create_one_to_program($parent_program->name, $parent_program->description, $client_id, $coach_id);
                 // If program type is standard then add starting_date
-                if ($parent_program->type == "3") $this->DB_OneToOneProgramStartingDate->create_starting_date($one_to_program->id, $start_date);
+                if ($parent_program->type == "3") $this->DB_OneToOneProgramStartingDate->create_starting_date($one_to_program->id, $start_date, $start_day);
                 // Create row with client_id and program_id in program_clients table
                 $this->DB_ProgramClients->create_program_client($program_id, $client_id, $one_to_program->id);
                 // Create the custom program exercises assigned to custom program
