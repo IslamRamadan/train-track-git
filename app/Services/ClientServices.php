@@ -18,6 +18,7 @@ use App\Services\DatabaseServices\DB_ProgramClients;
 use App\Services\DatabaseServices\DB_Programs;
 use App\Services\DatabaseServices\DB_Users;
 use App\Services\PaymentServices\FlashServices;
+use App\Services\NotificationServices;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -42,7 +43,8 @@ class ClientServices
         protected CoachServices                    $coachServices,
         protected DB_OneToOneProgramStartingDate   $DB_OneToOneProgramStartingDate,
         protected DB_ClientPayments                $DB_ClientPayments,
-        protected FlashServices                    $flashServices
+        protected FlashServices                    $flashServices,
+        protected NotificationServices              $notificationServices
     ) {}
 
 
@@ -670,6 +672,24 @@ class ClientServices
 
                 // 🔁 Auto-create new payment link for next billing cycle
                 $this->autoCreateNextPaymentLink($client, $amount, $merchantId);
+                
+                // Notify coach about the payment
+                $coachClient = $this->DB_Clients->find_coach_id($client->user_id);
+                if ($coachClient && $coachClient->coach_id) {
+                    $clientName = $client->user->name ?? 'Client';
+                    $title = "Payment Received";
+                    $message = "{$clientName} has successfully paid {$amount} EGP";
+                    $this->notificationServices->send_notification_to_user(
+                        $coachClient->coach_id,
+                        $title,
+                        $message,
+                        [
+                            'client_id' => $client->user_id,
+                            'amount' => $amount,
+                            'order_id' => $orderId
+                        ]
+                    );
+                }
             });
 
             return; // guard clause
