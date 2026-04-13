@@ -16,7 +16,9 @@ use App\Services\DatabaseServices\DB_Users;
 use App\Services\ValidationServices;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use PayMob\Facades\PayMob;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -95,11 +97,220 @@ class PaymobServices
     }
 
 
-    public function pay($amount, $full_name, $email, $description, $phone)
+    public function pay($amount, $full_name, $email, $description, $phone = '', bool $isWallet = false): object
     {
+        if ($isWallet) {
+            return $this->payViaWalletIntention((float) $amount, $full_name, $email, $description, $phone);
+        }
+
         $auth = PayMob::AuthenticationRequest();
         $payment_link_image = asset('images/logo.png');
-        return PayMob::createPaymentLink($auth->token, $payment_link_image, $amount * 100, $full_name, $email, $description, $phone);
+
+        return PayMob::createPaymentLink($auth->token, $payment_link_image, (int) round((float) $amount * 100), $full_name, $email, $description, $phone);
+    }
+
+    private function payViaWalletIntention(float $amount, string $full_name, string $email, string $description, string $phone): object
+    {
+        $secretKey = (string) config('paymob.secret_key', '');
+        if ($secretKey === '') {
+            throw new \RuntimeException('PAYMOB_SECRET_KEY is not configured.');
+        }
+
+        $walletIntegrationId = (int) config('paymob.wallet_integration_id', 0);
+        if ($walletIntegrationId <= 0) {
+            throw new \RuntimeException('Paymob wallet_integration_id is not configured.');
+        }
+        $paymentMethodIds = [$walletIntegrationId];
+
+        $notificationUrl = (string) config('paymob.intention_notification_url', '');
+        $redirectionUrl = (string) config('paymob.intention_redirection_url', '');
+        if ($notificationUrl === '' || $redirectionUrl === '') {
+            throw new \RuntimeException('Paymob intention notification_url or redirection_url is not configured.');
+        }
+
+        $amountCents = (int) round($amount * 100);
+        $intention = $this->createPaymobIntention(
+            secretKey: $secretKey,
+            amountCents: $amountCents,
+            fullName: $full_name,
+            email: $email,
+            phone: $phone,
+            description: $description,
+            paymentMethodIds: $paymentMethodIds,
+            notificationUrl: $notificationUrl,
+            redirectionUrl: $redirectionUrl,
+        );
+
+        $intentionOrderId = $intention['intention_order_id'] ?? null;
+        if ($intentionOrderId === null) {
+            Log::error('[Paymob] Intention response missing intention_order_id', ['body' => $intention]);
+            throw new \RuntimeException('Paymob intention response invalid.');
+        }
+
+        $paymentToken = $this->resolvePaymentTokenFromIntention($intention, $paymentMethodIds);
+        if ($paymentToken === null || $paymentToken === '') {
+            Log::error('[Paymob] Intention response missing payment key', ['body' => $intention]);
+            throw new \RuntimeException('Paymob intention response missing payment token.');
+        }
+
+        $payPayload = $this->initiateWalletAcceptancePayment($secretKey, $paymentToken, $phone);
+        $redirectUrl = $payPayload['redirect_url'] ?? data_get($payPayload, 'data.redirect_url');
+        if ($redirectUrl === null || $redirectUrl === '') {
+            Log::error('[Paymob] Wallet pay response missing redirect_url', ['body' => $payPayload]);
+            throw new \RuntimeException('Paymob wallet payment response missing redirect URL.');
+        }
+
+        $amountCentsFromPay = isset($payPayload['amount_cents']) ? (int) $payPayload['amount_cents'] : $amountCents;
+
+        return (object) [
+            'client_url' => $redirectUrl,
+            'order' => $intentionOrderId,
+            'amount_cents' => $amountCentsFromPay,
+        ];
+    }
+
+    /**
+     * @param  list<int>  $paymentMethodIds
+     * @return array<string, mixed>
+     */
+    private function createPaymobIntention(
+        string $secretKey,
+        int $amountCents,
+        string $fullName,
+        string $email,
+        string $phone,
+        string $description,
+        array $paymentMethodIds,
+        string $notificationUrl,
+        string $redirectionUrl,
+    ): array {
+        $normalizedFullName = trim($fullName);
+        if ($normalizedFullName === '') {
+            $normalizedFullName = 'Customer';
+        }
+        $currency = (string) config('paymob.currency', 'EGP');
+        $specialReference = Str::uuid()->toString();
+
+        $payload = [
+            'amount' => $amountCents,
+            'currency' => $currency,
+            'payment_methods' => array_values($paymentMethodIds),
+            'items' => [
+                [
+                    'name' => Str::limit($description, 255, ''),
+                    'amount' => $amountCents,
+                    'description' => Str::limit($description, 500, ''),
+                    'quantity' => 1,
+                ],
+            ],
+            'billing_data' => $this->buildIntentionBillingData(
+                $normalizedFullName,
+                $email,
+                $phone,
+            ),
+            'extras' => new \stdClass(),
+            'special_reference' => $specialReference,
+            'notification_url' => $notificationUrl,
+            'redirection_url' => $redirectionUrl,
+        ];
+
+        $url = (string) config('paymob.intention_url', 'https://accept.paymob.com/v1/intention');
+        $response = Http::withHeaders([
+            'Authorization' => 'Token ' . $secretKey,
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+        ])->timeout(60)->post($url, $payload);
+
+        if (! $response->successful()) {
+            Log::error('[Paymob] Intention request failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            throw new \RuntimeException('Paymob intention request failed.');
+        }
+
+        /** @var array<string, mixed> $decoded */
+        $decoded = $response->json() ?? [];
+
+        return $decoded;
+    }
+
+    /**
+     * @param  array<string, mixed>  $intention
+     * @param  list<int>  $paymentMethodIds
+     */
+    private function resolvePaymentTokenFromIntention(array $intention, array $paymentMethodIds): ?string
+    {
+        $keys = $intention['payment_keys'] ?? [];
+        if (! is_array($keys) || $keys === []) {
+            return null;
+        }
+
+        foreach ($keys as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $integration = isset($row['integration']) ? (int) $row['integration'] : 0;
+            if (in_array($integration, $paymentMethodIds, true) && ! empty($row['key'])) {
+                return (string) $row['key'];
+            }
+        }
+
+        $first = $keys[0];
+
+        return is_array($first) && isset($first['key']) ? (string) $first['key'] : null;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function initiateWalletAcceptancePayment(string $secretKey, string $paymentToken, string $phone): array
+    {
+        $url = (string) config('paymob.wallet_pay_url', 'https://accept.paymob.com/api/acceptance/payments/pay');
+        $response = Http::withHeaders([
+            'Authorization' => 'Token ' . $secretKey,
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+        ])->timeout(60)->post($url, [
+            'source' => [
+                'identifier' => $phone,
+                'subtype' => 'WALLET',
+            ],
+            'payment_token' => $paymentToken,
+        ]);
+
+        if (! $response->successful()) {
+            Log::error('[Paymob] Wallet pay request failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            throw new \RuntimeException('Paymob wallet payment request failed.');
+        }
+
+        /** @var array<string, mixed> $decoded */
+        $decoded = $response->json() ?? [];
+
+        return $decoded;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function buildIntentionBillingData(string $fullName, string $email, string $phone): array
+    {
+        return [
+            'apartment' => 'NA',
+            'first_name' => $fullName,
+            'last_name' => '',
+            'street' => 'NA',
+            'building' => 'NA',
+            'phone_number' => $phone,
+            'city' => 'NA',
+            'country' => 'EG',
+            'email' => $email,
+            'floor' => 'NA',
+            'state' => 'NA',
+        ];
     }
 
     public function checkout_response($request)

@@ -690,7 +690,8 @@ class ValidationServices
     {
         $request->validate([
             'coach_id' => ['required', 'exists:users,id'],
-            "upgrade" => "required|in:0,1"
+            "upgrade" => "required|in:0,1",
+            'is_wallet' => 'sometimes|integer|in:0,1',
         ]);
     }
 
@@ -815,6 +816,7 @@ class ValidationServices
         $request->validate([
             'upgrade' => 'required|in:0,1',
             'package_id' => ['nullable', 'exists:packages,id'],
+            'is_wallet' => 'sometimes|integer|in:0,1',
         ]);
     }
 
@@ -1011,7 +1013,7 @@ class ValidationServices
     {
         $request->validate([
             'client_id' => 'required|exists:users,id',
-            'amount' => "required|numeric|min:10|max:10000",
+            'amount' => "required|numeric|min:10|max:100000",
             'no_of_days' => "required|numeric|min:1|max:365",
             'due_date' => "nullable|date|date_format:Y-m-d"
         ], []);

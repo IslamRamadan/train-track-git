@@ -223,7 +223,7 @@ class CoachService
         $package = $this->DB_Packages->find_package($package_id);
         $payment_description = $package->name . " payment with " . $package->clients_limit . " clients limit.";
         try {
-            $payment = $this->paymentServices->pay(amount: $package->amount, full_name: $name, email: $email, description: $payment_description);
+            $payment = $this->paymentServices->pay(amount: $package->amount, full_name: $name, email: $email, description: $payment_description, phone: $phone);
             $payment_url = $payment->client_url;
             $order_id = $payment->order;
             $payment_amount = $payment->amount_cents / 100;

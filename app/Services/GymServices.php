@@ -325,15 +325,28 @@ class GymServices
             'upgrade' => $upgrade,
         ]);
 
+        $isWallet = (int) $request->input('is_wallet', 0) === 1;
+        if ($isWallet && trim((string) ($user->phone ?? '')) === '') {
+            Log::warning("[GymPayment] Wallet payment requested without phone", ['user_id' => $user_id, 'gym_id' => $gym_id]);
+            RequestInfoLog::query()->create([
+                "user_id" => $user_id,
+                "ip" => $ip,
+                "user_agent" => $user_agent,
+                "route" => $route,
+                "body" => "Wallet payment failed: phone number is required",
+            ]);
+            return sendError('Phone number is required for wallet payment.');
+        }
+
         // Create payment link
         try {
-            $payment = $this->paymentServices->pay(amount: $amount, full_name: $user->name, email: $user->email, description: $payment_description, phone: $user->phone ?? '');
             Log::info("[GymPayment] Attempting to create payment link via payment service", [
                 'gym_id' => $gym_id,
                 'amount' => $amount,
                 'user_name' => $user->name,
                 'user_email' => $user->email,
                 'user_phone' => $user->phone ?? '',
+                'is_wallet' => $isWallet,
             ]);
 
             $payment = $this->paymentServices->pay(
@@ -341,7 +354,8 @@ class GymServices
                 full_name: $user->name,
                 email: $user->email,
                 description: $payment_description,
-                phone: $user->phone ?? ''
+                phone: (string) ($user->phone ?? ''),
+                isWallet: $isWallet,
             );
 
             $payment_url = $payment->client_url;

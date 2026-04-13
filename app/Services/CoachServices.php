@@ -381,8 +381,20 @@ class CoachServices
 
         $payment_description = $package_name . " payment with " . $package_clients_limit . " clients limit.";
 
+        $isWallet = (int) $request->input('is_wallet', 0) === 1;
+        if ($isWallet && trim((string) $user->phone) === '') {
+            return sendError('Phone number is required for wallet payment.');
+        }
+
         try {
-            $payment = $this->paymentServices->pay(amount: $amount, full_name: $user->name, email: $user->email, description: $payment_description, phone: $user->phone);
+            $payment = $this->paymentServices->pay(
+                amount: $amount,
+                full_name: $user->name,
+                email: $user->email,
+                description: $payment_description,
+                phone: (string) $user->phone,
+                isWallet: $isWallet,
+            );
             $payment_url = $payment->client_url;
             $order_id = $payment->order;
             $payment_amount = $payment->amount_cents / 100;
