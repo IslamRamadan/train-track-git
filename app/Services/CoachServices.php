@@ -20,6 +20,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class CoachServices
 {
@@ -77,9 +78,9 @@ class CoachServices
             'coach_gym' => $coach_info->coach->gym,
             'coach_speciality' => $coach_info->coach->speciality,
             'coach_certificates' => $coach_info->coach->certificates,
-            'coach_package_id' => $coach_info->coach->package->id,
-            'coach_package_name' => $coach_info->coach->package->name,
-            'coach_package_amount' => $coach_info->coach->package->amount,
+            'coach_package_id' => $coach_info->withGym ? $coach_info->gym->package_id : $coach_info->coach->package->id,
+            'coach_package_name' => $coach_info->withGym ? $coach_info->gym->package->name : $coach_info->coach->package->name,
+            'coach_package_amount' => $coach_info->withGym ? $coach_info->gym->package->amount : $coach_info->coach->package->amount,
             'coach_country_id' => $coach_info->country_id ?? "",
             'coach_country_name' => $coach_info->country ? $coach_info->country->name : "",
             'coach_gender_id' => $coach_info->gender_id ?? "",

@@ -656,16 +656,19 @@ class GymServices
         $join_request = $this->DB_GymJoinRequest->find_join_request($request->join_request_id, $gym_id, $coach_id);
 
         if ($join_request) {
+            $gym_id = $join_request->gym_id;
+            $gym_name = $join_request->gym->name;
+            $coach_id = $join_request->coach_id;
             $send_type = $this->getRequestType($is_admin, $join_request->admin_id);
             if ($send_type == "Sent") {
                 return sendError("You can't change a request that you sent");
             }
             $this->DB_GymJoinRequest->update_join_request($join_request, null, $status);
             if ($status == "2") {
-                $this->DB_Coach_Gyms->create_gym_coach($gym_id, $join_request->coach_id, "3");
+                $this->DB_Coach_Gyms->create_gym_coach($gym_id, $coach_id, "3");
                 $title = "Join Request Accepted";
                 $message = "Your request to join $gym_name gym is accepted";
-                $this->notificationServices->send_notification_to_user($join_request->coach_id, $title, $message, ["gym_name" => $gym_name]);
+                $this->notificationServices->send_notification_to_user($coach_id, $title, $message, ["gym_name" => $gym_name]);
             }
         } else {
             return sendError("Join request is not found");

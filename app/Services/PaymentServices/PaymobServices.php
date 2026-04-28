@@ -301,7 +301,7 @@ class PaymobServices
         return [
             'apartment' => 'NA',
             'first_name' => $fullName,
-            'last_name' => '',
+            'last_name' => $fullName,
             'street' => 'NA',
             'building' => 'NA',
             'phone_number' => $phone,
