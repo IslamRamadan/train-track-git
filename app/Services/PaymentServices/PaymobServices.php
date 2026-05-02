@@ -24,6 +24,9 @@ use Yajra\DataTables\Facades\DataTables;
 
 class PaymobServices
 {
+    /** Applied to every Paymob checkout total (e.g. fees / tax). */
+    private const TOTAL_AMOUNT_MULTIPLIER = 1.14;
+
     public function __construct(
         protected DB_UserPayment    $DB_UserPayment,
         protected DB_Users          $DB_Users,
@@ -99,14 +102,16 @@ class PaymobServices
 
     public function pay($amount, $full_name, $email, $description, $phone = '', bool $isWallet = false): object
     {
+        $amount = round((float) $amount * self::TOTAL_AMOUNT_MULTIPLIER, 2);
+
         if ($isWallet) {
-            return $this->payViaWalletIntention((float) $amount, $full_name, $email, $description, $phone);
+            return $this->payViaWalletIntention($amount, $full_name, $email, $description, $phone);
         }
 
         $auth = PayMob::AuthenticationRequest();
         $payment_link_image = asset('images/logo.png');
 
-        return PayMob::createPaymentLink($auth->token, $payment_link_image, (int) round((float) $amount * 100), $full_name, $email, $description, $phone);
+        return PayMob::createPaymentLink($auth->token, $payment_link_image, (int) round($amount * 100), $full_name, $email, $description, $phone);
     }
 
     private function payViaWalletIntention(float $amount, string $full_name, string $email, string $description, string $phone): object
