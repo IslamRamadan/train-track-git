@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\RequestInfoLog;
+use App\Models\User;
 use App\Services\DatabaseServices\DB_Coach_Gyms;
 use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_Coaches;
@@ -20,6 +21,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class CoachServices
 {
@@ -59,6 +61,7 @@ class CoachServices
         $number_of_active_clients = $this->DB_Clients->get_coach_clients_count($coach_id, "1");
 
         $coach_info = $this->DB_Users->get_user_info($coach_id);
+        $subscription_total_clients = $this->subscriptionTotalActivePlusPendingClients($coach_info);
 
         //        Workouts done today
         $today = Carbon::now()->toDateString();
@@ -77,9 +80,6 @@ class CoachServices
             'coach_gym' => $coach_info->coach->gym,
             'coach_speciality' => $coach_info->coach->speciality,
             'coach_certificates' => $coach_info->coach->certificates,
-            'coach_package_id' => $coach_info->coach->package->id,
-            'coach_package_name' => $coach_info->coach->package->name,
-            'coach_package_amount' => $coach_info->coach->package->amount,
             'coach_country_id' => $coach_info->country_id ?? "",
             'coach_country_name' => $coach_info->country ? $coach_info->country->name : "",
             'coach_gender_id' => $coach_info->gender_id ?? "",
@@ -96,10 +96,11 @@ class CoachServices
             'is_gym_coach' => strval($coach_info->withGym),
             'merchant_id' => (string)$coach_info->coach?->merchant_id ?: "",
             'subscription' => [
-                'coach_package_id' => $coach_info->coach->package->id,
-                'coach_package_name' => $coach_info->coach->package->name,
-                'coach_package_amount' => $coach_info->coach->package->amount,
-                'coach_package_clients_limit' => $coach_info->coach->package->clients_limit,
+                'coach_package_id' => $coach_info->withGym ? $coach_info->gym_coach->gym->package_id : $coach_info->coach->package->id,
+                'coach_package_name' => $coach_info->withGym ? $coach_info->gym_coach->gym->package->name : $coach_info->coach->package->name,
+                'coach_package_amount' => $coach_info->withGym ? $coach_info->gym_coach->gym->package->amount : $coach_info->coach->package->amount,
+                'coach_package_clients_limit' => $coach_info->withGym ? $coach_info->gym_coach->gym->package->clients_limit : $coach_info->coach->package->clients_limit,
+                'total_active_clients' => $subscription_total_clients,
                 'coach_due_date' => $coach_info->due_date,
                 'in_trial' => $coach_info->coach->in_trial,
             ]
@@ -637,6 +638,24 @@ class CoachServices
         }, $coach_payments);
 
         return sendResponse($payments_arr);
+    }
+
+    /**
+     * Active + pending client count used with subscription: solo coach counts own clients;
+     * gym coach counts all active + pending clients across every coach in that gym.
+     */
+    private function subscriptionTotalActivePlusPendingClients(User $coach): int
+    {
+        $gym_coach = $coach->gym_coach;
+        if ($gym_coach !== null) {
+            $coach_ids = $this->DB_Coach_Gyms->get_all_gym_coach_ids((int) $gym_coach->gym_id);
+
+            return $this->DB_Clients->get_active_clients_count_for_coaches($coach_ids)
+                + $this->DB_PendingClients->get_pending_clients_count_for_coaches($coach_ids);
+        }
+
+        return $this->DB_Clients->get_active_clients($coach->id)
+            + $this->DB_PendingClients->get_pending_clients($coach->id);
     }
 
     /**

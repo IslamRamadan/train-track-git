@@ -25,6 +25,8 @@ Route::middleware(['auth:api', 'CheckSubscription', 'CheckCoachUser'])->group(fu
         Route::post('gym/send/join/request', [GymController::class, 'send_join_request']);
         Route::post('gym/list', [GymController::class, 'list']);
     });
+    Route::post('gym/list/join/requests', [GymController::class, 'list_join_requests']);
+    Route::post('gym/change/join/request/status', [GymController::class, 'change_join_request_status']);
 
 
     Route::group(['middleware' => 'CheckCoachIsOwner'], function () {
@@ -36,8 +38,6 @@ Route::middleware(['auth:api', 'CheckSubscription', 'CheckCoachUser'])->group(fu
     });
     Route::group(['middleware' => 'CheckCoachIsAdmin'], function () {
         Route::post('gym/check/package/limit', [GymController::class, 'check_package_limit']);
-        Route::post('gym/change/join/request/status', [GymController::class, 'change_join_request_status']);
-        Route::post('gym/list/join/requests', [GymController::class, 'list_join_requests']);
         Route::post('gym/coach/invite', [GymController::class, 'invite_coach_to_gym']);
         Route::post('gym/list/leave/requests', [GymController::class, 'list_leave_requests']);
         Route::post('gym/change/leave/request/status', [GymController::class, 'change_leave_request_status']);
