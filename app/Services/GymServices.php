@@ -325,7 +325,7 @@ class GymServices
             'upgrade' => $upgrade,
         ]);
 
-        $isWallet = (int) $request->input('is_wallet', 0) === 1;
+        $isWallet = (int) $request->input('isWallet', 0) === 1;
         if ($isWallet && trim((string) ($user->phone ?? '')) === '') {
             Log::warning("[GymPayment] Wallet payment requested without phone", ['user_id' => $user_id, 'gym_id' => $gym_id]);
             RequestInfoLog::query()->create([

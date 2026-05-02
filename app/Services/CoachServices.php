@@ -382,7 +382,7 @@ class CoachServices
 
         $payment_description = $package_name . " payment with " . $package_clients_limit . " clients limit.";
 
-        $isWallet = (int) $request->input('is_wallet', 0) === 1;
+        $isWallet = (int) $request->input('isWallet', 0) === 1;
         if ($isWallet && trim((string) $user->phone) === '') {
             return sendError('Phone number is required for wallet payment.');
         }
