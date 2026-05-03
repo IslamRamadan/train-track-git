@@ -101,6 +101,9 @@ class CoachServices
                 'coach_package_amount' => $coach_info->withGym ? $coach_info->gym_coach->gym->package->amount : $coach_info->coach->package->amount,
                 'coach_package_clients_limit' => $coach_info->withGym ? $coach_info->gym_coach->gym->package->clients_limit : $coach_info->coach->package->clients_limit,
                 'total_active_clients' => $subscription_total_clients,
+                'total_gym_coaches' => $coach_info->withGym
+                    ? $this->DB_Coach_Gyms->count_gym_coaches((int) $coach_info->gym_coach->gym_id)
+                    : 0,
                 'coach_due_date' => $coach_info->due_date,
                 'in_trial' => $coach_info->coach->in_trial,
             ]
@@ -577,7 +580,7 @@ class CoachServices
                 $active_clients += $this->DB_Clients->get_active_clients($cid);
                 $pending_clients += $this->DB_PendingClients->get_pending_clients($cid);
             }
-            $total_gym_clients = $active_clients + $pending_clients;
+            $total_gym_clients = $active_clients + $pending_clients + $this->DB_Coach_Gyms->count_gym_coaches($gym_id);
 
             $gym = $gym_coach->gym;
             $gym_package = $gym?->package_id ? $this->DB_Packages->find_package($gym->package_id) : null;

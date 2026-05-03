@@ -114,13 +114,23 @@ class GymServices
     }
 
     /**
-     * Get the appropriate package for gym based on current active + pending clients
+     * Total seats for gym package pricing: active + pending clients (all gym coaches) + assigned gym coaches.
+     */
+    private function getGymPackageBillingTotal(int $gym_id): int
+    {
+        $counts = $this->getGymActiveAndPendingClients($gym_id);
+
+        return $counts['active'] + $counts['pending'] + $this->DB_Coach_Gyms->count_gym_coaches($gym_id);
+    }
+
+    /**
+     * Get the appropriate package for gym based on active + pending clients and coach count
      */
     public function getGymCurrentPackage($gym_id)
     {
-        $counts = $this->getGymActiveAndPendingClients($gym_id);
-        $total_gym_clients = $counts['active'] + $counts['pending'];
-        return $this->DB_Packages->get_appropriate_package($total_gym_clients, ">=");
+        $billing_total = $this->getGymPackageBillingTotal($gym_id);
+
+        return $this->DB_Packages->get_appropriate_package($billing_total, ">=");
     }
 
     /**
@@ -130,24 +140,23 @@ class GymServices
      */
     public function getGymPackage($gym_id): array
     {
-        $counts = $this->getGymActiveAndPendingClients($gym_id);
-        $total_gym_clients = $counts['active'] + $counts['pending'];
+        $billing_total = $this->getGymPackageBillingTotal($gym_id);
 
         $gym = $this->DB_Gyms->find_gym($gym_id);
         $gym_package = $gym?->package ? $gym->package : null;
 
         if (!$gym_package) {
-            $gym_package = $this->DB_Packages->get_appropriate_package($total_gym_clients, ">=");
-            $upgrade = $total_gym_clients + 1 > $gym_package->clients_limit;
+            $gym_package = $this->DB_Packages->get_appropriate_package($billing_total, ">=");
+            $upgrade = $billing_total + 1 > $gym_package->clients_limit;
             if ($upgrade) {
-                $gym_package = $this->DB_Packages->get_appropriate_package($total_gym_clients);
+                $gym_package = $this->DB_Packages->get_appropriate_package($billing_total);
             }
             return [$gym_package, $upgrade];
         }
 
-        $upgrade = $total_gym_clients + 1 > $gym_package->clients_limit;
+        $upgrade = $billing_total + 1 > $gym_package->clients_limit;
         if ($upgrade) {
-            $gym_package = $this->DB_Packages->get_appropriate_package($total_gym_clients);
+            $gym_package = $this->DB_Packages->get_appropriate_package($billing_total);
         }
         return [$gym_package, $upgrade];
     }
@@ -354,7 +363,7 @@ class GymServices
                 full_name: $user->name,
                 email: $user->email,
                 description: $payment_description,
-                phone: (string) ($user->phone ?? ''),
+                phone: (string) "01010101010",
                 isWallet: $isWallet,
             );
 

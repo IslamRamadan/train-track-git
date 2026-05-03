@@ -87,4 +87,11 @@ class DB_Coach_Gyms
             ->pluck('coach_id')
             ->toArray();
     }
+
+    public function count_gym_coaches(int $gym_id): int
+    {
+        return GymCoach::query()
+            ->where('gym_id', $gym_id)
+            ->count();
+    }
 }
