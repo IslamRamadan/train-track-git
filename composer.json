@@ -21,6 +21,7 @@
         "maatwebsite/excel": "^3.1",
         "samir-hussein/paymob": "*",
         "spatie/laravel-translatable": "^6.7",
+        "twilio/sdk": "^8.11",
         "yajra/laravel-datatables": "10.0"
     },
     "require-dev": {

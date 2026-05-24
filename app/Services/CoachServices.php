@@ -16,7 +16,9 @@ use App\Services\DatabaseServices\DB_PendingClients;
 use App\Services\DatabaseServices\DB_UserPayment;
 use App\Services\DatabaseServices\DB_Users;
 use App\Services\PaymentServices\PaymobServices;
+use App\Services\SmsServices\PhoneVerificationService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -310,6 +312,32 @@ class CoachServices
         $this->DB_Coaches->update_coach($coach_id, $gym, $speciality, $certificates);
 
         return sendResponse(['message' => "Coach information updated successfully"]);
+    }
+
+    public function update_phone($request)
+    {
+        if ($request->user()->user_type != "0") {
+            return sendError("Only coaches can update phone via this endpoint", 403);
+        }
+
+        $this->validationServices->update_phone($request);
+
+        $coach_id = $request->user()->id;
+        $phone = $request->phone;
+
+        $cachedPhone = Cache::get(PhoneVerificationService::getCacheKey($phone));
+
+        if ($cachedPhone !== $phone) {
+            return sendError("Phone must be verified first. Use phone/send-otp and phone/verify endpoints.", 404);
+        }
+
+        $user = $this->DB_Users->get_user_info($coach_id);
+        $this->DB_Users->update_user_data($user, ['phone' => $phone]);
+        $this->DB_Coaches->update_coach_data($coach_id, ['phone_verified' => true]);
+
+        PhoneVerificationService::clearVerifiedPhone($coach_id);
+
+        return sendResponse(['message' => "Phone updated successfully"]);
     }
 
     public function list_client_logs($request)

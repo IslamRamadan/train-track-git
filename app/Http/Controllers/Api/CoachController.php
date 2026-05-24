@@ -39,13 +39,23 @@ class CoachController extends Controller
     }
 
     /**
-     *  client update info
+     * Coach update profile info
      * @param Request $request
      * @return JsonResponse
      */
     public function update_info(Request $request): JsonResponse
     {
         return $this->coachServices->update_info($request);
+    }
+
+    /**
+     * Coach update phone (requires prior OTP verification via phone/send-otp and phone/verify)
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function update_phone(Request $request): JsonResponse
+    {
+        return $this->coachServices->update_phone($request);
     }
 
     /**

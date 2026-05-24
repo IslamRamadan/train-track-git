@@ -127,7 +127,7 @@ class AuthServices
         $due_date = Carbon::today()->addMonth()->toDateString();
         DB::beginTransaction();
         $user = $this->DB_Users->create_user($name, $email, $phone, $password, $due_date, $country_id, $gender_id);
-        $this->DB_Coaches->create_coach($gym, $speciality, $certificates, $user->id);
+        $this->DB_Coaches->create_coach($gym, $speciality, $certificates, $user->id, 5, true);
         $email_is_invited_to_gym = $this->DB_GymJoinRequest->find_email_is_invited_to_gym($email);
         if ($email_is_invited_to_gym) {
             $this->DB_GymJoinRequest->update_join_request($email_is_invited_to_gym, $user->id);

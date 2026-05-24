@@ -588,6 +588,30 @@ class ValidationServices
         ]);
     }
 
+    public function send_phone_otp($request)
+    {
+        $request->validate([
+            'phone' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/',
+        ]);
+    }
+
+    public function verify_phone_otp($request)
+    {
+        $request->validate([
+            'phone' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/',
+            'code' => 'required',
+        ]);
+    }
+
+    public function update_phone($request)
+    {
+        $request->validate([
+            'phone' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/|unique:users,phone,' . $request->user()->id,
+        ], [
+            'phone.unique' => 'This phone already exists in the system',
+        ]);
+    }
+
     public function client_programs_logs_list($request)
     {
         $request->validate([

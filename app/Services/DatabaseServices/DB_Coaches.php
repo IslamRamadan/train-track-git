@@ -8,7 +8,7 @@ class DB_Coaches
 {
 
 
-    public function create_coach(mixed $gym, mixed $speciality, mixed $certificates, mixed $user_id, $package_id = 5)
+    public function create_coach(mixed $gym, mixed $speciality, mixed $certificates, mixed $user_id, $package_id = 5, $phone_verified = false)
     {
         return Coach::query()->create([
             'gym' => $gym,
@@ -16,6 +16,7 @@ class DB_Coaches
             'certificates' => $certificates,
             'user_id' => $user_id,
             'package_id' => $package_id,
+            'phone_verified' => $phone_verified,
         ]);
     }
 

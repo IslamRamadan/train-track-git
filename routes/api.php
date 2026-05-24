@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\LogController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OneToOneExerciseController;
 use App\Http\Controllers\Api\OneToOneProgramController;
+use App\Http\Controllers\Api\PhoneVerificationController;
 use App\Http\Controllers\Api\ProgramController;
 use App\Http\Controllers\Api\VVExerciseController;
 use App\Http\Controllers\PaymentController;
@@ -43,6 +44,9 @@ Route::post('flash/checkout/processed', [ClientController::class, 'checkoutProce
 Route::post('coach/get/package', [CoachController::class, 'get_package']);
 Route::post('countries/list', [CountryController::class, 'list']);
 Route::post('genders/list', [GenderController::class, 'list']);
+
+ Route::post('phone/send/otp', [PhoneVerificationController::class, 'send_phone_otp']);
+ Route::post('phone/verify/otp', [PhoneVerificationController::class, 'verify_phone_otp']);
 
 Route::middleware(['auth:api'])->group(function () {
     Route::post('coach/client/archive', [ClientController::class, 'coach_archive_client']);
@@ -91,6 +95,7 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     Route::post('clients/activities', [CoachController::class, 'clients_activities']);
     Route::post('client/update/due/date', [CoachController::class, 'update_due_date']);
     Route::post('coach/update/profile', [CoachController::class, 'update_info']);
+    Route::post('coach/phone/update', [CoachController::class, 'update_phone']);
     Route::post('coach/client/logs', [CoachController::class, 'list_client_logs']);
     Route::post('check/package/limit', [CoachController::class, 'check_package_limit']);
 
@@ -139,7 +144,6 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     Route::post('change/password', [AuthController::class, 'change_password']);
     // Client apis end
 
-    // Mutual apis start
     Route::post('notification/list', [NotificationController::class, 'list_notifications']);
 //    Route::post('send/coaches/notification', [NotificationController::class, 'send_coaches_notification']);
     Route::post('comment/add', [CommentController::class, 'add']);
