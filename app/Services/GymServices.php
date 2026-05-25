@@ -209,7 +209,7 @@ class GymServices
 
         $gym_id = $request->user()->gym_coach->gym_id;
         $upgrade = $request->upgrade;
-        
+
         Log::info("[GymPayment] Extracted request data", [
             'user_id' => $user_id,
             'gym_id' => $gym_id,
@@ -283,7 +283,7 @@ class GymServices
                     $amount = $requested_package->amount - ($old_package->amount ?? 0);
                     $package_name = $requested_package->name;
                     $package_clients_limit = $requested_package->clients_limit;
-                    
+
                     Log::info("[GymPayment] Using requested package for upgrade", [
                         'gym_id' => $gym_id,
                         'requested_package_id' => $request->package_id,
@@ -298,7 +298,7 @@ class GymServices
                     $amount = $upgraded_package->amount - ($old_package->amount ?? 0);
                     $package_name = $upgraded_package->name;
                     $package_clients_limit = $upgraded_package->clients_limit;
-                    
+
                     Log::info("[GymPayment] Requested package not found, using auto-calculated upgrade package", [
                         'gym_id' => $gym_id,
                         'requested_package_id' => $request->package_id,
@@ -313,7 +313,7 @@ class GymServices
                 $amount = $upgraded_package->amount - ($old_package->amount ?? 0);
                 $package_name = $upgraded_package->name;
                 $package_clients_limit = $upgraded_package->clients_limit;
-                
+
                 Log::info("[GymPayment] No package_id provided, using auto-calculated upgrade package", [
                     'gym_id' => $gym_id,
                     'auto_calculated_package_id' => $package_id,
@@ -363,7 +363,7 @@ class GymServices
                 full_name: $user->name,
                 email: $user->email,
                 description: $payment_description,
-                phone: (string) "01010101010",
+                phone: (string) $user->phone,
                 isWallet: $isWallet,
             );
 

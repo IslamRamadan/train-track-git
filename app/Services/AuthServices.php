@@ -62,7 +62,7 @@ class AuthServices
             return sendResponse($this->user_info_arr($user, $version));
         } else {
             // failure to authenticate
-            return sendError("Wrong credentials");
+            return sendError("Wrong username or password");
         }
     }
 

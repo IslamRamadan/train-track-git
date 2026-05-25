@@ -52,7 +52,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('coach/payment/link/create', [CoachController::class, 'create_payment_link']);
     Route::post('coach/client/invitation/delete', [ClientController::class, 'remove_client_invitation']);
     Route::post('client/delete', [ClientController::class, 'delete_client']);
-
+    Route::post('packages/list', [CoachController::class, 'list_packages']);
 });
 
 
@@ -69,24 +69,24 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
     Route::post('program/exercise/add', [ExerciseController::class, 'create']);
     Route::post('program/exercise/copy', [ExerciseController::class, 'copy']);
     Route::post('program/exercise/days/copy', [ExerciseController::class, 'copy_days']);
-    Route::post('program/exercise/days/cut', [ExerciseController::class, 'cut_days']);//6
-    Route::post('program/exercise/days/delete', [ExerciseController::class, 'delete_days']);//7
+    Route::post('program/exercise/days/cut', [ExerciseController::class, 'cut_days']); //6
+    Route::post('program/exercise/days/delete', [ExerciseController::class, 'delete_days']); //7
     Route::post('program/exercise/edit', [ExerciseController::class, 'update']);
-    Route::post('program/exercise/delete', [ExerciseController::class, 'destroy']);//5
+    Route::post('program/exercise/delete', [ExerciseController::class, 'destroy']); //5
     Route::post('program/client/assign', [ClientController::class, 'assign_program_to_client']);
     Route::post('active/clients/list', [ClientController::class, 'list_active_clients']);
     Route::post('coach/client/assign', [ClientController::class, 'assign_client_to_coach']);
     Route::post('client/programs/list', [OneToOneProgramController::class, 'index']);
-    Route::post('client/programs/delete', [OneToOneProgramController::class, 'destroy']);//2
+    Route::post('client/programs/delete', [OneToOneProgramController::class, 'destroy']); //2
     Route::post('client/program/exercises/list', [OneToOneExerciseController::class, 'list_client_exercises']);
     Route::post('client/program/exercises/by/date/list', [OneToOneExerciseController::class, 'list_client_program_exercises_by_date']);
     Route::post('client/program/exercise/add', [OneToOneExerciseController::class, 'add_client_exercise']);
     Route::post('client/program/exercise/copy', [OneToOneExerciseController::class, 'copy_client_exercise']);
     Route::post('client/program/exercise/days/copy', [OneToOneExerciseController::class, 'copy_client_exercise_days']);
-    Route::post('client/program/exercise/days/cut', [OneToOneExerciseController::class, 'cut_client_exercise_days']);//3
-    Route::post('client/program/exercise/days/delete', [OneToOneExerciseController::class, 'delete_client_exercise_days']);//4
+    Route::post('client/program/exercise/days/cut', [OneToOneExerciseController::class, 'cut_client_exercise_days']); //3
+    Route::post('client/program/exercise/days/delete', [OneToOneExerciseController::class, 'delete_client_exercise_days']); //4
     Route::post('client/program/exercise/edit', [OneToOneExerciseController::class, 'update_client_exercise']);
-    Route::post('client/program/exercise/delete', [OneToOneExerciseController::class, 'delete_client_exercise']);//1
+    Route::post('client/program/exercise/delete', [OneToOneExerciseController::class, 'delete_client_exercise']); //1
     Route::post('coach/dashboard', [CoachController::class, 'coach_dashboard']);
     Route::post('coach/client/date/activity', [CoachController::class, 'list_client_activity_in_date']);
     Route::post('clients/activities', [CoachController::class, 'clients_activities']);
@@ -110,7 +110,6 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
 
     Route::post('clients/details/update', [ClientInfoController::class, 'update']);
 
-    Route::post('packages/list', [CoachController::class, 'list_packages']);
     Route::post('coach/list/payments', [CoachController::class, 'list_payments']);
 
     Route::post('coach/videos/import', [CoachVideosController::class, 'import']);
@@ -142,7 +141,7 @@ Route::middleware(['auth:api', 'CheckSubscription'])->group(function () {
 
     // Mutual apis start
     Route::post('notification/list', [NotificationController::class, 'list_notifications']);
-//    Route::post('send/coaches/notification', [NotificationController::class, 'send_coaches_notification']);
+    //    Route::post('send/coaches/notification', [NotificationController::class, 'send_coaches_notification']);
     Route::post('comment/add', [CommentController::class, 'add']);
     Route::post('comment/delete', [CommentController::class, 'delete']);
     Route::post('version/update', [AuthController::class, 'update_version']);
