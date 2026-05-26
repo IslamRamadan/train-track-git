@@ -695,6 +695,13 @@ class ValidationServices
         ]);
     }
 
+    public function review_payment_details($request): void
+    {
+        $request->validate([
+            'coach_id' => ['required', 'exists:users,id'],
+        ]);
+    }
+
     public function add_coach_video($request)
     {
         $request->validate([

@@ -12,6 +12,11 @@ class DB_Users
         return User::with('coach', 'coach_client_client.coach.coach', 'client')->find($id);
     }
 
+    public function get_coach_for_payment_review(int $id): ?User
+    {
+        return User::with(['coach.package', 'gym_coach'])->find($id);
+    }
+
     public function get_user_for_delete($id)
     {
         return User::with(

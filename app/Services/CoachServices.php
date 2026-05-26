@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\DatabaseServices\DB_Coach_Gyms;
 use App\Services\DatabaseServices\DB_Clients;
 use App\Services\DatabaseServices\DB_Coaches;
+use App\Services\DatabaseServices\DB_Gyms;
 use App\Services\DatabaseServices\DB_ExerciseLog;
 use App\Services\DatabaseServices\DB_Notifications;
 use App\Services\DatabaseServices\DB_OneToOneProgram;
@@ -25,6 +26,8 @@ use Illuminate\Support\Facades\Log;
 
 class CoachServices
 {
+    private const PAYMENT_VAT_MULTIPLIER = 1.14;
+
     public function __construct(
         protected ValidationServices          $validationServices,
         protected DB_Clients                  $DB_Clients,
@@ -40,7 +43,8 @@ class CoachServices
         protected NotificationServices        $notificationServices,
         protected DB_OtoExerciseComments      $DB_OtoExerciseComments,
         protected DB_OneToOneProgram          $DB_OneToOneProgram,
-        protected DB_Coach_Gyms               $DB_Coach_Gyms
+        protected DB_Coach_Gyms               $DB_Coach_Gyms,
+        protected DB_Gyms                     $DB_Gyms,
     ) {}
 
 
@@ -423,6 +427,31 @@ class CoachServices
         }
     }
 
+    /**
+     * Payment review summary for renewal (solo coach or gym owner).
+     */
+    public function review_payment_details(Request $request): JsonResponse
+    {
+        $this->validationServices->review_payment_details($request);
+
+        $coachId = (int) $request->coach_id;
+        $user = $this->DB_Users->get_coach_for_payment_review($coachId);
+
+        if (!$user || $user->user_type != '0') {
+            return sendError('This user is not a coach');
+        }
+
+        if ($user->withGym == 1 && $user->isGymOwner != 1) {
+            return sendError('Only the gym owner can review gym payment details', 403);
+        }
+
+        if ($user->withGym == 1) {
+            return sendResponse($this->buildGymOwnerPaymentReview($user));
+        }
+
+        return sendResponse($this->buildSoloCoachPaymentReview($user));
+    }
+
     public function check_package_limit($request)
     {
         $coach_id = $request->user()->id;
@@ -607,6 +636,70 @@ class CoachServices
         $pending_clients = $this->DB_PendingClients->get_pending_clients($coach_id);
         $total_coach_clients = $active_clients + $pending_clients;
         return $this->DB_Packages->get_appropriate_package($total_coach_clients, ">=");
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildSoloCoachPaymentReview(User $user): array
+    {
+        $currentPackage = $user->coach?->package;
+        $usageTotal = $this->DB_PendingClients->get_solo_coach_usage_total($user->id, $this->DB_Clients);
+        $renewPackage = $this->DB_Packages->get_renew_package_for_usage($usageTotal);
+        $renewAmount = $renewPackage ? (float) $renewPackage->amount : 0.0;
+
+        return [
+            'billing_context' => 'coach',
+            'current_package_name' => $currentPackage?->name ?? '',
+            'current_package_clients_limit' => $currentPackage?->clients_limit ?? 0,
+            'renew_package_name' => $renewPackage?->name ?? '',
+            'renew_package_clients_limit' => $renewPackage?->clients_limit ?? 0,
+            'billing_total_members' => $usageTotal,
+            'renew_package_amount' => $renewAmount,
+            'renew_package_amount_with_vat' => round($renewAmount * self::PAYMENT_VAT_MULTIPLIER, 2),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildGymOwnerPaymentReview(User $user): array
+    {
+        $gymId = (int) $user->gym_coach->gym_id;
+        $gym = $this->DB_Gyms->find_gym($gymId);
+
+        if (!$gym) {
+            return [
+                'billing_context' => 'gym',
+                'current_package_name' => '',
+                'current_package_clients_limit' => 0,
+                'renew_package_name' => '',
+                'renew_package_clients_limit' => 0,
+                'billing_total_members' => 0,
+                'renew_package_amount' => 0.0,
+                'renew_package_amount_with_vat' => 0.0,
+            ];
+        }
+
+        $currentPackage = $gym->package;
+        $billingTotal = $this->DB_Coach_Gyms->get_gym_package_billing_total(
+            $gymId,
+            $this->DB_Clients,
+            $this->DB_PendingClients,
+        );
+        $renewPackage = $this->DB_Packages->get_renew_package_for_usage($billingTotal);
+        $renewAmount = $renewPackage ? (float) $renewPackage->amount : 0.0;
+
+        return [
+            'billing_context' => 'gym',
+            'current_package_name' => $currentPackage?->name ?? '',
+            'current_package_clients_limit' => $currentPackage?->clients_limit ?? 0,
+            'renew_package_name' => $renewPackage?->name ?? '',
+            'renew_package_clients_limit' => $renewPackage?->clients_limit ?? 0,
+            'billing_total_members' => $billingTotal,
+            'renew_package_amount' => $renewAmount,
+            'renew_package_amount_with_vat' => round($renewAmount * self::PAYMENT_VAT_MULTIPLIER, 2),
+        ];
     }
 
     public function list_packages()

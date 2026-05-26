@@ -42,6 +42,7 @@ Route::post('checkout/processed', [PaymentController::class, 'checkout_processed
 
 Route::post('flash/checkout/processed', [ClientController::class, 'checkoutProcessed']);
 Route::post('coach/get/package', [CoachController::class, 'get_package']);
+Route::post('review/payment/details', [CoachController::class, 'review_payment_details']);
 Route::post('countries/list', [CountryController::class, 'list']);
 Route::post('genders/list', [GenderController::class, 'list']);
 

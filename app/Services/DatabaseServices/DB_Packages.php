@@ -16,6 +16,11 @@ class DB_Packages
         return Package::query()->where('clients_limit', $operator, $coach_active_clients)->orderBy('clients_limit')->first();
     }
 
+    public function get_renew_package_for_usage(int $usage_total): ?Package
+    {
+        return $this->get_appropriate_package($usage_total, '>=');
+    }
+
     public function list_packages()
     {
         return Package::query()

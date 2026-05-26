@@ -68,6 +68,11 @@ class CoachController extends Controller
         return $this->coachServices->create_payment_link($request);
     }
 
+    public function review_payment_details(Request $request): JsonResponse
+    {
+        return $this->coachServices->review_payment_details($request);
+    }
+
     public function check_package_limit(Request $request): JsonResponse
     {
         return $this->coachServices->check_package_limit($request);

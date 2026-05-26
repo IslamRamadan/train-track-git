@@ -39,6 +39,11 @@ class DB_PendingClients
         return PendingClient::where('coach_id', $coach_id)->count();
     }
 
+    public function get_solo_coach_usage_total(int $coach_id, DB_Clients $DB_Clients): int
+    {
+        return $DB_Clients->get_active_clients($coach_id) + $this->get_pending_clients($coach_id);
+    }
+
     /**
      * Get total pending clients count for multiple coaches in one query
      */

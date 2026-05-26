@@ -94,4 +94,16 @@ class DB_Coach_Gyms
             ->where('gym_id', $gym_id)
             ->count();
     }
+
+    public function get_gym_package_billing_total(
+        int $gym_id,
+        DB_Clients $DB_Clients,
+        DB_PendingClients $DB_PendingClients,
+    ): int {
+        $coachIds = $this->get_all_gym_coach_ids($gym_id);
+
+        return $DB_Clients->get_active_clients_count_for_coaches($coachIds)
+            + $DB_PendingClients->get_pending_clients_count_for_coaches($coachIds)
+            + $this->count_gym_coaches($gym_id);
+    }
 }
